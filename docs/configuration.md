@@ -29,7 +29,7 @@ case class CoreConfig(
 | `withICache/DCache` | None | 预留：在总线接口后插入缓存 |
 | `numCores` | 1 | 多核数量，为核间互联保留 |
 | `hartId` | 0 | 每个核的硬件线程 ID（多核时用于 CSR 等） |
-| `withDebug` | false | 打开时导出 32 个寄存器值到顶层，便于仿真观察 |
+| `withDebug` | false | 仿真观测预留。当前 `RiscvCore` 始终导出 `debugPc/debugRegs/debugMepc/debugMcause/debugMode` 到顶层；该开关保留用于后续按需裁减调试逻辑 |
 
 ## 使用示例
 

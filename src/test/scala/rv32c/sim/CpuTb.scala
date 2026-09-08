@@ -12,11 +12,16 @@ import rv32c._
   */
 class CpuTb(config: CoreConfig, program: Seq[Long]) extends Component {
   val io = new Bundle {
+    val timerInterrupt = in Bool()
     val debugPc = out UInt(config.xlen bits)
     val debugRegs = out Vec(Bits(config.xlen bits), 32)
+    val debugMepc = out UInt(config.xlen bits)
+    val debugMcause = out Bits(config.xlen bits)
+    val debugMode = out UInt(2 bits)
   }
 
   val core = new RiscvCore(config)
+  core.io.timerInterrupt := io.timerInterrupt
 
   val iMem = new SyncRamSim(config.xlen, 1 << 12)
   val dMem = new SyncRamSim(config.xlen, 1 << 12)
@@ -48,4 +53,7 @@ class CpuTb(config: CoreConfig, program: Seq[Long]) extends Component {
 
   io.debugPc := core.io.debugPc
   io.debugRegs := core.io.debugRegs
+  io.debugMepc := core.io.debugMepc
+  io.debugMcause := core.io.debugMcause
+  io.debugMode := core.io.debugMode
 }

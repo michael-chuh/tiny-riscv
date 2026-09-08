@@ -22,16 +22,17 @@ graph LR
 
 ### ID（译码）
 
-- 组合译码器 `Decoder` 生成全部控制信号：寄存器写使能、ALU 操作、访存属性、分支类型、写回选择、立即数
+- 组合译码器 `Decoder` 生成全部控制信号：寄存器写使能、ALU 操作、访存属性、分支类型、写回选择、立即数，以及 CSR/异常指令的 `csrOp/csrWe/csrAddr/sysOp` 控制域
 - 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽
-- 读取寄存器堆，同时锁存到 ID/EX 寄存器
+- 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
 
-- 旁路单元根据 EX/MEM 与 MEM/WB 的结果优先选择操作数，消除绝大多数数据冒险
-- ALU 完成算术/逻辑/移位/比较运算
+- 旁路单元根据 EX/MEM 与 MEM/WB 的结果优先选择操作数；未被旁路覆盖的操作数在 EX 段**组合读寄存器堆**取得（读地址即本指令 rs1/rs2），因此总能观察到已提交的架构值
+- ALU 完成算术/逻辑/移位/比较运算；乘法在 ALU 内组合完成（RV32M）
 - **分支与跳转在 EX 阶段提前判定**，条件跳转直接消耗转发后的操作数，避免等到 MEM 阶段，将错误预测代价从 3 拍降到 2 拍
 - JALR 目标 = `rs1 + imm` 并强制按 2 字节对齐（清 LSB）
+- 异常（`ecall/ebreak/非法指令/mret 违例`）在 EX 段判定并提交 trap（见「CSR 与异常/中断通路」）
 
 ### MEM（访存）
 
@@ -41,30 +42,38 @@ graph LR
 
 ### WB（写回）
 
-- 选择写回源：ALU 结果 / 访存结果 / `pc + 4`（JAL/JALR 链接）
-- 写入寄存器堆（`rd == 0` 时忽略，符合 RISC-V 规范）
+- 选择写回源：ALU 结果 / 访存结果 / `pc + 4`（JAL/JALR 链接）/ CSR 读回旧值（`rd=x0` 时忽略）
+- 写入寄存器堆（`rd == 0` 时忽略，符合 RISC-V 规范）；寄存器堆为**单写端口**，WB 是唯一写入口
 
 ## 冒险处理
 
 ### 数据冒险（RAW）
 
-采用全旁路（forwarding）方案，旁路优先级：
+采用两级旁路 + EX 段组合读回的组合方案，优先级：
 
-1. EX/MEM → EX（最近结果优先，且排除 load 结果未就绪的情况）
-2. MEM/WB → EX
+1. EX/MEM → EX：最近 ALU 结果（排除 load / CSR 读这类 rd 尚未就绪的指令）
+2. MEM/WB → EX：WB 写回值（load 读回数据、CSR 旧值）
+3. 其余（与流水线内写回相距 ≥3 槽）：**EX 段直接读寄存器堆**——生产者已在 WB 末端把结果提交进寄存器堆，消费指令执行时读到的是已提交的架构值
 
 旁路判定条件：`regWrite && rd != 0 && rd == 源寄存器`。
 
-### load-use 冒险
+> 说明：操作数不再在 ID/EX 边界锁存旧值，读地址随流水到 EX 后统一取值，因此对任意间距的 RAW 都给出正确架构值；WB 单写端口的提交语义不变。
 
-当 EX 阶段是 load 且 ID 阶段指令需要使用其目标寄存器时，硬件停顿 1 拍：
+### load / CSR 结果冒险（停顿 1 拍）
+
+当 EX 阶段是 load 或 CSR 读且 ID 阶段指令需要使用其目标寄存器时，硬件停顿 1 拍：
 
 ```text
-检测: EX.MEMRead && EX.rd != 0 && (EX.rd == IF/ID.rs1 || EX.rd == IF/ID.rs2)
-动作: 冻结 PC 与 IF/ID 寄存器，向 EX 阶段插入气泡
+检测: EX.valid && EX.rd != 0 && (EX.MemRead || EX 是 CSR 写) &&
+      (EX.rd == IF/ID.rs1 || EX.rd == IF/ID.rs2)
+动作: 冻结 PC 与 IF/ID 寄存器，向 EX 段插入气泡
 ```
 
-停顿一拍后 load 结果已进入 MEM/WB，旁路即可正确转发。
+停顿一拍后 load/CSR 的结果已进入 MEM/WB，由第 2 级旁路正确转发（CSR 的 rd = 写前旧值，在 WB 读出）。
+
+### CSR→MRET 冒险（停顿）
+
+`mret` 读取 `mepc` 与 `mstatus.MPP`。若其后 1-2 槽内存在写入 `mepc(0x341)/mstatus(0x300)` 的 CSR 指令尚未提交，则冻结 `mret` 一拍，等这些写提交后再读取。
 
 ### RV32M 除法（多周期 EX 停顿）
 
@@ -89,6 +98,35 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 代价：条件分支错误预测固定 2 拍。JAL 无条件跳转同样 2 拍。
 
+## CSR 文件与异常/中断通路
+
+### CSR 文件（`CsrFile`）
+
+- 内部 CSR：`mstatus/misa/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）
+- **位掩码写**：仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读，写入在 EX 判非法
+- `mip.MTIP` 直接由顶层输入 `timerInterrupt` 电平组合反映，不经写口
+- 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/cause/epc/tval`）、`mretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
+- 读口：WB 读口（返回写前旧值，作为 `csrr*` 的 rd 源）、EX 控制读口（`mtvec/mepc/mstatus` 域、`curMode`，供 trap 重定向与非法复核）
+- `mstatus` 可写域：`MIE(bit3)/MPIE(bit7)/MPP(bit12:11)/FS`；`mie` 可写域：`MTIE(bit7)`
+
+### 同步异常（EX 级判定并提交）
+
+- `ecall`：M→cause 11；U→cause 8。`ebreak`：cause 3。非法指令/CSR 访问违例：cause 2，`mtval`=违例 CSR 地址或指令字；保留 `MPP`（1/2）的 `mret`：cause 2
+- 判定所需 CSR 域（U 模式访 M 级 CSR、写只读、`mtvec.MODE≠0`、MRET-in-U 等）由 EX 控制读口实时读取，避免对 1-2 槽前未提交写敏感
+- 提交 = 复用 `ctrlFlush` 重定向：该拍不产生 WB 副作用，PC ← `{mtvec.BASE, 2'b00}`（容忍 `mtvec.MODE≠0` 时的非对齐陷阱，此处固定按 MODE=0 取），同时写 `mepc/mcause/mtval` 并更新 `mstatus`（`MPIE←MIE, MIE←0, MPP←curMode`）、`curMode←M`
+
+### 机器定时器中断（取指边界接受）
+
+- 接受条件：`timerInterrupt && mie.MTIE && mstatus.MIE && curMode==M`，且当前拍无 EX trap、无分支/跳转/trap flush、无 `mret`、无 load/CSR 停顿、流水线无冻结
+- `mepc` = 被中断指令地址（EX 有合法指令取其 pc，否则取 ID 的 pc，管线排空情形取取指地址）；cause = `0x80000007`，`mtval=0`
+- 同步异常优先级高于中断（EX trap 一拍内先提交）
+
+### MRET（EX 级，M 模式）
+
+- `pc←mepc`，`mstatus` 恢复：`MIE←MPIE, MPIE←1, MPP←U(0)`，`curMode←原 MPP`；写回/旁路不受影响
+- `mret` 与 1-2 槽内未提交的 `mepc/mstatus` CSR 写之间停顿防冒险
+- 若 `MPP`=1/2（保留值）或 `curMode==U`，则判非法（cause 2）而非执行
+
 ## 总线接口
 
 核心通过两个握手接口对外访问，均支持 `valid/ready` 反压：
@@ -103,7 +141,10 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 | 决策 | 选择 | 理由 |
 |------|------|------|
 | 分支判定阶段 | EX | 比 MEM 阶段少 1 拍错误预测代价，不引入专用预测器 |
-| 旁路网络 | 两级全旁路 | 消除 RAW 冒险，仅保留 load-use 停顿 |
+| 数据冒险 | 两级旁路 + EX 段组合读寄存器堆 | 覆盖任意间距 RAW，仅 load/CSR 结果需停顿 1 拍 |
+| 寄存器堆 | 单写端口，WB 集中提交；EX 组合读 | 提交语义简单一致，多读口无写端口竞争 |
+| 同步异常判定 | EX 级单拍判定+提交 | 复用分支 flush 通路，trap 无 WB 副作用 |
+| 中断 | 取指边界接受，`mepc` 排空取址 | 同步异常优先，避免回写一半的状态 |
 | 哈佛结构 | 独立 I/D 总线 | 避免单端口存储器的吞吐瓶颈，接口对称易扩展 |
 | 位宽参数化 | 全程使用 `xlen` | 从 RV32 迁移 RV64 只需改一处配置 |
 | RV32M 乘法 | ALU 内组合乘法 | 单周期出结果，零流水线代价 |

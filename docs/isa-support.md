@@ -90,7 +90,37 @@
 | 指令 | opcode | 实现状态 |
 |------|--------|----------|
 | FENCE | 0001111 | 当作 NOP 处理（单核无一致性需求） |
-| ECALL / EBREAK | 1110011 | 当前按 NOP 处理，后续接入 CSR/异常 |
+| ECALL / EBREAK | 1110011 | 已实现（M 模式 cause 11 / 3，U 模式 cause 8 / 3，见下文） |
+| MRET | 1110011 | 已实现（M 模式恢复 mstatus/模式并跳转 mepc） |
+| WFI | 1110011 | 当作 NOP 处理 |
+| SRET / URET | 1110011 | 译码为非法指令（cause 2） |
+
+## Zicsr：CSR 访问指令（SYSTEM, 1110011）
+
+CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表 funct3 与 `CSR` 地址段含义同 RISC-V 规范。
+
+| 指令 | funct3 | 语义 | 实现状态 |
+|------|--------|------|----------|
+| CSRRW | 001 | 读旧值写新值（rs1 值；rs1=x0 时仅读） | 已实现 |
+| CSRRS | 010 | 读旧值，按 rs1 置位（rs1=x0 仅读） | 已实现 |
+| CSRRC | 011 | 读旧值，按 rs1 清位（rs1=x0 仅读） | 已实现 |
+| CSRRWI | 101 | 读旧值，写 zimm 零扩展 | 已实现 |
+| CSRRSI | 110 | 读旧值，按 zimm 置位（zimm=0 仅读） | 已实现 |
+| CSRRCI | 111 | 读旧值，按 zimm 清位（zimm=0 仅读） | 已实现 |
+
+> CSR 的 `rd` 总是返回写前旧值；`rd=x0` 时忽略写回。CSR 写与异常/中断的优先级见 `architecture.md` 的 trap 通路。
+
+## 特权模式、异常与中断
+
+- 支持 **M/U 两种特权模式**，复位进入 M；通过 `mret`（MPP=0 时）或异常委托路径进入 U，U 内非法/`ecall` 回到 M
+- 内置 CSR（全部 32 位）：`mstatus/misa/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`
+  - 仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读：CSRRW/I 写入触发 cause 2，CSRRS/CSRRC 命中只读位按读处理
+  - `mtvec` 的 MODE 域写入非 0 值触发 cause 2；trap 重定向恒按 direct 模式取 `{mtvec.BASE,2'b00}`
+  - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
+  - `mstatus` 可写域：`MIE/MPIE/MPP(3)/FS`；`mie.MTIE` 是唯一可写中断使能位
+- 同步异常 cause：ECALL(M)=11、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、保留 `MPP` 的 MRET=2
+- 机器定时器中断：`mip.MTIP && mie.MTIE && mstatus.MIE && curMode=M` 时在取指边界接受，cause=0x80000007，`mtval=0`
+- 复位 `debugPc` 回到 `resetVector`，内部 CSR/模式全部清零/复位为 M
 
 ## 立即数编码
 
