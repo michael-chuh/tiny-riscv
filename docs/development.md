@@ -25,9 +25,12 @@ sbt "runMain rv32c.RiscvCoreGen"
 
 ```
 src/main/scala/rv32c/
-├── CoreConfig.scala       # 全局配置（改参数即改架构）
+├── CoreConfig.scala       # 核配置（组合 IsaConfig；改参数即改架构）
 ├── RiscvCore.scala        # 五级流水线 + 冒险控制（核心文件）
 ├── RiscvCoreGen.scala     # Verilog 生成入口
+├── isa/IsaConfig.scala    # ISA 三轴配置：xlen × 扩展 × 特权栈（单一事实源）
+├── isa/RvExtension.scala  # 扩展命名/implemented/reserved
+├── isa/Privilege.scala    # 特权模式与特权栈规则
 ├── bus/BusInterfaces.scala
 ├── core/Alu.scala         # ALU + 操作枚举
 ├── core/RegisterFile.scala
@@ -75,7 +78,7 @@ def enc(op, rd=0, f3=0, rs1=0, rs2=0, imm=0, fmt='I'):
 ## 常见问题
 
 **Q：修改了配置但生成的 RTL 没变化？**
-重新运行 `RiscvCoreGen`，确认新参数传入（`CoreConfig(xlen = 64)` 等）。
+重新运行 `RiscvCoreGen`，确认新参数传入（`CoreConfig(isa = IsaConfig.rv64)` 等）。
 
 **Q：仿真出现 X 传播？**
 检查流水线寄存器的 `init` 与 `valid` 位复位逻辑；复位后需等待若干周期再开始断言。

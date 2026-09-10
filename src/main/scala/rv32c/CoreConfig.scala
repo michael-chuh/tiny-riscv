@@ -1,20 +1,31 @@
 package rv32c
 
+import rv32c.isa._
+
+/** Branch-predictor configuration. `staticNotTaken` is the only implemented
+  * strategy today; richer predictors are a reserved roadmap item. */
 case class BranchPredictorConfig(
     kind: String = "staticNotTaken"
 )
 
+/** Cache configuration placeholder. Reserved: caches are not instantiated yet. */
 case class CacheConfig(
     sizeBytes: Int = 4096,
     lineBytes: Int = 32,
     ways: Int = 2
 )
 
+/** Top-level hart configuration.
+  *
+  * The ISA axes (width, extensions, privilege stack) live in `isa` and are the
+  * single source of truth for anything instruction/CSR/mode related (misa,
+  * decode enable, CSR availability). This case class adds the *micro*- and
+  * platform-level knobs: reset vector, prediction/cache placeholders, hart id,
+  * debug export.
+  */
 case class CoreConfig(
-    xlen: Int = 32,
+    isa: IsaConfig = IsaConfig.rv32,
     resetVector: BigInt = 0x00000000L,
-    withMulDiv: Boolean = false,
-    withFpu: Boolean = false,
     branchPredictor: BranchPredictorConfig = BranchPredictorConfig(),
     withICache: Option[CacheConfig] = None,
     withDCache: Option[CacheConfig] = None,
@@ -22,9 +33,23 @@ case class CoreConfig(
     hartId: Int = 0,
     withDebug: Boolean = false
 ) {
-  require(xlen == 32 || xlen == 64, s"xlen must be 32 or 64, got $xlen")
   require(numCores >= 1, s"numCores must be >= 1, got $numCores")
 
-  def isRV64: Boolean = xlen == 64
-  def bytePerXlen: Int = xlen / 8
+  /** Data-path width, forwarded from the ISA config. */
+  def xlen: Int = isa.xlen
+  def isRV64: Boolean = isa.isRV64
+  def bytePerXlen: Int = isa.xlen / 8
+
+  // ---- convenient forwarders used across the RTL ----
+  def hasMulDiv: Boolean = isa.hasMulDiv
+  def misaValue: BigInt = isa.misaValue
+  def priv: PrivConfig = isa.priv
+
+  override def toString: String =
+    s"CoreConfig(${isa.canonicalName}, reset=$resetVector, xlen=$xlen)"
+}
+
+object CoreConfig {
+  /** RV32IM + Zicsr on the M/U stack: the current default development hart. */
+  def rv32im: CoreConfig = CoreConfig(isa = IsaConfig.rv32im)
 }

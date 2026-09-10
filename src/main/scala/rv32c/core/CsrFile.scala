@@ -19,7 +19,7 @@ import spinal.core._
   *   mretEna : MIE<-MPIE, MPIE<-1, MPP<-M, curMode<-MPP
   *   Control readouts for EX/trap logic and debug are outputs.
   */
-class CsrFile(xlen: Int, hartId: Int) extends Component {
+class CsrFile(xlen: Int, hartId: Int, misaValue: BigInt) extends Component {
   val io = new Bundle {
     val timerInterrupt = in Bool()
     // ---- WB normal CSR instruction port ----
@@ -60,8 +60,9 @@ class CsrFile(xlen: Int, hartId: Int) extends Component {
   val mtvalReg = Reg(Bits(xlen bits)) init B(0, xlen bits)
   val curModeReg = Reg(UInt(2 bits)) init MODE_M
 
-  // misa: MXL=1 (RV32) + I/M/U bits; mhartid constant.
-  val misaValue: BigInt = (BigInt(1) << 30) | (1 << 20) | (1 << 12) | (1 << 8)
+  // misa is read-only and comes from the ISA configuration: MXL (by xlen) +
+  // I base + enabled extension letters + U/S capability bits (see IsaConfig).
+  // mhartid is a constant. Neither goes through the write port.
 
   // Writable masks (WARL).
   private def mstatusMask: BigInt = (1 << 12) | (1 << 11) | (1 << 7) | (1 << 3)

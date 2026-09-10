@@ -173,7 +173,7 @@ class ZicsrTrapTest extends AnyFunSuite {
         assert(u32(dut.io.debugRegs(7).toBigInt) == 0x0F000F1FL, "x7 = mscratch")
         assert(u32(dut.io.debugRegs(9).toBigInt) == 0, "x9 = old mstatus 0")
         assert(u32(dut.io.debugRegs(10).toBigInt) == 0x1888L, "x10 = mstatus WARL write")
-        assert(u32(dut.io.debugRegs(11).toBigInt) == 0x40101100L, "x11 = misa")
+        assert(u32(dut.io.debugRegs(11).toBigInt) == 0x40100100L, "x11 = misa (RV32I + U, no M)")
         assert(u32(dut.io.debugRegs(12).toBigInt) == 0, "x12 = mhartid 0")
         assert(u32(dut.io.debugRegs(13).toBigInt) == 0, "x13 = mip (timer low)")
         assert(u32(dut.io.debugRegs(14).toBigInt) == 0x0F000F1FL, "x14 = old (no write)")
@@ -289,7 +289,7 @@ class ZicsrTrapTest extends AnyFunSuite {
         assert(u32(dut.io.debugRegs(24).toBigInt) == 1, "mip RO-write fault count")
         assert(u32(dut.io.debugRegs(25).toBigInt) == 1, "unimplemented CSR fault count")
         assert(u32(dut.io.debugRegs(26).toBigInt) == 1, "mtvec.MODE!=0 fault count")
-        assert(u32(dut.io.debugRegs(16).toBigInt) == 0x40101100L, "csrrs misa read")
+        assert(u32(dut.io.debugRegs(16).toBigInt) == 0x40100100L, "csrrs misa read (RV32I + U, no M)")
         assert(u32(dut.io.debugRegs(17).toBigInt) == 0, "csrrc mip read (timer low)")
         println(s"PASS: M-mode exceptions in $cyc cycles")
       }

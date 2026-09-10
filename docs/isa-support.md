@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I** 基础整数指令集与 **RV32M** 乘除扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；M 扩展随 `CoreConfig.withMulDiv` 使能）。
+当前版本实现 **RV32I** 基础整数指令集与 **RV32M** 乘除扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；M 扩展由 `IsaConfig.extensions` 中的 `RvExtension.MulDiv` 使能，默认配置为 `rv32im`）。
 
 ## 指令覆盖矩阵
 
@@ -143,4 +143,4 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 - **Zicsr**：CSR 读写指令与特权模式
 - **异常与中断**：mtvec、mepc 等，ECALL/EBREAK 真正落地
-- **RV64I**：`CoreConfig(xlen = 64)`，指令宽度仍 32 位，数据路径全 64 位（乘法/除法单元按 `xlen` 参数化，可随之迁移）
+- **RV64I**：`CoreConfig(isa = IsaConfig.rv64)`，指令宽度仍 32 位，数据路径全 64 位（乘法/除法单元按 `isa.xlen` 参数化，可随之迁移）

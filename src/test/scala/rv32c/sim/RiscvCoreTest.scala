@@ -89,7 +89,7 @@ class RiscvCoreTest extends AnyFunSuite {
   }
 
   test("RV32M multiply/divide program") {
-    val cfg = CoreConfig(withMulDiv = true)
+    val cfg = CoreConfig.rv32im
     SimConfig.withIVerilog
       .workspacePath("simWork")
       .compile(new CpuTb(cfg, mProgram))

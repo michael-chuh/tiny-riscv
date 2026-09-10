@@ -4,6 +4,7 @@ import spinal.core._
 import spinal.lib._
 import rv32c.bus._
 import rv32c.core._
+import rv32c.isa._
 
 class IfIdBundle(xlen: Int) extends Bundle {
   val valid = Bool()
@@ -160,6 +161,15 @@ class RiscvCore(config: CoreConfig) extends Component {
   val MODE_M = U(3, 2 bits)
   val MODE_U = U(0, 2 bits)
 
+  // ---- Capability check: which configurations this RTL can actually run ----
+  require(config.isa.isRV32, "rv32c currently implements RV32I only; RV64 is a roadmap branch")
+  require((config.isa.extensions -- RvExtension.implemented).isEmpty,
+    s"extensions not implemented by this core: ${(config.isa.extensions -- RvExtension.implemented).toSeq.sorted.mkString(", ")}")
+  require(config.isa.hasZicsr, "Zicsr decode is currently unconditional; it cannot be disabled")
+  require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
+  require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
+    "S/H modes are roadmap features and are not implemented yet")
+
   // ===== Fetch stage =====
   val pcReg = RegInit(U(config.resetVector, xlen bits))
   io.iBus.valid := True
@@ -171,7 +181,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val ifIdRs2 = ifId.instruction(24 downto 20).asUInt
 
   // ===== Decode =====
-  val decoder = new Decoder(xlen, config.withMulDiv)
+  val decoder = new Decoder(xlen, config.hasMulDiv)
   decoder.io.instruction := ifId.instruction
   val dec = decoder.io.output
 
@@ -183,7 +193,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val regFile = new RegisterFile(xlen)
 
   // ===== CSR file =====
-  val csrFile = new CsrFile(xlen, config.hartId)
+  val csrFile = new CsrFile(xlen, config.hartId, config.misaValue)
   csrFile.io.timerInterrupt := io.timerInterrupt
 
   // ===== ID/EX, EX/MEM, MEM/WB pipeline registers =====
@@ -410,7 +420,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val divStall = Bool()
   val exAluResult = Bits(xlen bits)
 
-  if (config.withMulDiv) {
+  if (config.hasMulDiv) {
     val divider = new Divider(xlen)
     divider.io.a := alu.io.a.asUInt
     divider.io.b := alu.io.b.asUInt

@@ -102,7 +102,7 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 ### CSR 文件（`CsrFile`）
 
-- 内部 CSR：`mstatus/misa/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）
+- 内部 CSR：`mstatus/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）；`misa` 为只读常量，值由 `IsaConfig.misaValue`（MXL + I + 扩展字母位 + U/S 位）推导
 - **位掩码写**：仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读，写入在 EX 判非法
 - `mip.MTIP` 直接由顶层输入 `timerInterrupt` 电平组合反映，不经写口
 - 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/cause/epc/tval`）、`mretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
@@ -146,9 +146,9 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 | 同步异常判定 | EX 级单拍判定+提交 | 复用分支 flush 通路，trap 无 WB 副作用 |
 | 中断 | 取指边界接受，`mepc` 排空取址 | 同步异常优先，避免回写一半的状态 |
 | 哈佛结构 | 独立 I/D 总线 | 避免单端口存储器的吞吐瓶颈，接口对称易扩展 |
-| 位宽参数化 | 全程使用 `xlen` | 从 RV32 迁移 RV64 只需改一处配置 |
+| 位宽参数化 | 全程使用 `isa.xlen`（经 `CoreConfig`） | 从 RV32 迁移 RV64 只需改一处配置 |
 | RV32M 乘法 | ALU 内组合乘法 | 单周期出结果，零流水线代价 |
-| RV32M 除法 | EX 段恢复除法器 + 整条流水线冻结 | 面积/时序友好；`withMulDiv=false` 时不实例化 |
+| RV32M 除法 | EX 段恢复除法器 + 整条流水线冻结 | 面积/时序友好；`IsaConfig` 不含 `MulDiv` 时不实例化 |
 
 ## 未来演进（对应参数化预留）
 
