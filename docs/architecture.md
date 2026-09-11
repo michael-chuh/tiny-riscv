@@ -104,6 +104,7 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 - 内部 CSR：`mstatus/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）；`misa` 为只读常量，值由 `IsaConfig.misaValue`（MXL + I + 扩展字母位 + U/S 位）推导
 - **位掩码写**：仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读，写入在 EX 判非法
+- 已实现地址集与只读地址集由 ISA 层的 `CsrMap` 派生（`implementedFor/readOnlyFor`），EX 合法性检查与 `CsrFile` 读通路共用同一事实源；异常号为 `ExceptionCode` 具名常量
 - `mip.MTIP` 直接由顶层输入 `timerInterrupt` 电平组合反映，不经写口
 - 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/cause/epc/tval`）、`mretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
 - 读口：WB 读口（返回写前旧值，作为 `csrr*` 的 rd 源）、EX 控制读口（`mtvec/mepc/mstatus` 域、`curMode`，供 trap 重定向与非法复核）

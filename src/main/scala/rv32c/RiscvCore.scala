@@ -181,7 +181,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val ifIdRs2 = ifId.instruction(24 downto 20).asUInt
 
   // ===== Decode =====
-  val decoder = new Decoder(xlen, config.hasMulDiv)
+  val decoder = new Decoder(xlen, config.isa)
   decoder.io.instruction := ifId.instruction
   val dec = decoder.io.output
 
@@ -193,7 +193,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val regFile = new RegisterFile(xlen)
 
   // ===== CSR file =====
-  val csrFile = new CsrFile(xlen, config.hartId, config.misaValue)
+  val csrFile = new CsrFile(xlen, config.hartId, config.isa)
   csrFile.io.timerInterrupt := io.timerInterrupt
 
   // ===== ID/EX, EX/MEM, MEM/WB pipeline registers =====
@@ -325,19 +325,13 @@ class RiscvCore(config: CoreConfig) extends Component {
   // nonzero MODE field. CSRRS/CSRRC touching only read-only bits are legal
   // reads (R1.8).
   val isCsrInst = idEx.csrOp =/= CsrOp.NONE
-  val csrImplemented = idEx.csrAddr === U(0x300, 12 bits) ||
-    idEx.csrAddr === U(0x301, 12 bits) ||
-    idEx.csrAddr === U(0x304, 12 bits) ||
-    idEx.csrAddr === U(0x305, 12 bits) ||
-    idEx.csrAddr === U(0x340, 12 bits) ||
-    idEx.csrAddr === U(0x341, 12 bits) ||
-    idEx.csrAddr === U(0x342, 12 bits) ||
-    idEx.csrAddr === U(0x343, 12 bits) ||
-    idEx.csrAddr === U(0x344, 12 bits) ||
-    idEx.csrAddr === U(0xF14, 12 bits)
-  val csrReadOnly = idEx.csrAddr === U(0x301, 12 bits) ||
-    idEx.csrAddr === U(0x344, 12 bits) ||
-    idEx.csrAddr === U(0xF14, 12 bits)
+  // Implemented / read-only address sets are derived from the ISA-level CsrMap,
+  // so this legality check and the CSR file share a single source of truth.
+  private val csrDefs = CsrMap.implementedFor(config.isa)
+  private val csrReadOnlyDefs = CsrMap.readOnlyFor(config.isa)
+  require(csrDefs.nonEmpty, "a hart must implement at least one CSR")
+  val csrImplemented = csrDefs.map(d => idEx.csrAddr === U(d.addr, 12 bits)).reduce(_ || _)
+  val csrReadOnly = csrReadOnlyDefs.map(d => idEx.csrAddr === U(d.addr, 12 bits)).reduce(_ || _)
 
   val csrRoWrite = isCsrInst && csrReadOnly && idEx.csrOp === CsrOp.WRITE && idEx.csrWe
   val csrUnimpl = isCsrInst && !csrImplemented
@@ -361,25 +355,25 @@ class RiscvCore(config: CoreConfig) extends Component {
   when(idEx.valid) {
     when(idEx.sysOp === SysOp.ECALL) {
       exTrapEna := True
-      exTrapCause := B(Mux(curMode === MODE_U, U(8), U(11)), xlen bits)
+      exTrapCause := B(Mux(curMode === MODE_U, U(ExceptionCode.ecallFromU), U(ExceptionCode.ecallFromM)), xlen bits)
     }
     when(idEx.sysOp === SysOp.EBREAK) {
       exTrapEna := True
-      exTrapCause := B(3, xlen bits)
+      exTrapCause := B(ExceptionCode.breakpoint, xlen bits)
     }
     when(idEx.sysOp === SysOp.MRET &&
          (curMode === MODE_U || mstatusMpp === U(1, 2 bits) || mstatusMpp === U(2, 2 bits))) {
       exTrapEna := True
-      exTrapCause := B(2, xlen bits)
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
     when(csrIllegal) {
       exTrapEna := True
-      exTrapCause := B(2, xlen bits)
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
       exTrapTval := idEx.csrAddr.resize(xlen).asBits
     }
     when(idEx.illegal || idEx.sysOp === SysOp.ILLEGAL) {
       exTrapEna := True
-      exTrapCause := B(2, xlen bits)
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
   }
 

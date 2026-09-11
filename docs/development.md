@@ -31,6 +31,8 @@ src/main/scala/rv32c/
 ├── isa/IsaConfig.scala    # ISA 三轴配置：xlen × 扩展 × 特权栈（单一事实源）
 ├── isa/RvExtension.scala  # 扩展命名/implemented/reserved
 ├── isa/Privilege.scala    # 特权模式与特权栈规则
+├── isa/CsrMap.scala       # CSR 地址/只读性/最低特权元数据
+├── isa/ExceptionCode.scala# mcause 同步异常编号常量
 ├── bus/BusInterfaces.scala
 ├── core/Alu.scala         # ALU + 操作枚举
 ├── core/RegisterFile.scala

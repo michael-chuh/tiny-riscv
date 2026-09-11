@@ -1,6 +1,7 @@
 package rv32c.core
 
 import spinal.core._
+import rv32c.isa._
 
 /** Machine-level CSR file for the minimal Zicsr/M-U privilege subset.
   *
@@ -19,7 +20,7 @@ import spinal.core._
   *   mretEna : MIE<-MPIE, MPIE<-1, MPP<-M, curMode<-MPP
   *   Control readouts for EX/trap logic and debug are outputs.
   */
-class CsrFile(xlen: Int, hartId: Int, misaValue: BigInt) extends Component {
+class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val io = new Bundle {
     val timerInterrupt = in Bool()
     // ---- WB normal CSR instruction port ----
@@ -75,7 +76,7 @@ class CsrFile(xlen: Int, hartId: Int, misaValue: BigInt) extends Component {
   mipBits := (B(0, xlen - 8 bits) ## io.timerInterrupt.asBits ## B(0, 7 bits))
   switch(io.csrAddr) {
     is(U(0x300, 12 bits)) { readData := mstatusReg }
-    is(U(0x301, 12 bits)) { readData := B(misaValue, xlen bits) }
+    is(U(0x301, 12 bits)) { readData := B(isa.misaValue, xlen bits) }
     is(U(0x304, 12 bits)) { readData := mieReg }
     is(U(0x305, 12 bits)) { readData := mtvecReg }
     is(U(0x340, 12 bits)) { readData := mscratchReg }

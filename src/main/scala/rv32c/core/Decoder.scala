@@ -1,6 +1,7 @@
 package rv32c.core
 
 import spinal.core._
+import rv32c.isa._
 
 object WbSel {
   def ALU = U(0, 3 bits)
@@ -57,11 +58,15 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val valid = Bool()
 }
 
-class Decoder(xlen: Int, withMulDiv: Boolean = false) extends Component {
+class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   val io = new Bundle {
     val instruction = in Bits(32 bits)
     val output = out(new DecodeOutput(xlen))
   }
+
+  // Extension enablement is derived from the ISA configuration so decode has a
+  // single, declarative source of truth.
+  private val withMulDiv: Boolean = isa.hasMulDiv
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
