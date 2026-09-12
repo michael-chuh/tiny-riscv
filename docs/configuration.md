@@ -13,7 +13,7 @@ rv32c 的全部可配置项集中在两层模型：**ISA 配置**（`rv32c.isa` 
 | 异常码 | `rv32c.isa.ExceptionCode` | `mcause` 同步异常编号 | 具名常量（2/3/8/9/11），消除 trap 通路魔法数字 |
 | 核 | `CoreConfig` | 复位向量、预测器/缓存占位、多核、调试 | 组合 `IsaConfig`，转发 `xlen/misaValue/hasMulDiv` |
 
-> 译码器 `Decoder` 与 CSR 文件 `CsrFile` 均接收 `IsaConfig`：M 扩展使能、misa 值等不再以散布尔/常量参数传入，而由配置层派生。EX 级 CSR 合法集（已实现地址、只读地址）来自 `CsrMap`，不再硬编码地址链。
+> 译码器 `Decoder` 与 CSR 文件 `CsrFile` 均接收 `IsaConfig`：M 扩展使能、misa 值等不再以散布尔/常量参数传入，而由配置层派生。EX 级 CSR 合法集（已实现地址、只读地址）来自 `CsrMap`，不再硬编码地址链。特权模式合法性同样配置驱动：`PrivConfig.supportedEncodings` 决定哪些 `MPP`/模式编码合法，`privAtLeast(minPriv)` 决定 CSR 访问权限；当 M/U 栈扩展为 M/S/U 时无需改写判定结构。
 
 ## ISA 配置（`IsaConfig`）
 

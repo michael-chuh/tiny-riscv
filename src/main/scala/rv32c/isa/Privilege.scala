@@ -41,6 +41,13 @@ case class PrivConfig(modes: Set[PrivMode]) {
   def hasSupervisor: Boolean = modes.contains(PrivMode.S)
   def hasHypervisor: Boolean = modes.contains(PrivMode.H)
 
+  /** True when `mode` is part of this stack (RTL may enter / return to it). */
+  def contains(mode: PrivMode): Boolean = modes.contains(mode)
+
+  /** Encodings the hart is allowed to hold, e.g. `{0, 3}` for M/U. Used by the
+    * core to reject writes/returns to unimplemented mode encodings. */
+  def supportedEncodings: Set[Int] = modes.map(_.encoding)
+
   /** Human stack name, e.g. "M/U", "M/S/U". */
   def name: String = modes.toSeq.sortBy(-_.encoding).map(_.name).mkString("/")
   override def toString: String = name

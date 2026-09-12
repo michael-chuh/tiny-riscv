@@ -158,8 +158,8 @@ class RiscvCore(config: CoreConfig) extends Component {
   }
 
   val xlen = config.xlen
-  val MODE_M = U(3, 2 bits)
-  val MODE_U = U(0, 2 bits)
+  val MODE_U = U(PrivMode.U.encoding, 2 bits)
+  val MODE_M = U(PrivMode.M.encoding, 2 bits)
 
   // ---- Capability check: which configurations this RTL can actually run ----
   require(config.isa.isRV32, "rv32c currently implements RV32I only; RV64 is a roadmap branch")
@@ -169,6 +169,25 @@ class RiscvCore(config: CoreConfig) extends Component {
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
   require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
     "S/H modes are roadmap features and are not implemented yet")
+
+  // ===== Privilege-mode legality (configuration driven) =====
+  // The configured stack is the authoritative set of encodings the hart may
+  // hold or return to. This keeps MPP/MRET/ECALL checks correct when the stack
+  // grows from M/U to M/S/U (roadmap).
+  def modeSupported(enc: UInt): Bool = {
+    val alternatives = config.priv.supportedEncodings.toSeq.sorted
+    alternatives.map(e => enc === U(e, 2 bits)).reduceOption(_ || _).getOrElse(False)
+  }
+
+  /** Privilege check: is `curMode` at least as privileged as `req`? RISC-V
+    * encodes higher privilege as a larger value, so a numeric compare works. */
+  def privAtLeast(req: PrivMode): Bool = curMode >= U(req.encoding, 2 bits)
+
+  /** Synchronous `mcause` code for an ECALL from `mode`. */
+  def ecallCause(mode: UInt): UInt =
+    Mux(mode === MODE_U, U(ExceptionCode.ecallFromU),
+      Mux(mode === U(PrivMode.S.encoding, 2 bits), U(ExceptionCode.ecallFromS),
+        U(ExceptionCode.ecallFromM)))
 
   // ===== Fetch stage =====
   val pcReg = RegInit(U(config.resetVector, xlen bits))
@@ -335,12 +354,15 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val csrRoWrite = isCsrInst && csrReadOnly && idEx.csrOp === CsrOp.WRITE && idEx.csrWe
   val csrUnimpl = isCsrInst && !csrImplemented
-  val csrUAccess = isCsrInst && curMode === MODE_U
+  // A CSR is illegal unless the current mode is at least its minimum privilege
+  // (each CsrDef carries that level). With the current M/U stack this means
+  // "no CSR is accessible from U mode", matching the spec subset.
+  val csrPrivIllegal = isCsrInst && csrDefs.map(d => !privAtLeast(d.minPriv)).reduce(_ || _)
   // mtvec.MODE after the write (the stored mode is always 0: nonzero writes trap).
   val mtvecModeBad = isCsrInst && idEx.csrWe && idEx.csrAddr === U(0x305, 12 bits) &&
     (idEx.csrOp === CsrOp.WRITE || idEx.csrOp === CsrOp.SET) &&
     csrWrDataEx(1 downto 0) =/= B(0, 2 bits)
-  val csrIllegal = (csrRoWrite || csrUnimpl || csrUAccess || mtvecModeBad) && idEx.valid
+  val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad) && idEx.valid
 
   // ===== Synchronous exception decode (EX stage) =====
   // Only one case applies per instruction (SYSTEM ops and CSR ops are mutually
@@ -352,17 +374,20 @@ class RiscvCore(config: CoreConfig) extends Component {
   exTrapCause := B(0, xlen bits)
   exTrapTval := B(0, xlen bits)
 
+  // MRET returns to mstatus.MPP, which must name a mode this hart implements;
+  // any other encoding is a reserved/unsupported target and traps as illegal.
+  val mppSupported = modeSupported(mstatusMpp)
+
   when(idEx.valid) {
     when(idEx.sysOp === SysOp.ECALL) {
       exTrapEna := True
-      exTrapCause := B(Mux(curMode === MODE_U, U(ExceptionCode.ecallFromU), U(ExceptionCode.ecallFromM)), xlen bits)
+      exTrapCause := B(ecallCause(curMode), xlen bits)
     }
     when(idEx.sysOp === SysOp.EBREAK) {
       exTrapEna := True
       exTrapCause := B(ExceptionCode.breakpoint, xlen bits)
     }
-    when(idEx.sysOp === SysOp.MRET &&
-         (curMode === MODE_U || mstatusMpp === U(1, 2 bits) || mstatusMpp === U(2, 2 bits))) {
+    when(idEx.sysOp === SysOp.MRET && (curMode =/= MODE_M || !mppSupported)) {
       exTrapEna := True
       exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
@@ -378,8 +403,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   }
 
   // ===== MRET / interrupt resolution =====
-  val mppReserved = mstatusMpp === U(1, 2 bits) || mstatusMpp === U(2, 2 bits)
-  val mretLegal = idEx.valid && idEx.sysOp === SysOp.MRET && curMode === MODE_M && !mppReserved
+  val mretLegal = idEx.valid && idEx.sysOp === SysOp.MRET && curMode === MODE_M && mppSupported
 
   // MRET reads mepc/mstatus.MPP which a CSR instruction 1-2 slots behind (still
   // in EX/MEM or MEM/WB) has not yet committed. Stall MRET until those writes

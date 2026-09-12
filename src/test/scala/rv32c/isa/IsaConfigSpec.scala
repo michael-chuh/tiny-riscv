@@ -80,6 +80,13 @@ class IsaConfigSpec extends AnyFunSuite {
     }
   }
 
+  test("PrivConfig exposes membership and supported encodings") {
+    assert(PrivConfig.MU.contains(PrivMode.U))
+    assert(!PrivConfig.MU.contains(PrivMode.S))
+    assert(PrivConfig.MU.supportedEncodings == Set(0, 3))
+    assert(PrivConfig.MSU.supportedEncodings == Set(0, 1, 3))
+  }
+
   // ---- naming ---------------------------------------------------------------
   test("canonical names") {
     assert(IsaConfig.rv32.canonicalName == "RV32I_Zicsr  M/U")

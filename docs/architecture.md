@@ -112,8 +112,9 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 ### 同步异常（EX 级判定并提交）
 
-- `ecall`：M→cause 11；U→cause 8。`ebreak`：cause 3。非法指令/CSR 访问违例：cause 2，`mtval`=违例 CSR 地址或指令字；保留 `MPP`（1/2）的 `mret`：cause 2
-- 判定所需 CSR 域（U 模式访 M 级 CSR、写只读、`mtvec.MODE≠0`、MRET-in-U 等）由 EX 控制读口实时读取，避免对 1-2 槽前未提交写敏感
+- `ecall`：cause 由 `ecallCause(curMode)` 派生（U→8、S→9、M→11）。`ebreak`：cause 3。非法指令/CSR 访问违例：cause 2，`mtval`=违例 CSR 地址或指令字；`MPP` 不属于配置特权栈的 `mret`：cause 2
+- 模式合法性由 `PrivConfig.supportedEncodings` 驱动：`mppSupported` 判断 `MPP` 是否为已实现模式，`privAtLeast(minPriv)` 按 CSR 最低特权判定访问权限（当前 M/U 栈下即"U 不可访问任何 CSR"）；扩展到 M/S/U 时无需改判定结构
+- 判定所需 CSR 域（写只读、`mtvec.MODE≠0`、当前模式低于 CSR 最低特权、MRET 目标模式非法等）由 EX 控制读口实时读取，避免对 1-2 槽前未提交写敏感
 - 提交 = 复用 `ctrlFlush` 重定向：该拍不产生 WB 副作用，PC ← `{mtvec.BASE, 2'b00}`（容忍 `mtvec.MODE≠0` 时的非对齐陷阱，此处固定按 MODE=0 取），同时写 `mepc/mcause/mtval` 并更新 `mstatus`（`MPIE←MIE, MIE←0, MPP←curMode`）、`curMode←M`
 
 ### 机器定时器中断（取指边界接受）
@@ -126,7 +127,7 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 - `pc←mepc`，`mstatus` 恢复：`MIE←MPIE, MPIE←1, MPP←U(0)`，`curMode←原 MPP`；写回/旁路不受影响
 - `mret` 与 1-2 槽内未提交的 `mepc/mstatus` CSR 写之间停顿防冒险
-- 若 `MPP`=1/2（保留值）或 `curMode==U`，则判非法（cause 2）而非执行
+- 若 `MPP` 编码不属于配置特权栈（如当前 M/U 栈下的 1/2），或 `curMode≠M`，则判非法（cause 2）而非执行
 
 ## 总线接口
 
