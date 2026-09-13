@@ -42,7 +42,7 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val aluASrc = UInt(2 bits)   // AluASrc: RS1 / PC / ZERO
   val memRead = Bool()
   val memWrite = Bool()
-  val memSize = UInt(2 bits)   // 0=byte, 1=half, 2=word
+  val memSize = UInt(2 bits)   // 0=byte, 1=half, 2=word, 3=doubleword
   val memSign = Bool()
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
@@ -67,6 +67,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   // Extension enablement is derived from the ISA configuration so decode has a
   // single, declarative source of truth.
   private val withMulDiv: Boolean = isa.hasMulDiv
+  private val isRV64: Boolean = isa.isRV64
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -166,9 +167,17 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
       switch(funct3) {
         is(M"000") { d.memSize := U(0, 2 bits); d.memSign := True }  // lb
         is(M"001") { d.memSize := U(1, 2 bits); d.memSign := True }  // lh
-        is(M"010") { d.memSize := U(2, 2 bits) }                     // lw
+        is(M"010") { d.memSize := U(2, 2 bits); d.memSign := True }  // lw
         is(M"100") { d.memSize := U(0, 2 bits) }                     // lbu
         is(M"101") { d.memSize := U(1, 2 bits) }                     // lhu
+        is(M"011") { // ld (RV64)
+          if (isRV64) { d.memSize := U(3, 2 bits) }
+          else { d.illegal := True; d.valid := False }
+        }
+        is(M"110") { // lwu (RV64, zero-extend)
+          if (isRV64) { d.memSize := U(2, 2 bits) }
+          else { d.illegal := True; d.valid := False }
+        }
         default { d.illegal := True; d.valid := False }
       }
     }
@@ -180,6 +189,10 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         is(M"000") { d.memSize := U(0, 2 bits) } // sb
         is(M"001") { d.memSize := U(1, 2 bits) } // sh
         is(M"010") { d.memSize := U(2, 2 bits) } // sw
+        is(M"011") { // sd (RV64)
+          if (isRV64) { d.memSize := U(3, 2 bits) }
+          else { d.illegal := True; d.valid := False }
+        }
         default { d.illegal := True; d.valid := False }
       }
     }
@@ -196,6 +209,47 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         is(M"110") { d.aluOp := AluOp.OR }
         is(M"111") { d.aluOp := AluOp.AND }
         default { d.illegal := True; d.valid := False }
+      }
+    }
+    is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
+      if (isRV64) {
+        d.regWrite := True
+        d.aluSrc := True
+        switch(funct3) {
+          is(M"000") { d.aluOp := AluOp.ADDW }
+          is(M"001") { d.aluOp := AluOp.SLLW }
+          is(M"101") { d.aluOp := Mux(instr(30), AluOp.SRAW, AluOp.SRLW) }
+          default { d.illegal := True; d.valid := False }
+        }
+      } else {
+        d.illegal := True
+        d.valid := False
+      }
+    }
+    is(M"0111011") { // OP-32 (RV64): ADDW/SUBW/SLLW/SRLW/SRAW (+ RV64M W forms, not yet)
+      if (isRV64) {
+        d.regWrite := True
+        switch(funct7) {
+          is(M"0000000") {
+            switch(funct3) {
+              is(M"000") { d.aluOp := AluOp.ADDW }
+              is(M"001") { d.aluOp := AluOp.SLLW }
+              is(M"101") { d.aluOp := AluOp.SRLW }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(M"0100000") {
+            switch(funct3) {
+              is(M"000") { d.aluOp := AluOp.SUBW }
+              is(M"101") { d.aluOp := AluOp.SRAW }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          default { d.illegal := True; d.valid := False }
+        }
+      } else {
+        d.illegal := True
+        d.valid := False
       }
     }
     is(M"0110011") { // OP: RV32I ALU ops, or RV32M when funct7 == 0b0000001

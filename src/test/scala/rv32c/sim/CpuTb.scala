@@ -23,15 +23,17 @@ class CpuTb(config: CoreConfig, program: Seq[Long]) extends Component {
   val core = new RiscvCore(config)
   core.io.timerInterrupt := io.timerInterrupt
 
-  val iMem = new SyncRamSim(config.xlen, 1 << 12)
-  val dMem = new SyncRamSim(config.xlen, 1 << 12)
+  // Instruction memory is 32-bit wide even on an RV64 hart: RISC-V instructions
+  // are always 32 bits, and the PC advances by 4 bytes per word.
+  val iMem = new SyncRamSim(32, config.xlen, 1 << 12)
+  val dMem = new SyncRamSim(config.xlen, config.xlen, 1 << 12)
 
   // ---- Instruction bus: core as master, iMem as slave ----
   iMem.io.valid := True
   iMem.io.write := False
   iMem.io.address := core.io.iBus.pc
-  iMem.io.writeData := B(0, config.xlen bits)
-  iMem.io.writeMask := B(0, config.xlen / 8 bits)
+  iMem.io.writeData := B(0, 32 bits)
+  iMem.io.writeMask := B(0, 4 bits)
   core.io.iBus.ready := iMem.io.ready
   core.io.iBus.instruction := iMem.io.readData
 

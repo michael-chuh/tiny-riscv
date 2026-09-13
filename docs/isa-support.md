@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I** 基础整数指令集与 **RV32M** 乘除扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；M 扩展由 `IsaConfig.extensions` 中的 `RvExtension.MulDiv` 使能，默认配置为 `rv32im`）。
+当前版本实现 **RV32I / RV64I** 基础整数指令集与 **RV32M** 乘除扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；位宽由 `IsaConfig.xlen` 选择，M 扩展由 `IsaConfig.extensions` 中的 `RvExtension.MulDiv` 使能，默认 RV32 配置为 `rv32im`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；RV64M 与 S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -56,6 +56,8 @@
 | LW | 010 | 已实现 |
 | LBU | 100 | 已实现 |
 | LHU | 101 | 已实现 |
+| LWU | 110 | 仅 RV64：零扩展 32 位 |
+| LD | 011 | 仅 RV64：加载双字 |
 
 ### 存储（STORE, 0100011）
 
@@ -64,6 +66,21 @@
 | SB | 000 | 已实现 |
 | SH | 001 | 已实现 |
 | SW | 010 | 已实现 |
+| SD | 011 | 仅 RV64：存储双字 |
+
+### RV64 专属（OP-IMM-32 / OP-32, 0011011 / 0111011）
+
+| 指令 | opcode | funct3 | funct7 | 语义 |
+|------|--------|--------|--------|------|
+| ADDIW | 0011011 | 000 | — | 32 位加立即数，结果符号扩展 |
+| SLLIW | 0011011 | 001 | — | 32 位逻辑左移（立即数） |
+| SRLIW / SRAIW | 0011011 | 101 | — | 32 位右移（instr[30] 选逻辑/算术） |
+| ADDW / SUBW | 0111011 | 000 | 0000000 / 0100000 | 32 位加/减，结果符号扩展 |
+| SLLW | 0111011 | 001 | 0000000 | 32 位逻辑左移 |
+| SRLW | 0111011 | 101 | 0000000 | 32 位逻辑右移 |
+| SRAW | 0111011 | 101 | 0100000 | 32 位算术右移 |
+
+> 所有 `*W` 指令只取操作数低 32 位、产生 32 位结果，再符号扩展到 64 位写回。RV64 的 `SLLI/SRLI/SRAI` 移位量为 `instr[25:20]`（6 位），RV32 为 `instr[24:20]`。
 
 ### 分支（BRANCH, 1100011）
 
@@ -118,7 +135,7 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
   - `mtvec` 的 MODE 域写入非 0 值触发 cause 2；trap 重定向恒按 direct 模式取 `{mtvec.BASE,2'b00}`
   - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
   - `mstatus` 可写域：`MIE/MPIE/MPP(3)/FS`；`mie.MTIE` 是唯一可写中断使能位
-- 同步异常 cause：ECALL(M)=11、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、保留 `MPP` 的 MRET=2
+- 同步异常 cause：ECALL(M)=11、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP` 不在配置特权栈的 MRET=2
 - 机器定时器中断：`mip.MTIP && mie.MTIE && mstatus.MIE && curMode=M` 时在取指边界接受，cause=0x80000007，`mtval=0`
 - 复位 `debugPc` 回到 `resetVector`，内部 CSR/模式全部清零/复位为 M
 
@@ -141,6 +158,6 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 ## 后续扩展计划
 
-- **Zicsr**：CSR 读写指令与特权模式
-- **异常与中断**：mtvec、mepc 等，ECALL/EBREAK 真正落地
-- **RV64I**：`CoreConfig(isa = IsaConfig.rv64)`，指令宽度仍 32 位，数据路径全 64 位（乘法/除法单元按 `isa.xlen` 参数化，可随之迁移）
+- **RV64M**：`MULW/DIVW/DIVUW/REMW/REMUW` 等 W 后缀乘除指令（当前 RV64 下要求关闭 `RvExtension.MulDiv`）
+- **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
+- **A/C/F/D**：原子、压缩、浮点扩展（`RvExtension` 的 `reserved` 集合）

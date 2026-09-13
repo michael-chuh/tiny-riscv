@@ -83,13 +83,21 @@ val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 
 `RiscvCoreGen` 使用 `CoreConfig.rv32im.copy(withDebug = true)`，故 `./scripts/gen-rtl.sh` 生成的 `rtl/RiscvCore.v` 内含除法器、misa = 0x40101100。
 
+### 切换到 RV64I（M/U 栈）
+
+```scala
+val config = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MU))
+```
+
+数据路径、地址、立即数、寄存器堆与访存宽度均按 `isa.xlen` 生成；指令宽度仍是 32 位。RV64 下支持 `*W` 后缀、64 位移位与 `LD/LWU/SD`。注意 RV64M（`MULW/DIVW` 等）尚未实现，RV64 配置需关闭 `MulDiv`。
+
 ### 表达 roadmap 配置（示例：rv64 M/S/U 基线）
 
 ```scala
 val config = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MSU))
 ```
 
-配置模型可完整表达该结构（含 misa 的 S 位），但当前 RTL 不支持——`RiscvCore` 构造时以 `require` 显式拒绝并给出原因。
+配置模型可完整表达该结构（含 misa 的 S 位），但 S 模式硬件尚未实现——`RiscvCore` 构造时以 `require` 显式拒绝并给出原因。
 
 ### 多核配置（预留）
 
@@ -111,7 +119,8 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- RV64、S/H 模式、未实现的扩展（A/C/F/D/Zifencei）、无 Zicsr、纯 M（无 U）均被 `require` 拒绝
+- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、Zicsr）
+- 拒绝：S/H 模式、RV64M（W 后缀乘除）、未实现的扩展（A/C/F/D/Zifencei）、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 
 ## 参数传递原则

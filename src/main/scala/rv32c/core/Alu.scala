@@ -4,6 +4,8 @@ import spinal.core._
 
 object AluOp extends SpinalEnum {
   val ADD, SUB, SLL, SLT, SLTU, XOR, SRL, SRA, OR, AND = newElement()
+  // RV64I W-suffix: operate on the low 32 bits, sign-extend the result to xlen.
+  val ADDW, SUBW, SLLW, SRLW, SRAW = newElement()
   val MUL, MULH, MULHSU, MULHU = newElement()
   val DIV, DIVU, REM, REMU = newElement()
 }
@@ -25,6 +27,12 @@ class Alu(xlen: Int) extends Component {
   val aS = io.a.asSInt
   val bS = io.b.asSInt
   val shamt = io.b(log2Up(xlen) - 1 downto 0).asUInt
+
+  // RV64 W-suffix operands: low 32 bits, with a 5-bit shift amount.
+  val aW = aS(31 downto 0)
+  val bW = bS(31 downto 0)
+  val aWU = aU(31 downto 0)
+  val shamtW = io.b(4 downto 0).asUInt
 
   // ----- Multiplication helpers (full-width products) -----
   val mulUU = aU * bU                       // unsigned * unsigned (2*xlen bits)
@@ -69,6 +77,22 @@ class Alu(xlen: Int) extends Component {
     }
     is(AluOp.AND) {
       result := io.a & io.b
+    }
+    // RV64I W-suffix: 32-bit operation, result sign-extended to xlen.
+    is(AluOp.ADDW) {
+      result := (aW + bW).resize(xlen).asBits
+    }
+    is(AluOp.SUBW) {
+      result := (aW - bW).resize(xlen).asBits
+    }
+    is(AluOp.SLLW) {
+      result := (aWU << shamtW).resize(32).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SRLW) {
+      result := (aWU >> shamtW).resize(32).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SRAW) {
+      result := (aW >> shamtW).resize(xlen).asBits
     }
     // RV32M: multiply (combinational)
     is(AluOp.MUL) {

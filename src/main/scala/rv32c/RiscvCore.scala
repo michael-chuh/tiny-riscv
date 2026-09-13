@@ -162,13 +162,14 @@ class RiscvCore(config: CoreConfig) extends Component {
   val MODE_M = U(PrivMode.M.encoding, 2 bits)
 
   // ---- Capability check: which configurations this RTL can actually run ----
-  require(config.isa.isRV32, "rv32c currently implements RV32I only; RV64 is a roadmap branch")
   require((config.isa.extensions -- RvExtension.implemented).isEmpty,
     s"extensions not implemented by this core: ${(config.isa.extensions -- RvExtension.implemented).toSeq.sorted.mkString(", ")}")
   require(config.isa.hasZicsr, "Zicsr decode is currently unconditional; it cannot be disabled")
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
   require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
     "S/H modes are roadmap features and are not implemented yet")
+  require(config.isa.isRV32 || !config.hasMulDiv,
+    "RV64M (W-suffix multiply/divide) is not implemented yet; disable MulDiv for RV64")
 
   // ===== Privilege-mode legality (configuration driven) =====
   // The configured stack is the authoritative set of encodings the hart may
@@ -600,11 +601,20 @@ class RiscvCore(config: CoreConfig) extends Component {
     }
     is(U(1)) { // half
       io.dBus.writeData := (exMem.rs2Data << (memAddr(1).asUInt * 8)).resize(xlen)
-      io.dBus.writeMask := Mux(memAddr(1), B((1 << (xlen / 8)) - 2, xlen / 8 bits), B(0x3, xlen / 8 bits))
+      io.dBus.writeMask := Mux(memAddr(1), B(0xc, xlen / 8 bits), B(0x3, xlen / 8 bits))
     }
-    default { // word
+    is(U(2)) { // word: low 4 bytes, or the high half of the bus word on RV64
+      if (xlen > 32) {
+        io.dBus.writeData := (exMem.rs2Data << (memAddr(1).asUInt * 8)).resize(xlen)
+        io.dBus.writeMask := Mux(memAddr(1), B(0xf0, xlen / 8 bits), B(0x0f, xlen / 8 bits))
+      } else {
+        io.dBus.writeData := exMem.rs2Data
+        io.dBus.writeMask := B(0xf, xlen / 8 bits)
+      }
+    }
+    default { // doubleword (RV64)
       io.dBus.writeData := exMem.rs2Data
-      io.dBus.writeMask := B((1 << (xlen / 8)) - 1, xlen / 8 bits)
+      io.dBus.writeMask := B((BigInt(1) << (xlen / 8)) - 1, xlen / 8 bits)
     }
   }
 
@@ -618,7 +628,12 @@ class RiscvCore(config: CoreConfig) extends Component {
       val half = (io.dBus.readData >> (memAddr(1).asUInt * 8))(15 downto 0)
       loadResult := Mux(exMem.memSign, half.asSInt.resize(xlen).asBits, half.resize(xlen))
     }
-    default {
+    is(U(2)) { // word: sign-extend (lw) or zero-extend (lwu) on RV64
+      val wordShift = if (xlen > 32) memAddr(1).asUInt * 32 else U(0, 1 bits)
+      val word = (io.dBus.readData >> wordShift)(31 downto 0)
+      loadResult := Mux(exMem.memSign, word.asSInt.resize(xlen).asBits, word.resize(xlen))
+    }
+    default { // doubleword
       loadResult := io.dBus.readData
     }
   }

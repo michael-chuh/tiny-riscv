@@ -4,6 +4,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 import rv32c._
+import rv32c.isa._
 
 class RiscvCoreTest extends AnyFunSuite {
   val program = Seq[Long](
@@ -53,6 +54,34 @@ class RiscvCoreTest extends AnyFunSuite {
     0x0211ce33L, // div   x28,x3,x1       (-7/13 = 0)
     0x0211eeb3L, // rem   x29,x3,x1       (-7%13 = -7)
     0x0000006fL  // jal x0,0              (self-loop at 0x78)
+  )
+
+  // RV64I program: 64-bit add/shift sign-extension, W-suffix ops (low 32 bits
+  // sign-extended to 64), LD/SD/LW/LWU load-extension. Self-loops at 0x58.
+  val rv64Program = Seq[Long](
+    0xFFF00093L, // addi  x1,x0,-1        x1 = 0xFFFFFFFFFFFFFFFF
+    0x12345137L, // lui   x2,0x12345      x2 = 0x0000000012345000
+    0x00400513L, // addi  x10,x0,4        x10 = 4 (shift amount)
+    0x00409193L, // slli  x3,x1,4         x3 = 0xFFFFFFFFFFFFFFF0
+    0x4040D213L, // srai  x4,x1,4         x4 = 0xFFFFFFFFFFFFFFFF
+    0xFFF00293L, // addi  x5,x0,-1        x5 = 0xFFFFFFFFFFFFFFFF
+    0x0012831BL, // addiw x6,x5,1         x6 = 0 (32-bit wrap, sign-extend)
+    0x800003B7L, // lui   x7,0x80000      x7 = 0xFFFFFFFF80000000
+    0x0013841BL, // addiw x8,x7,1         x8 = 0xFFFFFFFF80000001
+    0x00A094BBL, // sllw  x9,x1,x10       x9 = 0xFFFFFFFFFFFFFFF0
+    0x40A0D5BBL, // sraw  x11,x1,x10      x11 = 0xFFFFFFFFFFFFFFFF
+    0x00A0D63BL, // srlw  x12,x1,x10      x12 = 0x000000000FFFFFFF
+    0x00103023L, // sd    x1,0(x0)        mem[0] = 0xFFFFFFFFFFFFFFFF
+    0x00203423L, // sd    x2,8(x0)        mem[8] = 0x0000000012345000
+    0x00703823L, // sd    x7,16(x0)       mem[16] = 0xFFFFFFFF80000000
+    0x00003683L, // ld    x13,0(x0)       x13 = 0xFFFFFFFFFFFFFFFF
+    0x00806703L, // lwu   x14,8(x0)       x14 = 0x0000000012345000
+    0x00802783L, // lw    x15,8(x0)       x15 = 0x0000000012345000
+    0x01002803L, // lw    x16,16(x0)      x16 = 0xFFFFFFFF80000000 (sign-ext)
+    0x01006883L, // lwu   x17,16(x0)      x17 = 0x0000000080000000
+    0x00108913L, // addi  x18,x1,1        x18 = 0 (64-bit wrap)
+    0x001089B3L, // add   x19,x1,x1       x19 = 0xFFFFFFFFFFFFFFFE
+    0x0000006FL  // jal   x0,0            self-loop at 0x58
   )
 
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
@@ -126,6 +155,42 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugRegs(29).toBigInt == 0xfffffff9L, "x29 should be -7 (-7%13)")
         assert(dut.io.debugRegs(30).toBigInt == 15, "x30 should be 15 (div-result forwarding)")
         println(s"PASS: finished in $cycles cycles")
+      }
+  }
+
+  test("RV64I basic program") {
+    val cfg = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MU))
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64Program))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val allOnes = BigInt("FFFFFFFFFFFFFFFF", 16)
+        val cycles = runUntil(dut, 400, 0x58, 19, BigInt("FFFFFFFFFFFFFFFE", 16))
+        assert(cycles < 400, "program did not finish")
+        dut.clockDomain.waitSampling(3) // settle
+
+        assert(dut.io.debugRegs(1).toBigInt == allOnes, "x1 = -1 (64-bit addi)")
+        assert(dut.io.debugRegs(2).toBigInt == BigInt("12345000", 16), "x2 = lui")
+        assert(dut.io.debugRegs(3).toBigInt == BigInt("FFFFFFFFFFFFFFF0", 16), "x3 = slli 64-bit")
+        assert(dut.io.debugRegs(4).toBigInt == allOnes, "x4 = srai 64-bit")
+        assert(dut.io.debugRegs(5).toBigInt == allOnes, "x5 = -1")
+        assert(dut.io.debugRegs(6).toBigInt == 0, "x6 = addiw 32-bit wrap")
+        assert(dut.io.debugRegs(7).toBigInt == BigInt("FFFFFFFF80000000", 16), "x7 = lui sign-extend")
+        assert(dut.io.debugRegs(8).toBigInt == BigInt("FFFFFFFF80000001", 16), "x8 = addiw sign-extend")
+        assert(dut.io.debugRegs(9).toBigInt == BigInt("FFFFFFFFFFFFFFF0", 16), "x9 = sllw sign-extend")
+        assert(dut.io.debugRegs(11).toBigInt == allOnes, "x11 = sraw sign-extend")
+        assert(dut.io.debugRegs(12).toBigInt == BigInt("FFFFFFF", 16), "x12 = srlw sign-extend")
+        assert(dut.io.debugRegs(13).toBigInt == allOnes, "x13 = ld")
+        assert(dut.io.debugRegs(14).toBigInt == BigInt("12345000", 16), "x14 = lwu zero-extend")
+        assert(dut.io.debugRegs(15).toBigInt == BigInt("12345000", 16), "x15 = lw (positive)")
+        assert(dut.io.debugRegs(16).toBigInt == BigInt("FFFFFFFF80000000", 16), "x16 = lw sign-extend")
+        assert(dut.io.debugRegs(17).toBigInt == BigInt("80000000", 16), "x17 = lwu zero-extend")
+        assert(dut.io.debugRegs(18).toBigInt == 0, "x18 = 64-bit add wrap")
+        assert(dut.io.debugRegs(19).toBigInt == BigInt("FFFFFFFFFFFFFFFE", 16), "x19 = 64-bit add")
+        println(s"PASS: RV64I finished in $cycles cycles")
       }
   }
 }

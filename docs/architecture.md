@@ -154,7 +154,7 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：所有数据通路已按 `xlen` 生成，`xlen=64` 即得 RV64I
+- **RV64**：RV64I 已实现（`*W` 后缀、64 位移位、`LD/LWU/SD`，数据通路全按 `xlen` 生成）；RV64M 与 S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
-- **多核**：`numCores` 参数化，互联总线在核外组合
+- **多核**：`numCores` 参数化，互联核外组合
