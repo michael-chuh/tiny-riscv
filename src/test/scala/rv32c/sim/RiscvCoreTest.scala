@@ -7,6 +7,17 @@ import rv32c._
 import rv32c.isa._
 
 class RiscvCoreTest extends AnyFunSuite {
+  // Minimal instruction encoders used by the RV64M program (avoids hand-computing
+  // field layouts for the W-suffix opcode, which shares funct7 with RV32M).
+  private def encR(f7: Int, rs2: Int, rs1: Int, f3: Int, rd: Int, opc: Int = 0x3b): Long =
+    ((f7 & 0x7f).toLong << 25) | ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+  private def encI(imm: Int, rs1: Int, f3: Int, rd: Int, opc: Int = 0x13): Long =
+    ((imm & 0xfff).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+  private def encU(imm: Int, rd: Int, opc: Int = 0x37): Long =
+    ((imm & 0xfffff).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+
   val program = Seq[Long](
     0x00500093L, // addi x1,x0,5
     0x00700113L, // addi x2,x0,7
@@ -82,6 +93,43 @@ class RiscvCoreTest extends AnyFunSuite {
     0x00108913L, // addi  x18,x1,1        x18 = 0 (64-bit wrap)
     0x001089B3L, // add   x19,x1,x1       x19 = 0xFFFFFFFFFFFFFFFE
     0x0000006FL  // jal   x0,0            self-loop at 0x58
+  )
+
+  // RV64M program: MULW/DIVW/DIVUW/REMW/REMUW on 32-bit-sign-extended operands.
+  // Covers truncation, signed overflow, unsigned results whose bit 31 is set (to
+  // pin the spec's sign-extension of W results), div/rem by zero, and forwarding
+  // of a divider result into a following add. Opcode 0x3b, funct7 0x01.
+  val rv64mProgram = Seq[Long](
+    encU(0x80000, 1),        // lui   x1,0x80000      x1 = 0xffffffff80000000 (-2^31)
+    encI(-1, 0, 0, 2),       // addi  x2,x0,-1        x2 = -1 (low32 0xffffffff)
+    encI(2, 0, 0, 3),        // addi  x3,x0,2
+    encI(3, 0, 0, 4),        // addi  x4,x0,3
+    encI(1, 0, 0, 7),        // addi  x7,x0,1
+    encI(-7, 0, 0, 5),       // addi  x5,x0,-7
+    encI(6, 0, 0, 6),        // addi  x6,x0,6
+    encR(1, 3, 1, 0, 8),     // mulw  x8,x1,x3        (-2^31*2) low32 = 0
+    encR(1, 2, 2, 0, 9),     // mulw  x9,x2,x2        (-1*-1) = 1
+    encR(1, 2, 1, 0, 10),    // mulw  x10,x1,x2       (-2^31*-1) = 0x80000000 -> sign-ext
+    encR(1, 3, 1, 4, 11),    // divw  x11,x1,x3       -2^31/2 = -2^30
+    encR(1, 2, 1, 4, 12),    // divw  x12,x1,x2       -2^31/-1 overflow = -2^31
+    encR(1, 2, 1, 6, 13),    // remw  x13,x1,x2       overflow remainder = 0
+    encR(1, 6, 5, 4, 14),    // divw  x14,x5,x6       -7/6 = -1
+    encR(1, 6, 5, 6, 15),    // remw  x15,x5,x6       -7%6 = -1
+    encR(1, 3, 2, 5, 16),    // divuw x16,x2,x3       0xffffffff/2 = 0x7fffffff
+    encR(1, 3, 2, 7, 17),    // remuw x17,x2,x3       0xffffffff%2 = 1
+    encR(1, 4, 2, 5, 18),    // divuw x18,x2,x4       0xffffffff/3 = 0x55555555
+    encR(1, 7, 2, 5, 19),    // divuw x19,x2,x7       0xffffffff/1 -> sign-ext all ones
+    encR(1, 4, 2, 7, 20),    // remuw x20,x2,x4       0xffffffff%3 = 0
+    encR(1, 3, 2, 4, 21),    // divw  x21,x2,x3       -1/2 = 0
+    encR(1, 3, 2, 6, 22),    // remw  x22,x2,x3       -1%2 = -1
+    encR(1, 0, 2, 4, 23),    // divw  x23,x2,x0       div-by-zero -> -1
+    encR(1, 0, 2, 6, 24),    // remw  x24,x2,x0       rem-by-zero -> dividend (-1)
+    encR(1, 0, 5, 5, 25),    // divuw x25,x5,x0       div-by-zero -> 0xffffffff
+    encR(1, 0, 5, 7, 26),    // remuw x26,x5,x0       rem-by-zero -> low32(-7) sign-ext
+    encR(1, 5, 1, 4, 27),    // divw  x27,x1,x5       -2^31/-7 = 306783378
+    encR(0, 3, 8, 0, 28, 0x33), // add x28,x8,x3      0+2 = 2
+    encR(0, 7, 27, 0, 29, 0x33), // add x29,x27,x7    forward divider result
+    0x0000006FL              // jal   x0,0            self-loop at 0x74
   )
 
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
@@ -191,6 +239,49 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugRegs(18).toBigInt == 0, "x18 = 64-bit add wrap")
         assert(dut.io.debugRegs(19).toBigInt == BigInt("FFFFFFFFFFFFFFFE", 16), "x19 = 64-bit add")
         println(s"PASS: RV64I finished in $cycles cycles")
+      }
+  }
+
+  test("RV64M W-suffix multiply/divide program") {
+    val cfg = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv), PrivConfig.MU))
+    val lastPc = 4 * (rv64mProgram.length - 1)
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64mProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 4000, lastPc, 0, 0)
+        assert(cycles < 4000, "program did not finish")
+        dut.clockDomain.waitSampling(10) // let the last writes retire
+
+        val sgn80000000 = BigInt("FFFFFFFF80000000", 16)
+        val sgnC0000000 = BigInt("FFFFFFFFC0000000", 16)
+        val allOnes = BigInt("FFFFFFFFFFFFFFFF", 16)
+        assert(dut.io.debugRegs(8).toBigInt == 0, "x8 = mulw truncation")
+        assert(dut.io.debugRegs(9).toBigInt == 1, "x9 = mulw (-1*-1)")
+        assert(dut.io.debugRegs(10).toBigInt == sgn80000000, "x10 = mulw sign-extend")
+        assert(dut.io.debugRegs(11).toBigInt == sgnC0000000, "x11 = divw -2^31/2")
+        assert(dut.io.debugRegs(12).toBigInt == sgn80000000, "x12 = divw overflow")
+        assert(dut.io.debugRegs(13).toBigInt == 0, "x13 = remw overflow = 0")
+        assert(dut.io.debugRegs(14).toBigInt == allOnes, "x14 = divw -7/6 = -1")
+        assert(dut.io.debugRegs(15).toBigInt == allOnes, "x15 = remw -7%6 = -1")
+        assert(dut.io.debugRegs(16).toBigInt == BigInt("7FFFFFFF", 16), "x16 = divuw")
+        assert(dut.io.debugRegs(17).toBigInt == 1, "x17 = remuw")
+        assert(dut.io.debugRegs(18).toBigInt == BigInt("55555555", 16), "x18 = divuw")
+        assert(dut.io.debugRegs(19).toBigInt == allOnes, "x19 = divuw sign-extended result")
+        assert(dut.io.debugRegs(20).toBigInt == 0, "x20 = remuw = 0")
+        assert(dut.io.debugRegs(21).toBigInt == 0, "x21 = divw -1/2 = 0")
+        assert(dut.io.debugRegs(22).toBigInt == allOnes, "x22 = remw -1%2 = -1")
+        assert(dut.io.debugRegs(23).toBigInt == allOnes, "x23 = divw by zero")
+        assert(dut.io.debugRegs(24).toBigInt == allOnes, "x24 = remw by zero")
+        assert(dut.io.debugRegs(25).toBigInt == allOnes, "x25 = divuw by zero")
+        assert(dut.io.debugRegs(26).toBigInt == BigInt("FFFFFFFFFFFFFFF9", 16), "x26 = remuw by zero")
+        assert(dut.io.debugRegs(27).toBigInt == 306783378, "x27 = divw -2^31/-7")
+        assert(dut.io.debugRegs(28).toBigInt == 2, "x28 = mulw-result forwarding")
+        assert(dut.io.debugRegs(29).toBigInt == 306783379, "x29 = divider-result forwarding")
+        println(s"PASS: RV64M finished in $cycles cycles")
       }
   }
 }

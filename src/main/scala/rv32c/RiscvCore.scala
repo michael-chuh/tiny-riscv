@@ -168,8 +168,6 @@ class RiscvCore(config: CoreConfig) extends Component {
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
   require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
     "S/H modes are roadmap features and are not implemented yet")
-  require(config.isa.isRV32 || !config.hasMulDiv,
-    "RV64M (W-suffix multiply/divide) is not implemented yet; disable MulDiv for RV64")
 
   // ===== Privilege-mode legality (configuration driven) =====
   // The configured stack is the authoritative set of encodings the hart may
@@ -336,7 +334,9 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val divInEx = idEx.valid &&
     (idEx.aluOp === AluOp.DIV || idEx.aluOp === AluOp.DIVU ||
-     idEx.aluOp === AluOp.REM || idEx.aluOp === AluOp.REMU)
+     idEx.aluOp === AluOp.REM || idEx.aluOp === AluOp.REMU ||
+     idEx.aluOp === AluOp.DIVW || idEx.aluOp === AluOp.DIVUW ||
+     idEx.aluOp === AluOp.REMW || idEx.aluOp === AluOp.REMUW)
 
   // ===== CSR legality checks (EX stage) =====
   // A CSR access is illegal when performed from U mode (no U-accessible CSR is
@@ -428,29 +428,47 @@ class RiscvCore(config: CoreConfig) extends Component {
   val fetchStall = !io.iBus.ready
   val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !io.dBus.ready
 
-  // ===== RV32M divide/remainder (multi-cycle divider in EX) =====
+  // ===== RV32M / RV64M divide/remainder (multi-cycle divider in EX) =====
   // The divider is only instantiated when the M-extension is enabled. With it
   // disabled the decoder never issues a DIV/REM op, so the pipeline behaves as
   // a plain RV32I core (freezeAll collapses back to the bus stalls).
-  val divIsDiv = (idEx.aluOp === AluOp.DIV) || (idEx.aluOp === AluOp.DIVU)
-  val divIsRem = (idEx.aluOp === AluOp.REM) || (idEx.aluOp === AluOp.REMU)
-  val divSigned = (idEx.aluOp === AluOp.DIV) || (idEx.aluOp === AluOp.REM)
+  //
+  // W-suffix division uses the same xlen-wide divider. Signed W operands are
+  // sign-extended / unsigned W operands zero-extended from the low 32 bits, and
+  // the 32-bit result is sign-extended back to xlen, per the RISC-V spec.
+  val divIsDiv = (idEx.aluOp === AluOp.DIV) || (idEx.aluOp === AluOp.DIVU) ||
+    (idEx.aluOp === AluOp.DIVW) || (idEx.aluOp === AluOp.DIVUW)
+  val divIsRem = (idEx.aluOp === AluOp.REM) || (idEx.aluOp === AluOp.REMU) ||
+    (idEx.aluOp === AluOp.REMW) || (idEx.aluOp === AluOp.REMUW)
+  val divSigned = (idEx.aluOp === AluOp.DIV) || (idEx.aluOp === AluOp.REM) ||
+    (idEx.aluOp === AluOp.DIVW) || (idEx.aluOp === AluOp.REMW)
+  val divIsW = (idEx.aluOp === AluOp.DIVW) || (idEx.aluOp === AluOp.DIVUW) ||
+    (idEx.aluOp === AluOp.REMW) || (idEx.aluOp === AluOp.REMUW)
 
   val divStall = Bool()
   val exAluResult = Bits(xlen bits)
 
   if (config.hasMulDiv) {
     val divider = new Divider(xlen)
-    divider.io.a := alu.io.a.asUInt
-    divider.io.b := alu.io.b.asUInt
+    val aRaw = alu.io.a.asUInt
+    val bRaw = alu.io.b.asUInt
+    val aLowW = aRaw(31 downto 0)
+    val bLowW = bRaw(31 downto 0)
+    divider.io.a := Mux(divIsW,
+      Mux(divSigned, aLowW.asSInt.resize(xlen).asUInt, aLowW.resize(xlen)), aRaw)
+    divider.io.b := Mux(divIsW,
+      Mux(divSigned, bLowW.asSInt.resize(xlen).asUInt, bLowW.resize(xlen)), bRaw)
     divider.io.signed := divSigned
 
     divider.io.start := divInEx && !divider.io.busy && !divider.io.done && !(memStall || fetchStall)
     divider.io.ack := divInEx && divider.io.done && !(memStall || fetchStall)
 
+    val divResult = Mux(divIsRem, divider.io.remainder, divider.io.quotient)
+    val divResultW = divResult(31 downto 0).asSInt.resize(xlen).asBits
+
     divStall := divInEx && !divider.io.done && !(memStall || fetchStall)
     exAluResult := Mux(divInEx && divider.io.done,
-      Mux(divIsRem, divider.io.remainder, divider.io.quotient).asBits, aluResult)
+      Mux(divIsW, divResultW, divResult.asBits), aluResult)
   } else {
     divStall := False
     exAluResult := aluResult

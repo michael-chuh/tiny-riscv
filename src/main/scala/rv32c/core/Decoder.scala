@@ -226,7 +226,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         d.valid := False
       }
     }
-    is(M"0111011") { // OP-32 (RV64): ADDW/SUBW/SLLW/SRLW/SRAW (+ RV64M W forms, not yet)
+    is(M"0111011") { // OP-32 (RV64): ADDW/SUBW/SLLW/SRLW/SRAW and RV64M W forms
       if (isRV64) {
         d.regWrite := True
         switch(funct7) {
@@ -243,6 +243,21 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
               is(M"000") { d.aluOp := AluOp.SUBW }
               is(M"101") { d.aluOp := AluOp.SRAW }
               default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(M"0000001") { // RV64M W forms
+            if (withMulDiv) {
+              switch(funct3) {
+                is(M"000") { d.aluOp := AluOp.MULW }
+                is(M"100") { d.aluOp := AluOp.DIVW }
+                is(M"101") { d.aluOp := AluOp.DIVUW }
+                is(M"110") { d.aluOp := AluOp.REMW }
+                is(M"111") { d.aluOp := AluOp.REMUW }
+                default { d.illegal := True; d.valid := False }
+              }
+            } else {
+              d.illegal := True // M-extension disabled by config
+              d.valid := False
             }
           }
           default { d.illegal := True; d.valid := False }

@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集与 **RV32M** 乘除扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；位宽由 `IsaConfig.xlen` 选择，M 扩展由 `IsaConfig.extensions` 中的 `RvExtension.MulDiv` 使能，默认 RV32 配置为 `rv32im`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；RV64M 与 S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展，以及 **RV64M** 的 W 后缀乘除（RISC-V 规范 v2.1+ 中 I 扩展的全部指令；位宽由 `IsaConfig.xlen` 选择，M 扩展由 `IsaConfig.extensions` 中的 `RvExtension.MulDiv` 使能，默认 RV32 配置为 `rv32im`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -33,6 +33,18 @@
 | REMU | 111 | EX 段多周期除法器（无符号余数） |
 
 > 说明：乘法在 ALU 内组合完成；DIV/REM 共享一个恢复除法器，运算期间整条流水线冻结（约 `xlen` 拍），完成后结果经原 EX/MEM 旁路/回写路径送出。除零返回 quotient=全 1、remainder=被除数；有符号 MIN/-1 溢出返回 MIN（余数 0），均符合规范。
+
+### 乘除（RV64M, OP-32, opcode=0111011, funct7=0000001）
+
+| 指令 | funct3 | 语义 |
+|------|--------|------|
+| MULW | 000 | 32 位乘法，取低 32 位后符号扩展 |
+| DIVW | 100 | 32 位有符号除法，结果符号扩展（MIN/-1 溢出返回 MIN） |
+| DIVUW | 101 | 32 位无符号除法，结果符号扩展 |
+| REMW | 110 | 32 位有符号余数，结果符号扩展 |
+| REMUW | 111 | 32 位无符号余数，结果符号扩展 |
+
+> 说明：MULW 在 ALU 内组合完成。DIVW/DIVUW/REMW/REMUW 复用同一个 `xlen` 位除法器：有符号 W 操作数按低 32 位符号扩展、无符号 W 操作数按低 32 位零扩展送入，输出的 32 位结果再符号扩展到 `xlen`（与规范一致）。除零与 MIN/-1 溢出语义同 RV32M，按 32 位判定。
 
 ### 立即数运算（OP-IMM, 0010011）
 
@@ -158,6 +170,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 ## 后续扩展计划
 
-- **RV64M**：`MULW/DIVW/DIVUW/REMW/REMUW` 等 W 后缀乘除指令（当前 RV64 下要求关闭 `RvExtension.MulDiv`）
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
 - **A/C/F/D**：原子、压缩、浮点扩展（`RvExtension` 的 `reserved` 集合）

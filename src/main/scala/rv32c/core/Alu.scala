@@ -8,6 +8,8 @@ object AluOp extends SpinalEnum {
   val ADDW, SUBW, SLLW, SRLW, SRAW = newElement()
   val MUL, MULH, MULHSU, MULHU = newElement()
   val DIV, DIVU, REM, REMU = newElement()
+  // RV64M W-suffix: 32-bit multiply/divide, result sign-extended to xlen.
+  val MULW, DIVW, DIVUW, REMW, REMUW = newElement()
 }
 
 object BranchOp extends SpinalEnum {
@@ -119,6 +121,23 @@ class Alu(xlen: Int) extends Component {
       result := B(0, xlen bits)
     }
     is(AluOp.REMU) {
+      result := B(0, xlen bits)
+    }
+    // RV64M W-suffix: MULW is combinational (low 32 bits of the product,
+    // sign-extended); DIVW/DIVUW/REMW/REMUW run on the divider in the pipeline.
+    is(AluOp.MULW) {
+      result := (aW * bW).resize(32).resize(xlen).asBits
+    }
+    is(AluOp.DIVW) {
+      result := B(0, xlen bits)
+    }
+    is(AluOp.DIVUW) {
+      result := B(0, xlen bits)
+    }
+    is(AluOp.REMW) {
+      result := B(0, xlen bits)
+    }
+    is(AluOp.REMUW) {
       result := B(0, xlen bits)
     }
   }
