@@ -37,3 +37,11 @@ Entries discovered by the Agent during task execution should follow this format:
 - Instructions:
   - Git 提交信息（commit message）此后一律使用英文书写
   - 配置模型层完成后，按依赖顺序从第 1 步继续推进（Decoder/CsrFile/trap 通路从 IsaConfig 派生态与合法集）
+
+[Project Knowledge Summary]
+- Date: 2026-09-16
+- Context: Discovered by Agent while implementing the RV32C extension
+- Category: Build Methods
+- Instructions:
+  - RTL 生成：`bash scripts/gen-rtl.sh` 同时输出 `rtl/RiscvCore.v`（rv32im，C 关闭）与 `rtl/RiscvCoreC.v`（rv32imc，C 使能）；`rtl/` 未被忽略且已被 git 跟踪，重新生成后需一并提交
+  - 测试命令：全量 `sbt -batch test`；单类 `sbt -batch "testOnly rv32c.sim.RiscvCoreTest"`（RV32C 后基线为 29 项）
