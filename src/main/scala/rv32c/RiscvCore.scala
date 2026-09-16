@@ -10,6 +10,7 @@ class IfIdBundle(xlen: Int) extends Bundle {
   val valid = Bool()
   val pc = UInt(xlen bits)
   val instruction = Bits(32 bits)
+  val compressed = Bool()      // RV32C: instruction is 16 bits wide
 }
 object IfIdBundle {
   def zero(xlen: Int): IfIdBundle = {
@@ -17,6 +18,7 @@ object IfIdBundle {
     b.valid := False
     b.pc := U(0, xlen bits)
     b.instruction := B(0, 32 bits)
+    b.compressed := False
     b
   }
 }
@@ -24,6 +26,7 @@ object IfIdBundle {
 class IdExBundle(xlen: Int) extends Bundle {
   val valid = Bool()
   val pc = UInt(xlen bits)
+  val compressed = Bool()      // RV32C: instruction is 16 bits wide
   val regWrite = Bool()
   val aluSrc = Bool()
   val wbSel = UInt(3 bits)     // WbSel: ALU / MEM / PC4 / CSR
@@ -54,6 +57,7 @@ object IdExBundle {
     val b = new IdExBundle(xlen)
     b.valid := False
     b.pc := U(0, xlen bits)
+    b.compressed := False
     b.regWrite := False
     b.aluSrc := False
     b.wbSel := U(0, 3 bits)
@@ -168,6 +172,8 @@ class RiscvCore(config: CoreConfig) extends Component {
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
   require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
     "S/H modes are roadmap features and are not implemented yet")
+  require(config.xlen == 32 || !config.isa.hasCompressed,
+    "RV64C is a roadmap feature; compressed instructions are RV32-only for now")
 
   // ===== Privilege-mode legality (configuration driven) =====
   // The configured stack is the authoritative set of encodings the hart may
@@ -189,14 +195,70 @@ class RiscvCore(config: CoreConfig) extends Component {
         U(ExceptionCode.ecallFromM)))
 
   // ===== Fetch stage =====
+  // Without C, pcReg keeps its 4-byte granularity and a full word is delivered
+  // each cycle. With C the PC is 2-byte granular: the bus always fetches the
+  // aligned word and the core selects/splices halfwords. A 32-bit instruction
+  // that starts at the upper halfword needs one extra cycle to latch the high
+  // half and fetch the next word; that cycle presents itself as a fetch stall.
+  val withCompressed = config.isa.hasCompressed
   val pcReg = RegInit(U(config.resetVector, xlen bits))
+  val mis32 = Reg(Bool) init False
+  val hiReg = Reg(Bits(16 bits)) init B(0, 16 bits)
+
+  val mis32Start = Bool()
+  val mis32Stall = Bool()
+  val fetchInstr = Bits(32 bits)
+  val fetchLen = UInt(3 bits)
+  val fetchCompressed = Bool()
+
   io.iBus.valid := True
-  io.iBus.pc := pcReg
+  if (withCompressed) {
+    val alignedPc = Cat(pcReg(xlen - 1 downto 2), U(0, 2 bits)).asUInt
+    io.iBus.pc := Mux(mis32, alignedPc + U(4, xlen bits), alignedPc)
+
+    val word = io.iBus.instruction
+    val lowHalf = word(15 downto 0)
+    val highHalf = word(31 downto 16)
+    mis32Start := !mis32 && pcReg(1) && (highHalf(1 downto 0) === B"11")
+    mis32Stall := mis32Start
+
+    when(mis32) {
+      mis32 := False
+    } elsewhen (mis32Start) {
+      mis32 := True
+    }
+    when(mis32Start) {
+      hiReg := highHalf
+    }
+
+    when(mis32) {
+      fetchInstr := Cat(word(15 downto 0), hiReg)
+      fetchLen := U(4, 3 bits)
+      fetchCompressed := False
+    } elsewhen (pcReg(1)) {
+      fetchInstr := Cat(B(0, 16 bits), highHalf)
+      fetchLen := U(2, 3 bits)
+      fetchCompressed := True
+    } elsewhen (lowHalf(1 downto 0) === B"11") {
+      fetchInstr := word
+      fetchLen := U(4, 3 bits)
+      fetchCompressed := False
+    } otherwise {
+      fetchInstr := Cat(B(0, 16 bits), lowHalf)
+      fetchLen := U(2, 3 bits)
+      fetchCompressed := True
+    }
+  } else {
+    io.iBus.pc := pcReg
+    mis32Start := False
+    mis32Stall := False
+    fetchInstr := io.iBus.instruction
+    fetchLen := U(4, 3 bits)
+    fetchCompressed := False
+  }
 
   // ===== IF/ID pipeline register =====
   val ifId = Reg(new IfIdBundle(xlen)) init (IfIdBundle.zero(xlen))
-  val ifIdRs1 = ifId.instruction(19 downto 15).asUInt
-  val ifIdRs2 = ifId.instruction(24 downto 20).asUInt
 
   // ===== Decode =====
   val decoder = new Decoder(xlen, config.isa)
@@ -280,9 +342,12 @@ class RiscvCore(config: CoreConfig) extends Component {
   alu.io.b := aluB
   alu.io.op := idEx.aluOp
 
+  // Instruction length of the instruction in EX; compressed instructions link
+  // to pc+2 instead of pc+4.
+  val instrLenEx = Mux(idEx.compressed, U(2, xlen bits), U(4, xlen bits))
   val aluResult = Bits(xlen bits)
   when(idEx.jump) {
-    aluResult := (idEx.pc + U(4)).asBits
+    aluResult := (idEx.pc + instrLenEx).asBits
   } otherwise {
     aluResult := alu.io.result
   }
@@ -424,7 +489,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   // (the existing load-use stall extended to CSR results).
   val stallData = idEx.valid && idEx.rd =/= U(0) &&
     (idEx.memRead || (idEx.wbSel === WbSel.CSR && idEx.regWrite)) &&
-    (idEx.rd === ifIdRs1 || idEx.rd === ifIdRs2)
+    (idEx.rd === dec.rs1 || idEx.rd === dec.rs2)
   val fetchStall = !io.iBus.ready
   val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !io.dBus.ready
 
@@ -474,7 +539,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     exAluResult := aluResult
   }
 
-  val freezeAll = memStall || fetchStall || divStall
+  val freezeAll = memStall || fetchStall || divStall || mis32Stall
 
   // ===== Interrupt acceptance (instruction boundary) =====
   // Taken only when the pipeline is otherwise advancing and nothing older in
@@ -530,7 +595,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     } elsewhen (stallData || csrMretStall) {
       pcReg := pcReg // hold
     } otherwise {
-      pcReg := pcReg + U(4)
+      pcReg := pcReg + fetchLen
     }
   }
 
@@ -542,7 +607,8 @@ class RiscvCore(config: CoreConfig) extends Component {
       ifId.valid := False
     } otherwise {
       ifId.pc := pcReg
-      ifId.instruction := io.iBus.instruction
+      ifId.instruction := fetchInstr
+      ifId.compressed := fetchCompressed
       ifId.valid := True
     }
   }
@@ -555,6 +621,7 @@ class RiscvCore(config: CoreConfig) extends Component {
       idEx.valid := ifId.valid
     }
     idEx.pc := ifId.pc
+    idEx.compressed := ifId.compressed
     idEx.regWrite := dec.regWrite
     idEx.aluSrc := dec.aluSrc
     idEx.wbSel := dec.wbSel

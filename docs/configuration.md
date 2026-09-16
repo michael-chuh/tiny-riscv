@@ -28,18 +28,19 @@ case class IsaConfig(
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
 | `xlen` | 32 | 数据路径位宽，`isa-support` 以配置为准生成 |
-| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Zicsr` 为 `implemented`；A/C/F/D/Zifencei 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
+| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Zicsr`、`Compressed`（C，仅 RV32）为 `implemented`；A/F/D/Zifencei 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
 | `priv` | `M/U` | 结构规则由 `PrivConfig` 强制：M 必选、S 蕴含 U、H 蕴含 S；S/H 为 RV64 专用（当前 RTL 仅实现 M/U） |
 
 ### 预设
 
 ```scala
-IsaConfig.rv32    // RV32I_Zicsr,  M/U   —— 默认 RV32 MCU 基线
-IsaConfig.rv32im  // RV32IM_Zicsr, M/U   —— 含乘除扩展
-IsaConfig.rv64    // RV64I_Zicsr,  M/S/U —— roadmap 参考，当前 RTL 拒绝实例化
+IsaConfig.rv32    // RV32I_Zicsr,   M/U   —— 默认 RV32 MCU 基线
+IsaConfig.rv32im  // RV32IM_Zicsr,  M/U   —— 含乘除扩展
+IsaConfig.rv32imc // RV32IMC_Zicsr, M/U   —— 含乘除与 RV32C 压缩扩展
+IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— S 模式未实现故被拒绝；RV64I/M 请用 M/U 栈配置
 ```
 
-**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`。
+**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位。
 
 ## CoreConfig 字段
 
@@ -81,7 +82,15 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 使用 `CoreConfig.rv32im.copy(withDebug = true)`，故 `./scripts/gen-rtl.sh` 生成的 `rtl/RiscvCore.v` 内含除法器、misa = 0x40101100。
+`RiscvCoreGen` 生成两个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）与 `rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能），二者均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+
+### 启用 RV32C 压缩扩展（RV32IMC）
+
+```scala
+val config = CoreConfig.rv32imc       // isa = IsaConfig.rv32imc
+```
+
+压缩取指仅在 `isa.hasCompressed` 时生成；默认配置不含 C，取指与译码逐拍保持原行为。RV64C 目前为 roadmap，配置了 `Compressed` 的 RV64 会在 `RiscvCore` 构造时被 `require` 拒绝。
 
 ### 切换到 RV64IM（M/U 栈）
 
@@ -119,12 +128,12 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、Zicsr）；RV64 下 M 扩展按 W 后缀形式实现
-- 拒绝：S/H 模式、未实现的扩展（A/C/F/D/Zifencei）、无 Zicsr、纯 M（无 U）
+- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、Zicsr、C）；RV64 下 M 扩展按 W 后缀形式实现，C 扩展仅 RV32
+- 拒绝：S/H 模式、未实现的扩展（A/F/D/Zifencei）、RV64C、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 
 ## 参数传递原则
 
 - 配置采用**单点注入**：`CoreConfig` 传入 `RiscvCore`，逐层传给各子模块（ALU、寄存器堆、译码器）
 - 一切与指令/CSR/模式相关的位宽与能力均来自 `config.isa`（经 `CoreConfig` 转发），保证全链路一致
-- 未实现的扩展（F/缓存/预测器/S/H/RV64）通过 `reserved` 集合与配置旋钮 + 文档说明预留，避免死代码进入 RTL
+- 未实现的扩展（A/F/D/Zifencei）、RV64C 与 S/H 模式、缓存、分支预测器通过 `reserved` 集合与配置旋钮 + 文档说明预留，避免死代码进入 RTL

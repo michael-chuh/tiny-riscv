@@ -42,6 +42,7 @@ case class CoreConfig(
 
   // ---- convenient forwarders used across the RTL ----
   def hasMulDiv: Boolean = isa.hasMulDiv
+  def hasCompressed: Boolean = isa.hasCompressed
   def misaValue: BigInt = isa.misaValue
   def priv: PrivConfig = isa.priv
 
@@ -52,4 +53,7 @@ case class CoreConfig(
 object CoreConfig {
   /** RV32IM + Zicsr on the M/U stack: the current default development hart. */
   def rv32im: CoreConfig = CoreConfig(isa = IsaConfig.rv32im)
+
+  /** RV32IMC + Zicsr on the M/U stack: the compact rv32 MCU hart. */
+  def rv32imc: CoreConfig = CoreConfig(isa = IsaConfig.rv32imc)
 }

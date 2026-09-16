@@ -79,6 +79,10 @@ object IsaConfig {
   val rv32im: IsaConfig =
     IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv), PrivConfig.MU)
 
+  /** RV32 with M and C (RV32IMC_Zicsr, M/U): the compact rv32 MCU target. */
+  val rv32imc: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed), PrivConfig.MU)
+
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */
   val rv64: IsaConfig =

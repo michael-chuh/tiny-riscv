@@ -132,6 +132,31 @@ class RiscvCoreTest extends AnyFunSuite {
     0x0000006FL              // jal   x0,0            self-loop at 0x74
   )
 
+  // RV32C program: mixes 16-bit compressed instructions with a 32-bit
+  // instruction that starts at an odd halfword (pc[1]=1), exercising the
+  // misaligned-32 splice path, quadrant 0 (C.ADDI4SPN/C.SW/C.LW), quadrant 1
+  // (C.LI) and quadrant 2 (C.SWSP/C.LWSP/C.ADD) instructions.
+  // Layout (addresses are byte offsets; each word holds two halfwords):
+  //   addr0: C.LI  x1,3            addr2: addi x1,x1,4  (32-bit, spans words)
+  //   addr6: C.SWSP x1,4(x2)       addr8: C.LWSP x3,4(x2)
+  //   addr10: C.LI x4,20           addr12: C.ADD x1,x4
+  //   addr14: C.NOP                addr16: C.LI x9,7
+  //   addr18: C.ADDI4SPN x8,4      addr20: C.SW x9,0(x8)
+  //   addr22: C.LW x10,0(x8)       addr24: jal x0,0 (self-loop)
+  val rv32cProgram = Seq[Long](
+    0x8093408DL, // C.LI x1,3            | addi x1,x1,4 low half
+    0xC2060040L, // addi x1,x1,4 hi half | C.SWSP x1,4(x2)
+    0x42514192L, // C.LWSP x3,4(x2)      | C.LI x4,20
+    0x00019092L, // C.ADD x1,x4          | C.NOP
+    0x0040449DL, // C.LI x9,7            | C.ADDI4SPN x8,4
+    0x4008C004L, // C.SW x9,0(x8)        | C.LW x10,0(x8)
+    0x0000006FL  // jal x0,0             (self-loop at 0x18)
+  )
+
+  // A reserved RV64C shift encoding (C.SRLI with shamt[5]=1, 0x9001) is
+  // illegal on RV32 and must raise cause 2 without side effects.
+  val rv32cIllegalProgram = Seq[Long](0x00009001L)
+
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
     var cycles = 0
     while (cycles < maxCycles) {
@@ -282,6 +307,44 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugRegs(28).toBigInt == 2, "x28 = mulw-result forwarding")
         assert(dut.io.debugRegs(29).toBigInt == 306783379, "x29 = divider-result forwarding")
         println(s"PASS: RV64M finished in $cycles cycles")
+      }
+  }
+
+  test("RV32C compressed program") {
+    val cfg = CoreConfig.rv32imc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32cProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 400, 0x18, 1, 27)
+        assert(cycles < 400, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(1).toBigInt == 27, "x1 = 3 + 4 + 20 (C.LI/32-bit/C.ADD)")
+        assert(dut.io.debugRegs(3).toBigInt == 7, "x3 = stored value via C.LWSP round-trip")
+        assert(dut.io.debugRegs(4).toBigInt == 20, "x4 = C.LI 20")
+        assert(dut.io.debugRegs(8).toBigInt == 4, "x8 = sp + 4 (C.ADDI4SPN)")
+        assert(dut.io.debugRegs(9).toBigInt == 7, "x9 = C.LI 7")
+        assert(dut.io.debugRegs(10).toBigInt == 7, "x10 = C.LW round-trip through C.SW")
+        println(s"PASS: RV32C finished in $cycles cycles")
+      }
+  }
+
+  test("RV32C reserved encoding traps (cause 2)") {
+    val cfg = CoreConfig.rv32imc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32cIllegalProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(20)
+
+        assert(dut.io.debugMcause.toBigInt == 2, "reserved compressed encoding -> illegal instruction")
+        assert(dut.io.debugMepc.toBigInt == 0, "mepc should point at the faulting compressed instruction")
+        println("PASS: RV32C reserved encoding traps")
       }
   }
 }

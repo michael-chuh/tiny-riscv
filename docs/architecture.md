@@ -19,11 +19,12 @@ graph LR
 - `pcReg` 输出到指令总线，握手成功后指令进入 IF/ID 寄存器
 - 遇到停顿（stall）时 PC 冻结；遇到跳转/分支时 PC 更新为目标地址
 - 复位后从 `CoreConfig.resetVector` 开始取指
+- **RV32C（仅 `isa.hasCompressed`）**：PC 变为 2 字节粒度，总线恒取对齐字（`pc & ~3`），核内按 `pc[1]` 选择低/高半字；32 位指令起始于高半字时进入一拍 `mis32` 停顿——锁存高半字、下一拍取下一字拼接后交付。PC 增量改为指令长度 `instrLen`（压缩 2，标准 4），链接值与 `mepc` 均使用精确地址。C 关闭时上述逻辑整体省略，逐拍等价于原取指
 
 ### ID（译码）
 
 - 组合译码器 `Decoder` 生成全部控制信号：寄存器写使能、ALU 操作、访存属性、分支类型、写回选择、立即数，以及 CSR/异常指令的 `csrOp/csrWe/csrAddr/sysOp` 控制域
-- 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽
+- 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽；RV32C 使能时，16 位压缩指令在译码级展开为等价的标准操作（与 32 位路径写入同一组控制域），非法/保留压缩编码置 `illegal`（cause 2）
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
@@ -42,7 +43,7 @@ graph LR
 
 ### WB（写回）
 
-- 选择写回源：ALU 结果 / 访存结果 / `pc + 4`（JAL/JALR 链接）/ CSR 读回旧值（`rd=x0` 时忽略）
+- 选择写回源：ALU 结果 / 访存结果 / `pc + instrLen`（JAL/JALR 链接，压缩指令为 pc+2）/ CSR 读回旧值（`rd=x0` 时忽略）
 - 写入寄存器堆（`rd == 0` 时忽略，符合 RISC-V 规范）；寄存器堆为**单写端口**，WB 是唯一写入口
 
 ## 冒险处理
@@ -65,7 +66,7 @@ graph LR
 
 ```text
 检测: EX.valid && EX.rd != 0 && (EX.MemRead || EX 是 CSR 写) &&
-      (EX.rd == IF/ID.rs1 || EX.rd == IF/ID.rs2)
+      (EX.rd == ID.rs1 || EX.rd == ID.rs2)
 动作: 冻结 PC 与 IF/ID 寄存器，向 EX 段插入气泡
 ```
 

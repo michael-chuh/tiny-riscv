@@ -1,10 +1,10 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
-// Component : RiscvCore
+// Component : RiscvCoreC
 // Git hash  : 6181f4da3f827a515a88f3a24ad93cc45315ad36
 
 `timescale 1ns/1ps
 
-module RiscvCore (
+module RiscvCoreC (
   output wire          io_iBus_valid,
   output wire [31:0]   io_iBus_pc,
   input  wire          io_iBus_ready,
@@ -185,6 +185,7 @@ module RiscvCore (
   wire                divider_1_io_done;
   wire       [31:0]   divider_1_io_quotient;
   wire       [31:0]   divider_1_io_remainder;
+  wire       [31:0]   _zz_io_iBus_pc_1;
   wire       [31:0]   _zz_aluResult;
   wire       [31:0]   _zz_csrWrDataEx;
   wire       [31:0]   _zz_branchCond;
@@ -228,13 +229,18 @@ module RiscvCore (
   wire       [1:0]    MODE_U;
   wire       [1:0]    MODE_M;
   reg        [31:0]   pcReg;
-  wire                mis32;
-  wire       [15:0]   hiReg;
+  reg                 mis32;
+  reg        [15:0]   hiReg;
   wire                mis32Start;
   wire                mis32Stall;
-  wire       [31:0]   fetchInstr;
-  wire       [2:0]    fetchLen;
-  wire                fetchCompressed;
+  reg        [31:0]   fetchInstr;
+  reg        [2:0]    fetchLen;
+  reg                 fetchCompressed;
+  wire       [31:0]   _zz_io_iBus_pc;
+  wire       [15:0]   _zz_fetchInstr;
+  wire       [15:0]   _zz_hiReg;
+  wire                when_RiscvCore_l238;
+  wire                when_RiscvCore_l242;
   reg                 ifId_valid;
   reg        [31:0]   ifId_pc;
   reg        [31:0]   ifId_instruction;
@@ -372,6 +378,7 @@ module RiscvCore (
   `endif
 
 
+  assign _zz_io_iBus_pc_1 = (_zz_io_iBus_pc + 32'h00000004);
   assign _zz_aluResult = (idEx_pc + instrLenEx);
   assign _zz_csrWrDataEx = {27'd0, idEx_rs1};
   assign _zz_branchCond = forwardRs1;
@@ -613,15 +620,63 @@ module RiscvCore (
 
   assign MODE_U = 2'b00;
   assign MODE_M = 2'b11;
-  assign mis32 = 1'b0;
-  assign hiReg = 16'h0;
   assign io_iBus_valid = 1'b1;
-  assign io_iBus_pc = pcReg;
-  assign mis32Start = 1'b0;
-  assign mis32Stall = 1'b0;
-  assign fetchInstr = io_iBus_instruction;
-  assign fetchLen = 3'b100;
-  assign fetchCompressed = 1'b0;
+  assign _zz_io_iBus_pc = {pcReg[31 : 2],2'b00};
+  assign io_iBus_pc = (mis32 ? _zz_io_iBus_pc_1 : _zz_io_iBus_pc);
+  assign _zz_fetchInstr = io_iBus_instruction[15 : 0];
+  assign _zz_hiReg = io_iBus_instruction[31 : 16];
+  assign mis32Start = (((! mis32) && pcReg[1]) && (_zz_hiReg[1 : 0] == 2'b11));
+  assign mis32Stall = mis32Start;
+  always @(*) begin
+    if(mis32) begin
+      fetchInstr = {io_iBus_instruction[15 : 0],hiReg};
+    end else begin
+      if(when_RiscvCore_l238) begin
+        fetchInstr = {16'h0,_zz_hiReg};
+      end else begin
+        if(when_RiscvCore_l242) begin
+          fetchInstr = io_iBus_instruction;
+        end else begin
+          fetchInstr = {16'h0,_zz_fetchInstr};
+        end
+      end
+    end
+  end
+
+  always @(*) begin
+    if(mis32) begin
+      fetchLen = 3'b100;
+    end else begin
+      if(when_RiscvCore_l238) begin
+        fetchLen = 3'b010;
+      end else begin
+        if(when_RiscvCore_l242) begin
+          fetchLen = 3'b100;
+        end else begin
+          fetchLen = 3'b010;
+        end
+      end
+    end
+  end
+
+  always @(*) begin
+    if(mis32) begin
+      fetchCompressed = 1'b0;
+    end else begin
+      if(when_RiscvCore_l238) begin
+        fetchCompressed = 1'b1;
+      end else begin
+        if(when_RiscvCore_l242) begin
+          fetchCompressed = 1'b0;
+        end else begin
+          fetchCompressed = 1'b1;
+        end
+      end
+    end
+  end
+
+  assign when_RiscvCore_l238 = pcReg[1];
+  assign when_RiscvCore_l242 = (_zz_fetchInstr[1 : 0] == 2'b11);
   assign wbWriteData = ((memWb_wbSel == 3'b011) ? csrFile_1_io_rdData : memWb_wbData);
   assign when_RiscvCore_l304 = (((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs1));
   always @(*) begin
@@ -940,6 +995,8 @@ module RiscvCore (
   always @(posedge clk or posedge reset) begin
     if(reset) begin
       pcReg <= 32'h0;
+      mis32 <= 1'b0;
+      hiReg <= 16'h0;
       ifId_valid <= 1'b0;
       ifId_pc <= 32'h0;
       ifId_instruction <= 32'h0;
@@ -994,6 +1051,16 @@ module RiscvCore (
       memWb_csrAddr <= 12'h0;
       memWb_csrWrData <= 32'h0;
     end else begin
+      if(mis32) begin
+        mis32 <= 1'b0;
+      end else begin
+        if(mis32Start) begin
+          mis32 <= 1'b1;
+        end
+      end
+      if(mis32Start) begin
+        hiReg <= _zz_hiReg;
+      end
       if(when_RiscvCore_l588) begin
         if(trapCommit) begin
           pcReg <= trapEntry;
@@ -1608,7 +1675,7 @@ module CsrFile (
         readData = mstatusReg;
       end
       12'h301 : begin
-        readData = 32'h40101100;
+        readData = 32'h40101104;
       end
       12'h304 : begin
         readData = mieReg;
@@ -5347,7 +5414,7 @@ module Decoder (
     end
   end
 
-  assign isComp = 1'b0;
+  assign isComp = (io_instruction[1 : 0] != 2'b11);
   assign cfunct3 = io_instruction[15 : 13];
   assign crd = io_instruction[11 : 7];
   assign crs2 = io_instruction[6 : 2];
