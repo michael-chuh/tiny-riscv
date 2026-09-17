@@ -18,6 +18,105 @@ class RiscvCoreTest extends AnyFunSuite {
   private def encU(imm: Int, rd: Int, opc: Int = 0x37): Long =
     ((imm & 0xfffff).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
 
+  // ---- RV32C (16-bit) encoders ----
+  // Each helper takes logical operands and places them in the RVC bit fields as
+  // extracted by Decoder.scala. Register-prime operands are the 3-bit index
+  // (0 => x8). C.LI/C.ADDI/C.LUI immediates are 6-bit signed, so values must be
+  // in -32..31.
+  private def cCI(op: Int, f3: Int, rd: Int, imm6: Int): Int =
+    (op & 3) | ((f3 & 7) << 13) | (((imm6 >> 5) & 1) << 12) | ((rd & 0x1f) << 7) | ((imm6 & 0x1f) << 2)
+
+  private def cADDI16SP(imm: Int): Int = {
+    val i = imm & 0x3ff
+    (1) | (3 << 13) | (2 << 7) |
+      (((i >> 9) & 1) << 12) | (((i >> 8) & 1) << 4) | (((i >> 7) & 1) << 3) |
+      (((i >> 6) & 1) << 5) | (((i >> 5) & 1) << 2) | (((i >> 4) & 1) << 6)
+  }
+
+  private def cJ(op: Int, f3: Int, imm: Int): Int = {
+    val i = imm & 0xfff
+    (op & 3) | ((f3 & 7) << 13) |
+      (((i >> 11) & 1) << 12) | (((i >> 10) & 1) << 8) | (((i >> 9) & 1) << 10) |
+      (((i >> 8) & 1) << 9) | (((i >> 7) & 1) << 6) | (((i >> 6) & 1) << 7) |
+      (((i >> 5) & 1) << 2) | (((i >> 4) & 1) << 11) | (((i >> 3) & 1) << 5) |
+      (((i >> 2) & 1) << 4) | (((i >> 1) & 1) << 3)
+  }
+
+  private def cB(f3: Int, rs1p: Int, imm: Int): Int = {
+    val i = imm & 0x1ff
+    (1) | ((f3 & 7) << 13) | ((rs1p & 7) << 7) |
+      (((i >> 8) & 1) << 12) | (((i >> 7) & 1) << 6) | (((i >> 6) & 1) << 5) |
+      (((i >> 5) & 1) << 2) | (((i >> 4) & 1) << 11) | (((i >> 3) & 1) << 10) |
+      (((i >> 2) & 1) << 4) | (((i >> 1) & 1) << 3)
+  }
+
+  private def cLwImmBits(imm: Int): Int = {
+    val i = imm & 0x7f
+    (((i >> 6) & 1) << 5) | (((i >> 5) & 1) << 12) | (((i >> 4) & 1) << 11) |
+      (((i >> 3) & 1) << 10) | (((i >> 2) & 1) << 6)
+  }
+
+  private def cADDI4SPN(rdp: Int, imm: Int): Int = {
+    val i = imm & 0x3ff
+    ((rdp & 7) << 2) |
+      (((i >> 9) & 1) << 10) | (((i >> 8) & 1) << 9) | (((i >> 7) & 1) << 8) | (((i >> 6) & 1) << 7) |
+      (((i >> 5) & 1) << 12) | (((i >> 4) & 1) << 11) | (((i >> 3) & 1) << 5) | (((i >> 2) & 1) << 6)
+  }
+
+  private def cLW(rdp: Int, rs1p: Int, imm: Int): Int =
+    (2 << 13) | ((rs1p & 7) << 7) | ((rdp & 7) << 2) | cLwImmBits(imm)
+
+  private def cSW(rs2p: Int, rs1p: Int, imm: Int): Int =
+    (6 << 13) | ((rs1p & 7) << 7) | ((rs2p & 7) << 2) | cLwImmBits(imm)
+
+  private def cShift(sel: Int, rdp: Int, shamt: Int): Int =
+    (1) | (4 << 13) | ((sel & 3) << 10) | ((rdp & 7) << 7) |
+      (((shamt >> 5) & 1) << 12) | ((shamt & 0x1f) << 2)
+
+  private def cSLLI(rd: Int, shamt: Int): Int =
+    (2) | (0 << 13) | ((rd & 0x1f) << 7) |
+      (((shamt >> 5) & 1) << 12) | ((shamt & 0x1f) << 2)
+
+  private def cANDI(rdp: Int, imm6: Int): Int =
+    (1) | (4 << 13) | (2 << 10) | ((rdp & 7) << 7) |
+      (((imm6 >> 5) & 1) << 12) | ((imm6 & 0x1f) << 2)
+
+  private def cALU(rdp: Int, rs2p: Int, op2: Int): Int =
+    (1) | (4 << 13) | (3 << 10) | ((rdp & 7) << 7) | ((op2 & 3) << 5) | ((rs2p & 7) << 2)
+
+  private def cLWSP(rd: Int, imm: Int): Int = {
+    val i = imm & 0xff
+    (2) | (2 << 13) | ((rd & 0x1f) << 7) |
+      (((i >> 7) & 1) << 3) | (((i >> 6) & 1) << 2) |
+      (((i >> 5) & 1) << 12) | (((i >> 4) & 1) << 6) | (((i >> 3) & 1) << 5) | (((i >> 2) & 1) << 4)
+  }
+
+  private def cSWSP(rs2: Int, imm: Int): Int = {
+    val i = imm & 0xff
+    (2) | (6 << 13) | ((rs2 & 0x1f) << 2) |
+      (((i >> 7) & 1) << 8) | (((i >> 6) & 1) << 7) |
+      (((i >> 5) & 1) << 12) | (((i >> 4) & 1) << 11) | (((i >> 3) & 1) << 10) | (((i >> 2) & 1) << 9)
+  }
+
+  private def cMV(rd: Int, rs2: Int): Int =
+    (2) | (4 << 13) | ((rd & 0x1f) << 7) | ((rs2 & 0x1f) << 2)
+
+  private def cADD(rd: Int, rs2: Int): Int =
+    (2) | (4 << 13) | (1 << 12) | ((rd & 0x1f) << 7) | ((rs2 & 0x1f) << 2)
+
+  private def cJR(rs1: Int): Int = (2) | (4 << 13) | ((rs1 & 0x1f) << 7)
+
+  private def cJALR(rs1: Int): Int = (2) | (4 << 13) | (1 << 12) | ((rs1 & 0x1f) << 7)
+
+  private def cNop: Int = cCI(1, 0, 0, 0)
+
+  private def packHalfwords(hws: Seq[Int]): Seq[Long] = {
+    val padded = if (hws.length % 2 == 0) hws else hws :+ cNop
+    padded.grouped(2).map { case Seq(lo, hi) =>
+      (lo & 0xffff).toLong | ((hi & 0xffff).toLong << 16)
+    }.toSeq
+  }
+
   val program = Seq[Long](
     0x00500093L, // addi x1,x0,5
     0x00700113L, // addi x2,x0,7
@@ -156,6 +255,82 @@ class RiscvCoreTest extends AnyFunSuite {
   // A reserved RV64C shift encoding (C.SRLI with shamt[5]=1, 0x9001) is
   // illegal on RV32 and must raise cause 2 without side effects.
   val rv32cIllegalProgram = Seq[Long](0x00009001L)
+
+  // RV32C arithmetic/immediate/register coverage: C.ADDI, C.LUI, C.ADDI16SP,
+  // C.ANDI, C.SRLI, C.SRAI, C.SLLI, C.MV, C.ADD, C.SUB, C.XOR, C.OR, C.AND,
+  // plus a C.SW/C.LW pair at immediate 64 to pin the CRS2' and uimm[6] fields.
+  // All 16-bit; self-loop (jal x0,0) at 0x40.
+  val rv32cArithProgram = packHalfwords(Seq(
+    cCI(1, 2, 1, 5),      // C.LI x1,5            x1=5
+    cCI(1, 0, 1, 3),      // C.ADDI x1,3          x1=8
+    cCI(1, 3, 16, 1),     // C.LUI x16,1          x16=0x1000
+    cCI(1, 2, 2, 20),     // C.LI x2,20           x2=20
+    cADDI16SP(16),        // C.ADDI16SP 16        x2=36
+    cCI(1, 2, 8, 31),     // C.LI x8,31           x8=31
+    cANDI(0, 13),         // C.ANDI x8,13         x8=13
+    cCI(1, 2, 9, 30),     // C.LI x9,30           x9=30
+    cShift(0, 1, 2),      // C.SRLI x9,2          x9=7
+    cCI(1, 2, 10, -8),    // C.LI x10,-8          x10=-8
+    cShift(1, 2, 2),      // C.SRAI x10,2         x10=-2
+    cCI(1, 2, 11, 1),     // C.LI x11,1           x11=1
+    cSLLI(11, 5),         // C.SLLI x11,5         x11=32
+    cMV(12, 11),          // C.MV x12,x11         x12=32
+    cCI(1, 2, 13, 3),     // C.LI x13,3           x13=3
+    cADD(12, 13),         // C.ADD x12,x13        x12=35
+    cCI(1, 2, 13, 20),    // C.LI x13,20
+    cCI(1, 2, 14, 5),     // C.LI x14,5
+    cALU(5, 6, 0),        // C.SUB x13,x14        x13=15
+    cCI(1, 2, 13, 12),    // C.LI x13,12
+    cCI(1, 2, 14, 10),    // C.LI x14,10
+    cALU(5, 6, 1),        // C.XOR x13,x14        x13=6
+    cCI(1, 2, 13, 12),    // C.LI x13,12
+    cCI(1, 2, 14, 10),    // C.LI x14,10
+    cALU(5, 6, 2),        // C.OR  x13,x14        x13=14
+    cCI(1, 2, 13, 12),    // C.LI x13,12
+    cCI(1, 2, 14, 10),    // C.LI x14,10
+    cALU(5, 6, 3),        // C.AND x13,x14        x13=8
+    cCI(1, 2, 15, 20),    // C.LI x15,20          x15=20 (store value)
+    cCI(1, 2, 8, 0),      // C.LI x8,0            x8=0  (base)
+    cSW(7, 0, 64),        // C.SW x15,64(x8)      mem[64]=20
+    cLW(0, 0, 64)         // C.LW x8,64(x8)       x8=20
+  )) ++ Seq(0x0000006FL) // jal x0,0             self-loop at 0x40
+
+  // RV32C control-flow coverage: C.JAL (link = PC+2), C.JR, C.BNEZ taken and
+  // not taken, C.BEQZ not taken, C.JALR (link = PC+2), and a C.J self-loop.
+  // Layout: 0x00 C.LI x8,5 | 0x02 C.LI x13,16 | 0x04 C.JAL ->0x0A | skips at
+  // 0x06/0x08 | 0x0A C.MV x21,x1 (saves link 0x06) | 0x0C C.JR x13 ->0x10 |
+  // 0x0E skipped | 0x10 C.LI x9,30 | 0x12 C.BEQZ x8 (not taken) | 0x14 x10=1 |
+  // 0x16 C.BNEZ x8 ->0x1A | 0x18 skipped | 0x1A x15=4 | 0x1C/0x1E build x13=0x30
+  // | 0x20 C.JALR x13 ->0x30 (link 0x22) | 0x22..0x2E skipped | 0x30 x12=11 |
+  // 0x32 C.J 0 (self-loop).
+  val rv32cFlowProgram = packHalfwords(Seq(
+    cCI(1, 2, 8, 5),      // 0x00 C.LI x8,5
+    cCI(1, 2, 13, 16),    // 0x02 C.LI x13,16      (JR target 0x10)
+    cJ(1, 1, 6),          // 0x04 C.JAL +6 -> 0x0A
+    cCI(1, 2, 9, 21),     // 0x06 skipped
+    cCI(1, 2, 9, 22),     // 0x08 skipped
+    cMV(21, 1),           // 0x0A x21 = link (0x06)
+    cJR(13),              // 0x0C C.JR x13 -> 0x10
+    cCI(1, 2, 11, 23),    // 0x0E skipped
+    cCI(1, 2, 9, 30),     // 0x10 x9=30
+    cB(6, 0, 4),          // 0x12 C.BEQZ x8 -> 0x16 (not taken, x8=5)
+    cCI(1, 2, 10, 1),     // 0x14 x10=1
+    cB(7, 0, 4),          // 0x16 C.BNEZ x8 -> 0x1A (taken)
+    cCI(1, 2, 11, 24),    // 0x18 skipped
+    cCI(1, 2, 15, 4),     // 0x1A x15=4
+    cCI(1, 2, 13, 12),    // 0x1C x13=12
+    cSLLI(13, 2),         // 0x1E C.SLLI x13,2 -> x13=48 (0x30)
+    cJALR(13),            // 0x20 C.JALR x13 -> 0x30
+    cCI(1, 2, 12, 25),    // 0x22 skipped
+    cCI(1, 2, 12, 26),    // 0x24 skipped
+    cCI(1, 2, 12, 27),    // 0x26 skipped
+    cCI(1, 2, 12, 28),    // 0x28 skipped
+    cCI(1, 2, 12, 29),    // 0x2A skipped
+    cCI(1, 2, 12, 30),    // 0x2C skipped
+    cCI(1, 2, 12, 31),    // 0x2E skipped
+    cCI(1, 2, 12, 11),    // 0x30 x12=11 (JALR landing)
+    cJ(1, 5, 0)           // 0x32 C.J 0 (self-loop)
+  ))
 
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
     var cycles = 0
@@ -345,6 +520,60 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugMcause.toBigInt == 2, "reserved compressed encoding -> illegal instruction")
         assert(dut.io.debugMepc.toBigInt == 0, "mepc should point at the faulting compressed instruction")
         println("PASS: RV32C reserved encoding traps")
+      }
+  }
+
+  test("RV32C arithmetic/immediate/register coverage") {
+    val cfg = CoreConfig.rv32imc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32cArithProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 500, 0x40, 8, 20)
+        assert(cycles < 500, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(1).toBigInt == 8, "x1 = 5 + 3 (C.ADDI)")
+        assert(dut.io.debugRegs(16).toBigInt == 0x1000L, "x16 = C.LUI 1<<12")
+        assert(dut.io.debugRegs(2).toBigInt == 36, "x2 = 20 + 16 (C.ADDI16SP)")
+        assert(dut.io.debugRegs(8).toBigInt == 20, "x8 = C.LW x8,64(x8)")
+        assert(dut.io.debugRegs(9).toBigInt == 7, "x9 = 30 >>> 2 (C.SRLI)")
+        assert(dut.io.debugRegs(10).toBigInt == 0xfffffffeL, "x10 = -8 >> 2 (C.SRAI)")
+        assert(dut.io.debugRegs(11).toBigInt == 32, "x11 = 1 << 5 (C.SLLI)")
+        assert(dut.io.debugRegs(12).toBigInt == 35, "x12 = C.MV 32 then C.ADD +3")
+        assert(dut.io.debugRegs(13).toBigInt == 8, "x13 = last C.AND result")
+        assert(dut.io.debugRegs(14).toBigInt == 10, "x14 = 10")
+        assert(dut.io.debugRegs(15).toBigInt == 20, "x15 = 20 stored via C.SW at imm 64")
+        println(s"PASS: RV32C arith finished in $cycles cycles")
+      }
+  }
+
+  test("RV32C control-flow coverage") {
+    val cfg = CoreConfig.rv32imc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32cFlowProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 500, 0x32, 12, 11)
+        assert(cycles < 500, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(8).toBigInt == 5, "x8 = 5")
+        assert(dut.io.debugRegs(21).toBigInt == 0x06L, "x21 = C.JAL link (PC+2)")
+        assert(dut.io.debugRegs(9).toBigInt == 30, "x9 = 30 after C.JR landing")
+        assert(dut.io.debugRegs(10).toBigInt == 1, "C.BEQZ not taken (x8!=0)")
+        assert(dut.io.debugRegs(11).toBigInt == 0, "skipped by C.JR and C.BNEZ")
+        assert(dut.io.debugRegs(15).toBigInt == 4, "x15 = 4 after C.BNEZ taken")
+        assert(dut.io.debugRegs(13).toBigInt == 48, "x13 = 12 << 2 (C.SLLI)")
+        assert(dut.io.debugRegs(1).toBigInt == 0x22L, "x1 = C.JALR link (PC+2)")
+        assert(dut.io.debugRegs(12).toBigInt == 11, "x12 = 11 at C.JALR landing")
+        println(s"PASS: RV32C flow finished in $cycles cycles")
       }
   }
 }

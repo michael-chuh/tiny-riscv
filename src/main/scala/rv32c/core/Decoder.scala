@@ -131,7 +131,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   val crs2 = instr(6 downto 2).asUInt
   val crdp = (U(8, 5 bits) + instr(4 downto 2).asUInt.resize(5)).resize(5)
   val crs1p = (U(8, 5 bits) + instr(9 downto 7).asUInt.resize(5)).resize(5)
-  val crs2p = (U(8, 5 bits) + instr(6 downto 2).asUInt.resize(5)).resize(5)
+  val crs2p = (U(8, 5 bits) + instr(4 downto 2).asUInt.resize(5)).resize(5)
   val c6 = Cat(instr(12), instr(6 downto 2))
   val c6S = c6.asSInt
   val cShamt = c6.asUInt.resize(xlen).asSInt
@@ -205,18 +205,18 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
               is(B"00") { // C.SRLI
                 when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
                   d.regWrite := True; d.aluOp := AluOp.SRL; d.aluSrc := True
-                  d.rs1 := crdp; d.rd := crdp; d.imm := cShamt
+                  d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
                 }
               }
               is(B"01") { // C.SRAI
                 when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
                   d.regWrite := True; d.aluOp := AluOp.SRA; d.aluSrc := True
-                  d.rs1 := crdp; d.rd := crdp; d.imm := cShamt
+                  d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
                 }
               }
               is(B"10") { // C.ANDI
                 d.regWrite := True; d.aluOp := AluOp.AND; d.aluSrc := True
-                d.rs1 := crdp; d.rd := crdp; d.imm := c6S.resize(xlen)
+                d.rs1 := crs1p; d.rd := crs1p; d.imm := c6S.resize(xlen)
               }
               default { // 11: C.SUB/XOR/OR/AND (RV64 forms are reserved here)
                 when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
@@ -224,7 +224,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
                   d.aluOp := Mux(instr(6),
                     Mux(instr(5), AluOp.AND, AluOp.OR),
                     Mux(instr(5), AluOp.XOR, AluOp.SUB))
-                  d.rs1 := crdp; d.rs2 := crs2p; d.rd := crdp
+                  d.rs1 := crs1p; d.rs2 := crs2p; d.rd := crs1p
                 }
               }
             }

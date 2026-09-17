@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCore
-// Git hash  : 6181f4da3f827a515a88f3a24ad93cc45315ad36
+// Git hash  : d63426956f1727eccb2ad288ff60a5d044aefbe1
 
 `timescale 1ns/1ps
 
@@ -2218,6 +2218,8 @@ module Decoder (
   wire       [2:0]    _zz_crdp_1;
   wire       [4:0]    _zz_crs1p;
   wire       [2:0]    _zz_crs1p_1;
+  wire       [4:0]    _zz_crs2p;
+  wire       [2:0]    _zz_crs2p_1;
   wire       [31:0]   _zz_cShamt;
   wire       [5:0]    _zz_cShamt_1;
   wire                _zz_cJImm;
@@ -2309,6 +2311,8 @@ module Decoder (
   assign _zz_crdp = {2'd0, _zz_crdp_1};
   assign _zz_crs1p_1 = io_instruction[9 : 7];
   assign _zz_crs1p = {2'd0, _zz_crs1p_1};
+  assign _zz_crs2p_1 = io_instruction[4 : 2];
+  assign _zz_crs2p = {2'd0, _zz_crs2p_1};
   assign _zz_cShamt_1 = c6;
   assign _zz_cShamt = {26'd0, _zz_cShamt_1};
   assign _zz_cAddi16sp = ({4'd0,{io_instruction[12],{io_instruction[4],{io_instruction[3],{io_instruction[5],{io_instruction[2],io_instruction[6]}}}}}} <<< 3'd4);
@@ -4042,20 +4046,20 @@ module Decoder (
               case(switch_Decoder_l204)
                 2'b00 : begin
                   if(!when_Decoder_l206) begin
-                    io_output_rs1 = crdp;
+                    io_output_rs1 = crs1p;
                   end
                 end
                 2'b01 : begin
                   if(!when_Decoder_l212) begin
-                    io_output_rs1 = crdp;
+                    io_output_rs1 = crs1p;
                   end
                 end
                 2'b10 : begin
-                  io_output_rs1 = crdp;
+                  io_output_rs1 = crs1p;
                 end
                 default : begin
                   if(!when_Decoder_l222) begin
-                    io_output_rs1 = crdp;
+                    io_output_rs1 = crs1p;
                   end
                 end
               endcase
@@ -4238,20 +4242,20 @@ module Decoder (
               case(switch_Decoder_l204)
                 2'b00 : begin
                   if(!when_Decoder_l206) begin
-                    io_output_rd = crdp;
+                    io_output_rd = crs1p;
                   end
                 end
                 2'b01 : begin
                   if(!when_Decoder_l212) begin
-                    io_output_rd = crdp;
+                    io_output_rd = crs1p;
                   end
                 end
                 2'b10 : begin
-                  io_output_rd = crdp;
+                  io_output_rd = crs1p;
                 end
                 default : begin
                   if(!when_Decoder_l222) begin
-                    io_output_rd = crdp;
+                    io_output_rd = crs1p;
                   end
                 end
               endcase
@@ -5353,7 +5357,7 @@ module Decoder (
   assign crs2 = io_instruction[6 : 2];
   assign crdp = (5'h08 + _zz_crdp);
   assign crs1p = (5'h08 + _zz_crs1p);
-  assign crs2p = (5'h08 + io_instruction[6 : 2]);
+  assign crs2p = (5'h08 + _zz_crs2p);
   assign c6 = {io_instruction[12],io_instruction[6 : 2]};
   assign c6S = c6;
   assign cShamt = _zz_cShamt;
