@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除，以及 **RV32C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，C 扩展由 `RvExtension.Compressed` 使能（仅 RV32，默认 RV32 配置为 `rv32im`，压缩核配置为 `rv32imc`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；RV64C、S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除，以及 **RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持，默认 RV32 配置为 `rv32im`，压缩核配置为 `rv32imc` / `rv64imc`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -94,29 +94,33 @@
 
 > 所有 `*W` 指令只取操作数低 32 位、产生 32 位结果，再符号扩展到 64 位写回。RV64 的 `SLLI/SRLI/SRAI` 移位量为 `instr[25:20]`（6 位），RV32 为 `instr[24:20]`。
 
-### 压缩指令（RV32C, 16 位编码，仅当 `RvExtension.Compressed` 使能）
+### 压缩指令（RV32C / RV64C, 16 位编码，仅当 `RvExtension.Compressed` 使能）
 
-取指阶段保持 32 位指令总线，核内按 `pc[1]` 选择半字；当 32 位指令起始于高半字时，用一拍停顿锁存高半字并拼接下一个字。压缩指令在译码级展开为等价的标准操作。
+取指阶段保持 32 位指令总线，核内按 `pc[1]` 选择半字；当 32 位指令起始于高半字时，用一拍停顿锁存高半字并拼接下一个字。压缩指令在译码级展开为等价的标准操作。RV32 与 RV64 共用同一压缩取指通路，专属编码按 `xlen` 区分。
 
 | 指令 | quadrant / funct3 | 内部等价 |
 |------|-------------------|----------|
 | C.ADDI4SPN | 00 / 000 | `addi rd', x2, nzuimm`（nzuimm=0 非法） |
 | C.LW / C.SW | 00 / 010 / 110 | word 载入/存储，base=rs1' |
+| C.LD / C.SD | 00 / 011 / 111 | doubleword 载入/存储，base=rs1'（仅 RV64） |
 | C.ADDI / C.NOP | 01 / 000 | `addi rd, rd, nzimm` |
-| C.JAL | 01 / 001 | 跳转并链接 `pc+2` 到 x1 |
+| C.JAL | 01 / 001 | 跳转并链接 `pc+2` 到 x1（仅 RV32） |
+| C.ADDIW | 01 / 001 | `addiw rd, rd, imm`（仅 RV64，rd=0 非法） |
 | C.LI | 01 / 010 | `addi rd, x0, imm` |
 | C.ADDI16SP / C.LUI | 01 / 011 | `addi x2,x2,imm` / `lui`（crd=0 或 c6=0 非法） |
-| C.SRLI / C.SRAI / C.ANDI | 01 / 100 | `srli/srai/andi rd', rd', imm`（shamt[5]=1 非法） |
+| C.SRLI / C.SRAI / C.ANDI | 01 / 100 | `srli/srai/andi rd', rd', imm`（RV32 shamt[5]=1 非法，RV64 允许 6 位 shamt） |
 | C.SUB/XOR/OR/AND | 01 / 100 (11) | 对应寄存器 ALU 操作 |
+| C.SUBW/C.ADDW | 01 / 100 (11, bit12=1) | 对应 32 位 ALU 操作并符号扩展（仅 RV64） |
 | C.J | 01 / 101 | 跳转 `pc+2` |
 | C.BEQZ / C.BNEZ | 01 / 110 / 111 | `beq/bne rs1', x0` |
-| C.SLLI | 10 / 000 | `slli rd, rd, shamt`（shamt[5]=1 非法） |
+| C.SLLI | 10 / 000 | `slli rd, rd, shamt`（RV32 shamt[5]=1 非法，RV64 允许 6 位 shamt） |
 | C.LWSP | 10 / 010 | word 载入，base=x2（rd=0 非法） |
+| C.LDSP / C.SDSP | 10 / 011 / 111 | doubleword 载入/存储，base=x2（仅 RV64，C.LDSP rd=0 非法） |
 | C.JR / C.MV | 10 / 100 (bit12=0) | 跳转 `rs1` / `add rd, x0, rs2` |
 | C.EBREAK / C.JALR / C.ADD | 10 / 100 (bit12=1) | `ebreak` / 跳转链接 `pc+2` / `add rd, rd, rs2` |
 | C.SWSP | 10 / 110 | word 存储，base=x2 |
 
-> 非法/保留压缩编码（含 RV64C 专属、`C.ADDI4SPN` nzuimm=0、`C.LUI` imm=0/rd=0、`C.LWSP` rd=0、RV32 shamt[5]=1 等）统一触发 cause 2，`mepc` 记录压缩指令的精确地址。C 关闭时取指与译码逻辑逐拍等价于非压缩核。
+> 非法/保留压缩编码（`C.ADDI4SPN` nzuimm=0、`C.LUI` imm=0/rd=0、`C.LWSP`/`C.LDSP` rd=0、RV32 shamt[5]=1、RV64 核上出现 RV32 专属编码，以及 RV32 核上出现 RV64 专属编码）统一触发 cause 2，`mepc` 记录压缩指令的精确地址。C 关闭时取指与译码逻辑逐拍等价于非压缩核。
 
 ### 分支（BRANCH, 1100011）
 
@@ -195,5 +199,4 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 ## 后续扩展计划
 
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
-- **RV64C**：压缩指令的 RV64 专属编码（`C.LD/C.SD`、64 位 `C.SLLI` 等），当前仅 RV32 使能
 - **A/F/D**：原子、浮点扩展（`RvExtension` 的 `reserved` 集合）

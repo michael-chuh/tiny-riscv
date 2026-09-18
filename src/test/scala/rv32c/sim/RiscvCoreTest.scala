@@ -108,6 +108,31 @@ class RiscvCoreTest extends AnyFunSuite {
 
   private def cJALR(rs1: Int): Int = (2) | (4 << 13) | (1 << 12) | ((rs1 & 0x1f) << 7)
 
+  // ---- RV64C (16-bit) encoders ----
+  private def cLD(rdp: Int, rs1p: Int, off: Int): Int =
+    (3 << 13) | ((rs1p & 7) << 7) | ((rdp & 7) << 2) |
+      (((off >> 5) & 1) << 12) | (((off >> 4) & 1) << 11) | (((off >> 3) & 1) << 10) |
+      (((off >> 7) & 1) << 6) | (((off >> 6) & 1) << 5)
+
+  private def cSD(rs2p: Int, rs1p: Int, off: Int): Int =
+    (7 << 13) | ((rs1p & 7) << 7) | ((rs2p & 7) << 2) |
+      (((off >> 5) & 1) << 12) | (((off >> 4) & 1) << 11) | (((off >> 3) & 1) << 10) |
+      (((off >> 7) & 1) << 6) | (((off >> 6) & 1) << 5)
+
+  private def cLDSP(rd: Int, off: Int): Int =
+    (2) | (3 << 13) | ((rd & 0x1f) << 7) |
+      (((off >> 5) & 1) << 12) | (((off >> 4) & 1) << 6) | (((off >> 3) & 1) << 5) |
+      (((off >> 8) & 1) << 4) | (((off >> 7) & 1) << 3) | (((off >> 6) & 1) << 2)
+
+  private def cSDSP(rs2: Int, off: Int): Int =
+    (2) | (7 << 13) | ((rs2 & 0x1f) << 2) |
+      (((off >> 5) & 1) << 12) | (((off >> 4) & 1) << 11) | (((off >> 3) & 1) << 10) |
+      (((off >> 8) & 1) << 9) | (((off >> 7) & 1) << 8) | (((off >> 6) & 1) << 7)
+
+  private def cADDIW(rd: Int, imm6: Int): Int = cCI(1, 1, rd, imm6)
+
+  private def cALUW(rdp: Int, rs2p: Int, op2: Int): Int = cALU(rdp, rs2p, op2) | (1 << 12)
+
   private def cNop: Int = cCI(1, 0, 0, 0)
 
   private def packHalfwords(hws: Seq[Int]): Seq[Long] = {
@@ -331,6 +356,53 @@ class RiscvCoreTest extends AnyFunSuite {
     cCI(1, 2, 12, 11),    // 0x30 x12=11 (JALR landing)
     cJ(1, 5, 0)           // 0x32 C.J 0 (self-loop)
   ))
+
+  // RV64C coverage: C.LD/C.SD (Q0 doubleword), C.LDSP/C.SDSP (Q2 doubleword),
+  // C.ADDIW, C.SUBW/C.ADDW, and 6-bit shamt shifts (instr[12]=1). The final
+  // `addi x1,x0,7` is a 32-bit instruction deliberately placed at pc[1]=1
+  // (addr 0x36) so the misaligned-32 splice path is exercised under xlen=64.
+  // Self-loop (jal x0,0) at 0x3C.
+  val rv64cProgram: Seq[Long] = {
+    val body = Seq[Int](
+      cCI(1, 2, 9, 1),      // 0x00 C.LI x9,1
+      cSLLI(9, 40),         // 0x02 C.SLLI x9,40      x9 = 1<<40 (shamt[5]=1)
+      cShift(0, 1, 3),      // 0x04 C.SRLI x9,3       x9 = 1<<37
+      cCI(1, 2, 10, -1),    // 0x06 C.LI x10,-1
+      cShift(1, 2, 33),     // 0x08 C.SRAI x10,33     x10 = -1 (arith, 6-bit shamt)
+      cCI(1, 2, 11, -1),    // 0x0A C.LI x11,-1
+      cSLLI(11, 31),        // 0x0C C.SLLI x11,31     x11 = 0xFFFFFFFF80000000
+      cADDIW(11, 1),        // 0x0E C.ADDIW x11,1     x11 = 0xFFFFFFFF80000001
+      cCI(1, 2, 12, 1),     // 0x10 C.LI x12,1
+      cSLLI(12, 32),        // 0x12 C.SLLI x12,32     x12 = 1<<32
+      cADDIW(12, 5),        // 0x14 C.ADDIW x12,5     x12 = 5 (low32 truncation)
+      cCI(1, 2, 13, 8),     // 0x16 C.LI x13,8
+      cALUW(4, 5, 1),       // 0x18 C.ADDW x12,x13    x12 = 13
+      cALUW(4, 5, 0),       // 0x1A C.SUBW x12,x13    x12 = 5
+      cCI(1, 2, 13, -1),    // 0x1C C.LI x13,-1
+      cSLLI(13, 31),        // 0x1E C.SLLI x13,31     x13 = 0xFFFFFFFF80000000
+      cCI(1, 2, 14, -1),    // 0x20 C.LI x14,-1
+      cALUW(5, 6, 1),       // 0x22 C.ADDW x13,x14    x13 = 0x7FFFFFFF
+      cCI(1, 2, 15, 1),     // 0x24 C.LI x15,1
+      cSLLI(15, 32),        // 0x26 C.SLLI x15,32     x15 = 1<<32
+      cCI(1, 0, 15, 1),     // 0x28 C.ADDI x15,1      x15 = 0x100000001
+      cCI(1, 2, 8, 0),      // 0x2A C.LI x8,0         base = 0
+      cSD(7, 0, 40),        // 0x2C C.SD x15,40(x8)   mem[40] = 0x100000001
+      cLD(6, 0, 40),        // 0x2E C.LD x14,40(x8)   x14 = 0x100000001
+      cCI(1, 2, 2, 16),     // 0x30 C.LI x2,16        sp = 16
+      cSDSP(15, 16),        // 0x32 C.SDSP x15,16(x2) mem[sp+16] = 0x100000001
+      cLDSP(16, 16)         // 0x34 C.LDSP x16,16(x2) x16 = 0x100000001
+    )
+    // Place a 32-bit `addi x1,x0,7` at addr 0x36 (pc[1]=1): its low half lives
+    // in the high halfword of word 0x34, its high half in word 0x38.
+    val mixed = encI(7, 0, 0, 1)
+    val withMixed = (body :+ (mixed & 0xffff).toInt).grouped(2).map {
+      case Seq(lo, hi) => (lo & 0xffff).toLong | ((hi.toLong & 0xffff) << 16)
+    }.toSeq
+    withMixed ++ Seq(
+      ((mixed >>> 16) & 0xffff).toLong | ((cNop.toLong & 0xffff) << 16), // 0x38
+      0x0000006FL                                                        // 0x3C jal x0,0
+    )
+  }
 
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
     var cycles = 0
@@ -574,6 +646,35 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugRegs(1).toBigInt == 0x22L, "x1 = C.JALR link (PC+2)")
         assert(dut.io.debugRegs(12).toBigInt == 11, "x12 = 11 at C.JALR landing")
         println(s"PASS: RV32C flow finished in $cycles cycles")
+      }
+  }
+
+  test("RV64C compressed program") {
+    val cfg = CoreConfig.rv64imc
+    val lastPc = 4 * (rv64cProgram.length - 1)
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64cProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 500, lastPc, 16, BigInt("100000001", 16))
+        assert(cycles < 500, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        val allOnes = BigInt("FFFFFFFFFFFFFFFF", 16)
+        assert(dut.io.debugRegs(9).toBigInt == BigInt("2000000000", 16), "x9 = 1<<40 >>> 3 (6-bit shamt)")
+        assert(dut.io.debugRegs(10).toBigInt == allOnes, "x10 = -1 >> 33 (C.SRAI, 6-bit shamt)")
+        assert(dut.io.debugRegs(11).toBigInt == BigInt("FFFFFFFF80000001", 16), "x11 = C.ADDIW sign-extend")
+        assert(dut.io.debugRegs(12).toBigInt == 5, "x12 = C.ADDW then C.SUBW")
+        assert(dut.io.debugRegs(13).toBigInt == BigInt("7FFFFFFF", 16), "x13 = C.ADDW 32-bit overflow")
+        assert(dut.io.debugRegs(14).toBigInt == BigInt("100000001", 16), "x14 = C.LD round-trip")
+        assert(dut.io.debugRegs(15).toBigInt == BigInt("100000001", 16), "x15 = 1<<32 + 1")
+        assert(dut.io.debugRegs(16).toBigInt == BigInt("100000001", 16), "x16 = C.LDSP round-trip")
+        assert(dut.io.debugRegs(2).toBigInt == 16, "x2 = sp 16")
+        assert(dut.io.debugRegs(1).toBigInt == 7, "x1 = 32-bit instr at pc[1]=1 spliced")
+        println(s"PASS: RV64C finished in $cycles cycles")
       }
   }
 }

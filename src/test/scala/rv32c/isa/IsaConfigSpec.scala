@@ -32,6 +32,14 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.misaValue == 0x40101100L, f"0x${isa.misaValue}%x")
   }
 
+  test("rv64imc misa is MXL=2 | I | M | C | U") {
+    val isa = IsaConfig.rv64imc
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasCompressed)
+    val expected = (BigInt(2) << 62) | (BigInt(1) << ('I' - 'A')) |
+      (BigInt(1) << ('M' - 'A')) | (BigInt(1) << ('C' - 'A')) | (BigInt(1) << ('U' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
   test("extension letters are bit-indexed from 'A'") {
     def bit(c: Char) = c - 'A'
     assert(bit('I') == 8 && bit('M') == 12 && bit('U') == 20 && bit('S') == 18)

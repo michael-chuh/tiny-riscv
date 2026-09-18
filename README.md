@@ -25,7 +25,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 32 位 RISC-V 处�
 
 - RV32I 定向测试通过：数据冒险旁路、load-use 停顿、分支跳过、访存读写均验证正确
 - RV32M 定向测试通过：乘法（高位/有符号×无符号/无符号）、有符号与无符号除法/余数、负数运算、除零、MIN/-1 溢出回绕、除法结果旁路均验证正确
-- 已生成可综合的 `rtl/RiscvCore.v`（异步复位、标准 Verilog，默认含 RV32M 除法器）
+- RV64I / RV64M / RV32C / RV64C 定向测试通过，`sbt test` 共 33 项
+- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）与 `rtl/RiscvCore64C.v`（RV64IMC），异步复位、标准 Verilog
 
 ## 快速开始
 
@@ -35,7 +36,7 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 32 位 RISC-V 处�
 # 运行全部仿真测试
 ./scripts/run-tests.sh
 
-# 生成 Verilog RTL（输出到 rtl/RiscvCore.v）
+# 生成 Verilog RTL（输出到 rtl/）
 ./scripts/gen-rtl.sh
 ```
 

@@ -145,6 +145,11 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
     instr(4), instr(3), B"0").asSInt
   val cAddi16sp = (Cat(instr(12), instr(4), instr(3), instr(5), instr(2), instr(6)) << 4).asSInt
 
+  // RV64C doubleword forms: offsets are scaled by 8.
+  val cLdImm = (Cat(instr(6 downto 5), instr(12 downto 10)) << 3).asSInt    // C.LD/C.SD
+  val cLdspImm = (Cat(instr(4 downto 2), instr(12), instr(6 downto 5)) << 3).asSInt // C.LDSP
+  val cSdspImm = (Cat(instr(9 downto 7), instr(12 downto 10)) << 3).asSInt   // C.SDSP
+
   when(isComp) {
     switch(instr(1 downto 0)) {
       is(B"00") { // Quadrant 0
@@ -163,10 +168,28 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
             d.rs1 := crs1p; d.rd := crdp; d.imm := cLwImm.resize(xlen).asSInt
           }
+          is(B"011") { // C.LD (RV64)
+            if (isRV64) {
+              d.regWrite := True; d.memRead := True; d.memSize := U(3, 2 bits)
+              d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
+              d.rs1 := crs1p; d.rd := crdp; d.imm := cLdImm.resize(xlen)
+            } else {
+              d.illegal := True; d.valid := False
+            }
+          }
           is(B"110") { // C.SW
             d.memWrite := True; d.memSize := U(2, 2 bits)
             d.aluOp := AluOp.ADD; d.aluSrc := True
             d.rs1 := crs1p; d.rs2 := crs2p; d.imm := cLwImm.resize(xlen).asSInt
+          }
+          is(B"111") { // C.SD (RV64)
+            if (isRV64) {
+              d.memWrite := True; d.memSize := U(3, 2 bits)
+              d.aluOp := AluOp.ADD; d.aluSrc := True
+              d.rs1 := crs1p; d.rs2 := crs2p; d.imm := cLdImm.resize(xlen)
+            } else {
+              d.illegal := True; d.valid := False
+            }
           }
           default { d.illegal := True; d.valid := False }
         }
@@ -177,9 +200,18 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             d.regWrite := True; d.aluOp := AluOp.ADD; d.aluSrc := True
             d.rs1 := crd; d.rd := crd; d.imm := c6S.resize(xlen)
           }
-          is(B"001") { // C.JAL (RV32)
-            d.regWrite := True; d.jump := True; d.wbSel := WbSel.PC4
-            d.rd := U(1, 5 bits); d.imm := cJImm.resize(xlen)
+          is(B"001") { // C.JAL (RV32) / C.ADDIW (RV64)
+            if (isRV64) {
+              when(crd === U(0, 5 bits)) {
+                d.illegal := True; d.valid := False // C.ADDIW rd=x0 is reserved
+              } otherwise {
+                d.regWrite := True; d.aluOp := AluOp.ADDW; d.aluSrc := True
+                d.rs1 := crd; d.rd := crd; d.imm := c6S.resize(xlen)
+              }
+            } else {
+              d.regWrite := True; d.jump := True; d.wbSel := WbSel.PC4
+              d.rd := U(1, 5 bits); d.imm := cJImm.resize(xlen)
+            }
           }
           is(B"010") { // C.LI
             d.regWrite := True; d.aluOp := AluOp.ADD; d.aluSrc := True
@@ -202,24 +234,50 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
           is(B"100") {
             switch(instr(11 downto 10)) {
-              is(B"00") { // C.SRLI
-                when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+              is(B"00") { // C.SRLI (6-bit shamt on RV64)
+                if (isRV64) {
                   d.regWrite := True; d.aluOp := AluOp.SRL; d.aluSrc := True
                   d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
+                } else {
+                  when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+                    d.regWrite := True; d.aluOp := AluOp.SRL; d.aluSrc := True
+                    d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
+                  }
                 }
               }
-              is(B"01") { // C.SRAI
-                when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+              is(B"01") { // C.SRAI (6-bit shamt on RV64)
+                if (isRV64) {
                   d.regWrite := True; d.aluOp := AluOp.SRA; d.aluSrc := True
                   d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
+                } else {
+                  when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+                    d.regWrite := True; d.aluOp := AluOp.SRA; d.aluSrc := True
+                    d.rs1 := crs1p; d.rd := crs1p; d.imm := cShamt
+                  }
                 }
               }
               is(B"10") { // C.ANDI
                 d.regWrite := True; d.aluOp := AluOp.AND; d.aluSrc := True
                 d.rs1 := crs1p; d.rd := crs1p; d.imm := c6S.resize(xlen)
               }
-              default { // 11: C.SUB/XOR/OR/AND (RV64 forms are reserved here)
-                when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+              default { // 11: C.SUB/XOR/OR/AND (RV32); C.SUBW/C.ADDW (RV64)
+                when(instr(12)) {
+                  if (isRV64) {
+                    switch(instr(6 downto 5)) {
+                      is(B"00") { // C.SUBW
+                        d.regWrite := True; d.aluOp := AluOp.SUBW
+                        d.rs1 := crs1p; d.rs2 := crs2p; d.rd := crs1p
+                      }
+                      is(B"01") { // C.ADDW
+                        d.regWrite := True; d.aluOp := AluOp.ADDW
+                        d.rs1 := crs1p; d.rs2 := crs2p; d.rd := crs1p
+                      }
+                      default { d.illegal := True; d.valid := False } // 10/11 reserved
+                    }
+                  } else {
+                    d.illegal := True; d.valid := False
+                  }
+                } otherwise {
                   d.regWrite := True
                   d.aluOp := Mux(instr(6),
                     Mux(instr(5), AluOp.AND, AluOp.OR),
@@ -245,10 +303,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
       }
       is(B"10") { // Quadrant 2
         switch(cfunct3) {
-          is(B"000") { // C.SLLI
-            when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+          is(B"000") { // C.SLLI (6-bit shamt on RV64)
+            if (isRV64) {
               d.regWrite := True; d.aluOp := AluOp.SLL; d.aluSrc := True
               d.rs1 := crd; d.rd := crd; d.imm := cShamt
+            } else {
+              when(instr(12)) { d.illegal := True; d.valid := False } otherwise {
+                d.regWrite := True; d.aluOp := AluOp.SLL; d.aluSrc := True
+                d.rs1 := crd; d.rd := crd; d.imm := cShamt
+              }
             }
           }
           is(B"010") { // C.LWSP
@@ -256,6 +319,17 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
               d.regWrite := True; d.memRead := True; d.memSize := U(2, 2 bits)
               d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
               d.rs1 := U(2, 5 bits); d.rd := crd; d.imm := cLwspImm.resize(xlen).asSInt
+            }
+          }
+          is(B"011") { // C.LDSP (RV64)
+            if (isRV64) {
+              when(crd === U(0, 5 bits)) { d.illegal := True; d.valid := False } otherwise {
+                d.regWrite := True; d.memRead := True; d.memSize := U(3, 2 bits)
+                d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
+                d.rs1 := U(2, 5 bits); d.rd := crd; d.imm := cLdspImm.resize(xlen)
+              }
+            } else {
+              d.illegal := True; d.valid := False
             }
           }
           is(B"100") {
@@ -289,6 +363,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             d.memWrite := True; d.memSize := U(2, 2 bits)
             d.aluOp := AluOp.ADD; d.aluSrc := True
             d.rs1 := U(2, 5 bits); d.rs2 := crs2; d.imm := cSwspImm.resize(xlen).asSInt
+          }
+          is(B"111") { // C.SDSP (RV64)
+            if (isRV64) {
+              d.memWrite := True; d.memSize := U(3, 2 bits)
+              d.aluOp := AluOp.ADD; d.aluSrc := True
+              d.rs1 := U(2, 5 bits); d.rs2 := crs2; d.imm := cSdspImm.resize(xlen)
+            } else {
+              d.illegal := True; d.valid := False
+            }
           }
           default { d.illegal := True; d.valid := False }
         }

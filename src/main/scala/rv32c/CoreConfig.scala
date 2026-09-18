@@ -56,4 +56,7 @@ object CoreConfig {
 
   /** RV32IMC + Zicsr on the M/U stack: the compact rv32 MCU hart. */
   def rv32imc: CoreConfig = CoreConfig(isa = IsaConfig.rv32imc)
+
+  /** RV64IMC + Zicsr on the M/U stack: the compressed rv64 hart. */
+  def rv64imc: CoreConfig = CoreConfig(isa = IsaConfig.rv64imc)
 }

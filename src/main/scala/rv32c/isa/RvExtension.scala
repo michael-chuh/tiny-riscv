@@ -25,8 +25,8 @@ object RvExtension {
   case object Atomic extends RvExtension("A") {
     override val misaLetter: Option[Char] = Some('A')
   }
-  /** C: compressed 16-bit instructions. Implemented on RV32 (rv32 MCU target);
-    * the RV64C form stays reserved. */
+  /** C: compressed 16-bit instructions. Implemented on both RV32 (rv32 MCU
+    * target) and RV64. */
   case object Compressed extends RvExtension("C") {
     override val misaLetter: Option[Char] = Some('C')
   }

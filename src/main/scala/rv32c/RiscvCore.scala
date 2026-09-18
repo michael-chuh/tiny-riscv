@@ -172,8 +172,6 @@ class RiscvCore(config: CoreConfig) extends Component {
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
   require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
     "S/H modes are roadmap features and are not implemented yet")
-  require(config.xlen == 32 || !config.isa.hasCompressed,
-    "RV64C is a roadmap feature; compressed instructions are RV32-only for now")
 
   // ===== Privilege-mode legality (configuration driven) =====
   // The configured stack is the authoritative set of encodings the hart may
