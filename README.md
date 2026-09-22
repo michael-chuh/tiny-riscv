@@ -1,6 +1,6 @@
 # rv32c — 可配置的 32 位 RISC-V CPU
 
-rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 32 位 RISC-V 处理器，采用经典五级流水线微架构，完整实现 RV32I 基础整数指令集，并内置可配置的 **RV32M** 乘除扩展。
+rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，采用经典五级流水线微架构，完整实现 RV32I / RV64I 基础整数指令集，并内置可配置的 **RV32M/RV64M** 乘除扩展、**RV32A/RV64A** 原子扩展与 **RV32C/RV64C** 压缩扩展。
 
 项目设计目标：
 
@@ -13,6 +13,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 32 位 RISC-V 处�
 - 完整 RV32I 指令集（含 load/store 字节/半字/字访问、有符号/无符号扩展）
 - 完整 RV32M 扩展：MUL/MULH/MULHSU/MULHU 组合实现；DIV/DIVU/REM/REMU 由 EX 段多周期除法器执行，运算期间整条流水线冻结，除零与 MIN/-1 边界按 RISC-V 规范处理
 - 经典 5 级流水线：IF / ID / EX / MEM / WB
+- RV32A / RV64A 原子扩展：LR/SC 预约集 + 9 种 AMO（ADD/SWAP/XOR/OR/AND/MIN/MAX/MINU/MAXU），AMO 在 MEM 级「读→改→写」冻结流水线保证原子性，LR/SC 与 AMO 对齐违例触发 cause 4/6
+- RV32C / RV64C 压缩扩展：32 位指令总线内按 `pc[1]` 半字取指与拼接，RV64 专属编码（`C.LD/C.SD/C.ADDIW/C.*W` 等）按 `xlen` 展开
 - 数据冒险全旁路（EX/MEM → EX、MEM/WB → EX）
 - load-use 冒险：硬件停顿 1 拍
 - 分支在 EX 阶段判定，跳过 2 条错误取指指令
@@ -25,8 +27,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 32 位 RISC-V 处�
 
 - RV32I 定向测试通过：数据冒险旁路、load-use 停顿、分支跳过、访存读写均验证正确
 - RV32M 定向测试通过：乘法（高位/有符号×无符号/无符号）、有符号与无符号除法/余数、负数运算、除零、MIN/-1 溢出回绕、除法结果旁路均验证正确
-- RV64I / RV64M / RV32C / RV64C 定向测试通过，`sbt test` 共 33 项
-- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）与 `rtl/RiscvCore64C.v`（RV64IMC），异步复位、标准 Verilog
+- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A 定向测试通过，`sbt test` 共 39 项
+- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）与 `rtl/RiscvCore64A.v`（RV64IMA），异步复位、标准 Verilog
 
 ## 快速开始
 
@@ -70,11 +72,13 @@ rtl/                        # 生成的 Verilog（可选）
 ## 路线图
 
 - [x] RV32I 五级流水线（含旁路、load-use 停顿、分支提前判定）
-- [x] RV32M 扩展（组合乘法 + EX 多周期除法器，`withMulDiv` 配置）
+- [x] RV32M / RV64M 扩展（组合乘法 + EX 多周期除法器，`RvExtension.MulDiv` 配置）
+- [x] RV32C / RV64C 压缩扩展（`RvExtension.Compressed` 配置）
+- [x] RV32A / RV64A 原子扩展（LR/SC + AMO 读-改-写，`RvExtension.Atomic` 配置）
+- [x] RV64I 支持（`xlen = 64` 参数切换，RV32C/RV64C 共用压缩取指通路）
 - [ ] F/D 浮点扩展
 - [ ] 分支预测器（BHT/gshare 插件化）
 - [ ] I/D 缓存、AXI4 总线桥
-- [ ] RV64I 支持（`xlen = 64` 参数切换）
 - [ ] 多核（`numCores` 参数 + 互联总线）
 
 ## 许可证

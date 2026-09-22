@@ -87,6 +87,14 @@ object IsaConfig {
   val rv64imc: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed), PrivConfig.MU)
 
+  /** RV32 with M and A (RV32IMA_Zicsr, M/U): atomic-enabled rv32 hart. */
+  val rv32ima: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Atomic), PrivConfig.MU)
+
+  /** RV64 with M and A (RV64IMA_Zicsr, M/U): atomic-enabled rv64 hart. */
+  val rv64ima: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Atomic), PrivConfig.MU)
+
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */
   val rv64: IsaConfig =

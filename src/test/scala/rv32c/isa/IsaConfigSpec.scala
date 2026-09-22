@@ -40,6 +40,22 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
   }
 
+  test("rv32ima misa is MXL=1 | I | M | A | U") {
+    val isa = IsaConfig.rv32ima
+    assert(!isa.isRV64 && isa.hasMulDiv && isa.hasAtomic)
+    val expected = (BigInt(1) << 30) | (BigInt(1) << ('I' - 'A')) |
+      (BigInt(1) << ('M' - 'A')) | (BigInt(1) << ('A' - 'A')) | (BigInt(1) << ('U' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
+  test("rv64ima misa is MXL=2 | I | M | A | U") {
+    val isa = IsaConfig.rv64ima
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasAtomic)
+    val expected = (BigInt(2) << 62) | (BigInt(1) << ('I' - 'A')) |
+      (BigInt(1) << ('M' - 'A')) | (BigInt(1) << ('A' - 'A')) | (BigInt(1) << ('U' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
   test("extension letters are bit-indexed from 'A'") {
     def bit(c: Char) = c - 'A'
     assert(bit('I') == 8 && bit('M') == 12 && bit('U') == 20 && bit('S') == 18)
@@ -111,5 +127,8 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(cfg.bytePerXlen == 4)
     val plain = CoreConfig()
     assert(!plain.hasMulDiv && plain.misaValue == 0x40100100L)
+    val atomic = CoreConfig.rv32ima
+    assert(atomic.hasAtomic && !atomic.hasCompressed)
+    assert(!plain.hasAtomic)
   }
 }

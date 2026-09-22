@@ -40,6 +40,11 @@ class IdExBundle(xlen: Int) extends Bundle {
   val memWrite = Bool()
   val memSize = UInt(2 bits)
   val memSign = Bool()
+  // --- A extension (LR/SC/AMO) ---
+  val atomic = Bool()          // SC / AMO*: result is produced in MEM, not EX
+  val isLr = Bool()
+  val isSc = Bool()
+  val amoOp = UInt(5 bits)     // funct5 for AMO*
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
   val rd = UInt(5 bits)
@@ -71,6 +76,10 @@ object IdExBundle {
     b.memWrite := False
     b.memSize := U(0, 2 bits)
     b.memSign := False
+    b.atomic := False
+    b.isLr := False
+    b.isSc := False
+    b.amoOp := U(0, 5 bits)
     b.rs1 := U(0, 5 bits)
     b.rs2 := U(0, 5 bits)
     b.rd := U(0, 5 bits)
@@ -91,6 +100,11 @@ class ExMemBundle(xlen: Int) extends Bundle {
   val memWrite = Bool()
   val memSize = UInt(2 bits)
   val memSign = Bool()
+  // --- A extension (LR/SC/AMO) ---
+  val atomic = Bool()
+  val isLr = Bool()
+  val isSc = Bool()
+  val amoOp = UInt(5 bits)
   val regWrite = Bool()
   val rd = UInt(5 bits)
   val wbSel = UInt(3 bits)     // WbSel: ALU / MEM / PC4 / CSR
@@ -109,6 +123,10 @@ object ExMemBundle {
     b.memWrite := False
     b.memSize := U(0, 2 bits)
     b.memSign := False
+    b.atomic := False
+    b.isLr := False
+    b.isSc := False
+    b.amoOp := U(0, 5 bits)
     b.regWrite := False
     b.rd := U(0, 5 bits)
     b.wbSel := U(0, 3 bits)
@@ -199,6 +217,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   // that starts at the upper halfword needs one extra cycle to latch the high
   // half and fetch the next word; that cycle presents itself as a fetch stall.
   val withCompressed = config.isa.hasCompressed
+  val withAtomic = config.isa.hasAtomic
   val pcReg = RegInit(U(config.resetVector, xlen bits))
   val mis32 = Reg(Bool) init False
   val hiReg = Reg(Bits(16 bits)) init B(0, 16 bits)
@@ -299,6 +318,7 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val forwardRs1 = Bits(xlen bits)
   when(exMem.valid && exMem.regWrite && exMem.rd =/= U(0) && !exMem.memRead &&
+       !exMem.atomic &&
        exMem.wbSel =/= WbSel.CSR && exMem.rd === idEx.rs1) {
     forwardRs1 := exMem.aluResult
   } elsewhen (memWb.valid && memWb.regWrite && memWb.rd =/= U(0) && memWb.rd === idEx.rs1) {
@@ -313,6 +333,7 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val forwardRs2 = Bits(xlen bits)
   when(exMem.valid && exMem.regWrite && exMem.rd =/= U(0) && !exMem.memRead &&
+       !exMem.atomic &&
        exMem.wbSel =/= WbSel.CSR && exMem.rd === idEx.rs2) {
     forwardRs2 := exMem.aluResult
   } elsewhen (memWb.valid && memWb.regWrite && memWb.rd =/= U(0) && memWb.rd === idEx.rs2) {
@@ -464,6 +485,19 @@ class RiscvCore(config: CoreConfig) extends Component {
       exTrapEna := True
       exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
+    // A-extension ops require natural alignment (W: 4 bytes, D: 8 bytes).
+    // LR uses the load-misaligned cause, SC/AMO the store/AMO one.
+    when(idEx.atomic || idEx.isLr) {
+      val alignCheck = Mux(idEx.memSize === U(2, 2 bits),
+        aluResult(1 downto 0) === B"00", aluResult(2 downto 0) === B"000")
+      when(!alignCheck) {
+        exTrapEna := True
+        exTrapCause := Mux(idEx.isLr,
+          U(ExceptionCode.loadMisaligned, xlen bits),
+          U(ExceptionCode.storeMisaligned, xlen bits)).asBits
+        exTrapTval := aluResult
+      }
+    }
   }
 
   // ===== MRET / interrupt resolution =====
@@ -486,10 +520,10 @@ class RiscvCore(config: CoreConfig) extends Component {
   // is produced by such an instruction currently in EX must be bubbled one cycle
   // (the existing load-use stall extended to CSR results).
   val stallData = idEx.valid && idEx.rd =/= U(0) &&
-    (idEx.memRead || (idEx.wbSel === WbSel.CSR && idEx.regWrite)) &&
+    (idEx.memRead || idEx.atomic || (idEx.wbSel === WbSel.CSR && idEx.regWrite)) &&
     (idEx.rd === dec.rs1 || idEx.rd === dec.rs2)
   val fetchStall = !io.iBus.ready
-  val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !io.dBus.ready
+  val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !exMem.atomic && !io.dBus.ready
 
   // ===== RV32M / RV64M divide/remainder (multi-cycle divider in EX) =====
   // The divider is only instantiated when the M-extension is enabled. With it
@@ -537,7 +571,102 @@ class RiscvCore(config: CoreConfig) extends Component {
     exAluResult := aluResult
   }
 
-  val freezeAll = memStall || fetchStall || divStall || mis32Stall
+  // ===== A extension: LR/SC reservation + AMO read-modify-write =====
+  // LR is an ordinary load that also sets a reservation; SC is a conditional
+  // store whose rd carries 0 (success) / 1 (failure); AMO runs a two-step
+  // read-then-write in MEM, freezing the pipeline so the update is atomic.
+  val scSuccess = Bool()
+  val amoStall = Bool()
+  val amoDriveRead = Bool()
+  val amoDriveWrite = Bool()
+  val amoNewValue = Bits(xlen bits)
+  val amoOldValue = Bits(xlen bits)
+
+  // AMO operation combiner at a given width; `default` never uses the result
+  // (illegal funct5 is rejected by the decoder).
+  def amoCombine(width: Int, op: UInt, lhs: Bits, rhs: Bits): Bits = {
+    val l = lhs.asUInt.resize(width)
+    val r = rhs.asUInt.resize(width)
+    val res = Bits(width bits)
+    switch(op) {
+      is(U(0x00, 5 bits)) { res := (l + r).asBits }                       // AMOADD
+      is(U(0x01, 5 bits)) { res := r.asBits }                             // AMOSWAP
+      is(U(0x04, 5 bits)) { res := (l ^ r).asBits }                       // AMOXOR
+      is(U(0x08, 5 bits)) { res := (l | r).asBits }                       // AMOOR
+      is(U(0x0c, 5 bits)) { res := (l & r).asBits }                       // AMOAND
+      is(U(0x10, 5 bits)) { res := Mux(l.asSInt < r.asSInt, l, r).asBits } // AMOMIN
+      is(U(0x14, 5 bits)) { res := Mux(l.asSInt > r.asSInt, l, r).asBits } // AMOMAX
+      is(U(0x18, 5 bits)) { res := Mux(l < r, l, r).asBits }              // AMOMINU
+      is(U(0x1c, 5 bits)) { res := Mux(l > r, l, r).asBits }              // AMOMAXU
+      default { res := l.asBits }
+    }
+    res
+  }
+
+  val otherFreeze = memStall || fetchStall || divStall || mis32Stall
+
+  if (withAtomic) {
+    val resvValid = RegInit(False)
+    val resvAddr = Reg(UInt(xlen bits))
+    val memAddrEx = exMem.aluResult.asUInt
+    val isLrMem = exMem.valid && exMem.isLr
+    val isScMem = exMem.valid && exMem.isSc
+    val isAmoMem = exMem.valid && exMem.atomic && !exMem.isSc
+
+    val scOk = resvValid && (resvAddr === memAddrEx)
+
+    // AMO FSM: 0 = issue read (latch the old word), 1 = issue write (release).
+    val amoState = RegInit(U(0, 2 bits))
+    val amoOld = Reg(Bits(xlen bits))
+    val shiftWidth = log2Up(xlen)
+    val amoWordShift = if (xlen > 32)
+      Mux(memAddrEx(log2Up(xlen / 8) - 1), U(32, shiftWidth bits), U(0, shiftWidth bits))
+    else
+      U(0, shiftWidth bits)
+    val amoIsW = exMem.memSize === U(2, 2 bits)
+    val amoOldWord = (amoOld >> amoWordShift)(31 downto 0)
+
+    amoOldValue := Mux(amoIsW, amoOldWord.asSInt.resize(xlen).asBits, amoOld)
+    val wNew = amoCombine(32, exMem.amoOp, (amoOld >> amoWordShift)(31 downto 0), exMem.rs2Data(31 downto 0))
+    val dNew = amoCombine(xlen, exMem.amoOp, amoOld, exMem.rs2Data)
+    amoNewValue := Mux(amoIsW, wNew.asSInt.resize(xlen).asBits, dNew)
+
+    amoDriveRead := isAmoMem && amoState === U(0)
+    amoDriveWrite := isAmoMem && amoState === U(1)
+    amoStall := isAmoMem && !(amoState === U(1) && io.dBus.ready)
+    scSuccess := scOk
+
+    when(isAmoMem) {
+      when(amoState === U(0)) {
+        when(io.dBus.ready) { amoOld := io.dBus.readData; amoState := U(1) }
+      } elsewhen (amoState === U(1)) {
+        when(io.dBus.ready) { amoState := U(0) }
+      }
+    } otherwise {
+      amoState := U(0)
+    }
+
+    // LR establishes a reservation; any store, SC or committed AMO clears it.
+    when(!otherFreeze) {
+      when(isLrMem) {
+        resvValid := True
+        resvAddr := memAddrEx
+      }
+      when(isScMem || (exMem.valid && exMem.memWrite) ||
+           (isAmoMem && amoState === U(1) && io.dBus.ready)) {
+        resvValid := False
+      }
+    }
+  } else {
+    amoStall := False
+    amoDriveRead := False
+    amoDriveWrite := False
+    amoNewValue := B(0, xlen bits)
+    amoOldValue := B(0, xlen bits)
+    scSuccess := False
+  }
+
+  val freezeAll = otherFreeze || amoStall
 
   // ===== Interrupt acceptance (instruction boundary) =====
   // Taken only when the pipeline is otherwise advancing and nothing older in
@@ -633,6 +762,10 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.memWrite := dec.memWrite
     idEx.memSize := dec.memSize
     idEx.memSign := dec.memSign
+    idEx.atomic := dec.atomic
+    idEx.isLr := dec.isLr
+    idEx.isSc := dec.isSc
+    idEx.amoOp := dec.amoOp
     idEx.rs1 := dec.rs1
     idEx.rs2 := dec.rs2
     idEx.rd := dec.rd
@@ -656,6 +789,10 @@ class RiscvCore(config: CoreConfig) extends Component {
     exMem.memWrite := idEx.memWrite
     exMem.memSize := idEx.memSize
     exMem.memSign := idEx.memSign
+    exMem.atomic := idEx.atomic
+    exMem.isLr := idEx.isLr
+    exMem.isSc := idEx.isSc
+    exMem.amoOp := idEx.amoOp
     exMem.regWrite := idEx.regWrite
     exMem.rd := idEx.rd
     exMem.wbSel := idEx.wbSel
@@ -669,34 +806,44 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   // ===== Memory stage =====
   val memAddr = exMem.aluResult
-  io.dBus.valid := exMem.valid && (exMem.memRead || exMem.memWrite)
-  io.dBus.write := exMem.memWrite
+  // An SC drives the bus only when its reservation check succeeds; AMO read /
+  // write phases are driven by the FSM instead of the ordinary load/store path.
+  val effMemWrite = exMem.memWrite && Mux(exMem.isSc, scSuccess, True)
+  val normalRead = exMem.valid && exMem.memRead && !exMem.atomic
+  val normalWrite = exMem.valid && effMemWrite
+  io.dBus.valid := normalRead || normalWrite || amoDriveRead || amoDriveWrite
+  io.dBus.write := normalWrite || amoDriveWrite
   io.dBus.size := exMem.memSize
   io.dBus.address := memAddr.asUInt
 
-  val storeOffset = memAddr(1 downto 0).asUInt
+  // Byte offset within the data-memory word; the word is xlen/8 bytes wide, so
+  // RV64 needs 3 offset bits to reach the high half of a word (addresses 4..7).
+  val byteOffsetWidth = log2Up(xlen / 8)
+  val storeOffset = memAddr(byteOffsetWidth - 1 downto 0).asUInt
+  // AMO write uses the combined value; ordinary stores use rs2.
+  val storeValue = Mux(amoDriveWrite, amoNewValue, exMem.rs2Data)
   io.dBus.writeData := B(0, xlen bits)
   io.dBus.writeMask := B(0, xlen / 8 bits)
   switch(exMem.memSize) {
     is(U(0)) { // byte
-      io.dBus.writeData := (exMem.rs2Data << (storeOffset * 8)).resize(xlen)
+      io.dBus.writeData := (storeValue << (storeOffset * 8)).resize(xlen)
       io.dBus.writeMask := (U(1, xlen / 8 bits) << storeOffset).resize(xlen / 8).asBits
     }
     is(U(1)) { // half
-      io.dBus.writeData := (exMem.rs2Data << (memAddr(1).asUInt * 8)).resize(xlen)
-      io.dBus.writeMask := Mux(memAddr(1), B(0xc, xlen / 8 bits), B(0x3, xlen / 8 bits))
+      io.dBus.writeData := (storeValue << (storeOffset * 8)).resize(xlen)
+      io.dBus.writeMask := (U(3, xlen / 8 bits) << storeOffset).resize(xlen / 8).asBits
     }
     is(U(2)) { // word: low 4 bytes, or the high half of the bus word on RV64
       if (xlen > 32) {
-        io.dBus.writeData := (exMem.rs2Data << (memAddr(1).asUInt * 8)).resize(xlen)
-        io.dBus.writeMask := Mux(memAddr(1), B(0xf0, xlen / 8 bits), B(0x0f, xlen / 8 bits))
+        io.dBus.writeData := (storeValue << (storeOffset * 8)).resize(xlen)
+        io.dBus.writeMask := (U(0xf, xlen / 8 bits) << storeOffset).resize(xlen / 8).asBits
       } else {
-        io.dBus.writeData := exMem.rs2Data
+        io.dBus.writeData := storeValue
         io.dBus.writeMask := B(0xf, xlen / 8 bits)
       }
     }
     default { // doubleword (RV64)
-      io.dBus.writeData := exMem.rs2Data
+      io.dBus.writeData := storeValue
       io.dBus.writeMask := B((BigInt(1) << (xlen / 8)) - 1, xlen / 8 bits)
     }
   }
@@ -708,12 +855,11 @@ class RiscvCore(config: CoreConfig) extends Component {
       loadResult := Mux(exMem.memSign, byte.asSInt.resize(xlen).asBits, byte.resize(xlen))
     }
     is(U(1)) { // half
-      val half = (io.dBus.readData >> (memAddr(1).asUInt * 8))(15 downto 0)
+      val half = (io.dBus.readData >> (storeOffset * 8))(15 downto 0)
       loadResult := Mux(exMem.memSign, half.asSInt.resize(xlen).asBits, half.resize(xlen))
     }
     is(U(2)) { // word: sign-extend (lw) or zero-extend (lwu) on RV64
-      val wordShift = if (xlen > 32) memAddr(1).asUInt * 32 else U(0, 1 bits)
-      val word = (io.dBus.readData >> wordShift)(31 downto 0)
+      val word = (io.dBus.readData >> (storeOffset * 8))(31 downto 0)
       loadResult := Mux(exMem.memSign, word.asSInt.resize(xlen).asBits, word.resize(xlen))
     }
     default { // doubleword
@@ -727,7 +873,11 @@ class RiscvCore(config: CoreConfig) extends Component {
     memWb.regWrite := exMem.regWrite
     memWb.rd := exMem.rd
     memWb.wbSel := exMem.wbSel
-    when(exMem.memRead) {
+    when(exMem.atomic) {
+      // SC returns 0 on success / 1 on failure; AMO returns the original value.
+      memWb.wbData := Mux(exMem.isSc,
+        Mux(scSuccess, B(0, xlen bits), B(1, xlen bits)), amoOldValue)
+    } elsewhen (exMem.memRead) {
       memWb.wbData := loadResult
     } otherwise {
       memWb.wbData := exMem.aluResult

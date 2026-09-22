@@ -25,6 +25,7 @@ graph LR
 
 - 组合译码器 `Decoder` 生成全部控制信号：寄存器写使能、ALU 操作、访存属性、分支类型、写回选择、立即数，以及 CSR/异常指令的 `csrOp/csrWe/csrAddr/sysOp` 控制域
 - 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽；RV32C / RV64C 使能时，16 位压缩指令在译码级展开为等价的标准操作（与 32 位路径写入同一组控制域），非法/保留压缩编码置 `illegal`（cause 2）
+- **RV32A / RV64A（`isa.hasAtomic`）**：opcode `0101111` 按 `funct5[31:27]` 展开 LR/SC/AMO 控制域（`atomic/isLr/isSc/amoOp`），有效地址为 `rs1`；`funct3` 决定 `.W`/`.D`，非本宽度的 `funct3`、未知 `funct5` 或 A 关闭时置 `illegal`（cause 2）
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
@@ -34,12 +35,14 @@ graph LR
 - **分支与跳转在 EX 阶段提前判定**，条件跳转直接消耗转发后的操作数，避免等到 MEM 阶段，将错误预测代价从 3 拍降到 2 拍
 - JALR 目标 = `rs1 + imm` 并强制按 2 字节对齐（清 LSB）
 - 异常（`ecall/ebreak/非法指令/mret 违例`）在 EX 段判定并提交 trap（见「CSR 与异常/中断通路」）
+- **A 扩展对齐检查**：LR/SC 与 AMO 的地址未按访问宽度自然对齐时在 EX 段判定并提交 trap——LR 为 cause 4，SC/AMO 为 cause 6，`mtval` 记录故障地址；异常先于任何内存副作用
 
 ### MEM（访存）
 
 - 根据指令访问数据总线（读写、字节/半字/字、符号扩展）
 - 写数据与写掩码（byte strobe）在核心内生成，从地址低 2 位计算字节偏移
 - 读回数据按访问宽度截取并做符号/零扩展
+- **AMO 原子读-改-写（`isa.hasAtomic`）**：以两态状态机在 MEM 级完成「读回旧值 → 组合运算 → 写回」，期间拉高 `amoStall` 冻结整条流水线；旧值经 MEM/WB 旁路回写 rd，写回值由组合器按 `wNew/dNew` 生成；SC 仅当预约有效且地址匹配时驱动总线写，rd 写 0/1 表示成功/失败
 
 ### WB（写回）
 
@@ -89,6 +92,18 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 ```
 
 结果通过既有 EX/MEM 旁路网络转发，流水线其余逻辑无需感知除法器的多周期特性。
+
+### RV32A / RV64A 原子访存（多周期 MEM 停顿）
+
+LR 是普通载入并置位预约；SC 在预约校验失败时不驱动总线写；AMO 在 MEM 段以两态状态机完成读-改-写：
+
+```text
+状态 0 (READ): 驱动总线读，amoStall=1 冻结流水线，读回值锁存到 amoOld
+状态 1 (WRITE): 组合器算出新值驱动总线写，amoStall 释放，旧值经 MEM/WB 回写 rd
+预约: LR 置 resvValid/resvAddr；任何提交的存储、SC 或已提交 AMO 清除预约
+```
+
+`freezeAll = otherFreeze || amoStall`，因此 AMO 读写两拍间所有阶段保持；A 关闭时该分支、预约寄存器与状态机被整体剪除。
 
 ### 控制冒险
 
@@ -152,10 +167,11 @@ DIV/DIVU/REM/REMU 在 EX 段由一个恢复除法器执行，运算期间整条�
 | 位宽参数化 | 全程使用 `isa.xlen`（经 `CoreConfig`） | 从 RV32 迁移 RV64 只需改一处配置 |
 | RV32M 乘法 | ALU 内组合乘法 | 单周期出结果，零流水线代价 |
 | RV32M 除法 | EX 段恢复除法器 + 整条流水线冻结 | 面积/时序友好；`IsaConfig` 不含 `MulDiv` 时不实例化 |
+| RV32A / RV64A 原子 | MEM 段「读→改→写」状态机 + 流水线冻结；LR/SC 预约集 | 单核下无需总线锁即可保证原子性；`IsaConfig` 不含 `Atomic` 时整体剪除 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）与 RV64C 压缩编码已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码与 RV64A 原子（`.W`/`.D`）已实现；S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合

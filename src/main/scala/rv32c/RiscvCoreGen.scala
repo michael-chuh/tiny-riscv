@@ -15,11 +15,13 @@ object RiscvCoreGen {
   }
 
   def main(args: Array[String]): Unit = {
-    // Default hart (no compressed), the RV32IMC variant, and the RV64IMC variant
-    // are elaborated so the C-off / C-on and RV32 / RV64 paths stay buildable.
+    // Elaborate one hart per capability combination so the C-off / C-on,
+    // A-off / A-on, and RV32 / RV64 paths stay buildable.
     gen(CoreConfig.rv32im, "RiscvCore")
     gen(CoreConfig.rv32imc, "RiscvCoreC")
     gen(CoreConfig.rv64imc, "RiscvCore64C")
-    println("Generated rtl/RiscvCore.v, rtl/RiscvCoreC.v and rtl/RiscvCore64C.v")
+    gen(CoreConfig.rv32ima, "RiscvCoreA")
+    gen(CoreConfig.rv64ima, "RiscvCore64A")
+    println("Generated rtl/RiscvCore.v, RiscvCoreC.v, RiscvCore64C.v, RiscvCoreA.v and RiscvCore64A.v")
   }
 }

@@ -42,6 +42,7 @@ case class CoreConfig(
 
   // ---- convenient forwarders used across the RTL ----
   def hasMulDiv: Boolean = isa.hasMulDiv
+  def hasAtomic: Boolean = isa.hasAtomic
   def hasCompressed: Boolean = isa.hasCompressed
   def misaValue: BigInt = isa.misaValue
   def priv: PrivConfig = isa.priv
@@ -59,4 +60,10 @@ object CoreConfig {
 
   /** RV64IMC + Zicsr on the M/U stack: the compressed rv64 hart. */
   def rv64imc: CoreConfig = CoreConfig(isa = IsaConfig.rv64imc)
+
+  /** RV32IMA + Zicsr on the M/U stack: the atomic-enabled rv32 hart. */
+  def rv32ima: CoreConfig = CoreConfig(isa = IsaConfig.rv32ima)
+
+  /** RV64IMA + Zicsr on the M/U stack: the atomic-enabled rv64 hart. */
+  def rv64ima: CoreConfig = CoreConfig(isa = IsaConfig.rv64ima)
 }

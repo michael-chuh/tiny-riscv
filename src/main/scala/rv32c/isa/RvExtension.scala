@@ -21,7 +21,7 @@ object RvExtension {
   case object MulDiv extends RvExtension("M") {
     override val misaLetter: Option[Char] = Some('M')
   }
-  /** A: atomics. Reserved (rv64 target). */
+  /** A: atomics (LR/SC + AMO). Implemented (rv32/rv64). */
   case object Atomic extends RvExtension("A") {
     override val misaLetter: Option[Char] = Some('A')
   }
@@ -43,11 +43,11 @@ object RvExtension {
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
-  /** Extensions the current RTL can execute (M, Zicsr, C). */
-  val implemented: Set[RvExtension] = Set(MulDiv, Zicsr, Compressed)
+  /** Extensions the current RTL can execute (M, A, Zicsr, C). */
+  val implemented: Set[RvExtension] = Set(MulDiv, Atomic, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
-    Set(Atomic, SingleFloat, DoubleFloat, Zifencei)
+    Set(SingleFloat, DoubleFloat, Zifencei)
 
   private val byName: Map[String, RvExtension] =
     (implemented ++ reserved).map(e => e.name -> e).toMap

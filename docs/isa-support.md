@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除，以及 **RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持，默认 RV32 配置为 `rv32im`，压缩核配置为 `rv32imc` / `rv64imc`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO），以及 **RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持，默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -122,6 +122,28 @@
 
 > 非法/保留压缩编码（`C.ADDI4SPN` nzuimm=0、`C.LUI` imm=0/rd=0、`C.LWSP`/`C.LDSP` rd=0、RV32 shamt[5]=1、RV64 核上出现 RV32 专属编码，以及 RV32 核上出现 RV64 专属编码）统一触发 cause 2，`mepc` 记录压缩指令的精确地址。C 关闭时取指与译码逻辑逐拍等价于非压缩核。
 
+### 原子指令（RV32A / RV64A, opcode=0101111，仅当 `RvExtension.Atomic` 使能）
+
+A 扩展的 `funct5` 位于 `instr[31:27]`；`funct3=010` 为 `.W`（32 位），`funct3=011` 为 `.D`（doubleword，仅 RV64）。LR/SC 与 AMO 的有效地址均为 `rs1`（无偏移），`.W` 形式在 RV64 上只访问低/高 32 位并按符号扩展回写 rd。
+
+| 指令 | funct5 | 语义 |
+|------|--------|------|
+| LR.W / LR.D | 00010 | 载入并建立地址预约（rd=旧值） |
+| SC.W / SC.D | 00011 | 仅当预约有效且地址匹配时写入；rd=0 成功 / 1 失败 |
+| AMOADD.W / .D | 00000 | 读-改-写：旧值送 rd，内存写 `mem + rs2` |
+| AMOSWAP.W / .D | 00001 | 内存写 `rs2`，旧值送 rd |
+| AMOXOR.W / .D | 00100 | `mem ^ rs2` |
+| AMOOR.W / .D | 01000 | `mem \| rs2` |
+| AMOAND.W / .D | 01100 | `mem & rs2` |
+| AMOMIN.W / .D | 10000 | 有符号 `min(mem, rs2)` |
+| AMOMAX.W / .D | 10100 | 有符号 `max(mem, rs2)` |
+| AMOMINU.W / .D | 11000 | 无符号 `min` |
+| AMOMAXU.W / .D | 11100 | 无符号 `max` |
+
+> 原子性：AMO 在 MEM 级以「读 → 改 → 写」两拍状态机实现，期间冻结整条流水线（`amoStall`），读回应值与组合运算结果锁存后再发起写，单核下不存在中间可见状态。LR 建立的预约在整个流水线推进时设置；任何提交的存储、SC 或已提交的 AMO 都会清除预约，因此上下文切换/中断天然使预约失效。SC 仅在预约有效且地址相等时驱动总线写。AMO 结果（旧值）经 MEM/WB 旁路回写 rd，可被紧随其后的指令前递。
+>
+> 对齐：A 访问地址未按访问宽度自然对齐时触发地址非对齐异常——LR 为 cause 4（load address misaligned），SC/AMO 为 cause 6（store/AMO address misaligned），`mtval` 记录故障地址，且在产生任何内存副作用之前陷阱。非本宽度的 `funct3`、未知 `funct5`、以及 A 关闭时出现 opcode `0101111` 均触发 cause 2。
+
 ### 分支（BRANCH, 1100011）
 
 | 指令 | funct3 | 实现状态 |
@@ -199,4 +221,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 ## 后续扩展计划
 
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
-- **A/F/D**：原子、浮点扩展（`RvExtension` 的 `reserved` 集合）
+- **F/D**：浮点扩展（`RvExtension` 的 `reserved` 集合）
+- **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）

@@ -7,6 +7,8 @@ package rv32c.isa
 object ExceptionCode {
   def instructionIllegal = 2
   def breakpoint = 3
+  def loadMisaligned = 4
+  def storeMisaligned = 6
   def ecallFromU = 8
   def ecallFromS = 9
   def ecallFromM = 11

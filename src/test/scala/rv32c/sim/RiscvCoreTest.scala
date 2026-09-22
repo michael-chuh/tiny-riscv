@@ -17,6 +17,14 @@ class RiscvCoreTest extends AnyFunSuite {
       ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
   private def encU(imm: Int, rd: Int, opc: Int = 0x37): Long =
     ((imm & 0xfffff).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+  private def encS(imm: Int, rs2: Int, rs1: Int, f3: Int, opc: Int = 0x23): Long =
+    (((imm >> 5) & 0x7f).toLong << 25) | ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((f3 & 0x7).toLong << 12) | ((imm & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+  // A-extension R-type: funct5[31:27], aq[26], rl[25], opcode 0x2f.
+  private def encAmo(funct5: Int, rs2: Int, rs1: Int, f3: Int, rd: Int, aq: Int = 0, rl: Int = 0): Long =
+    ((funct5 & 0x1f).toLong << 27) | ((aq & 1).toLong << 26) | ((rl & 1).toLong << 25) |
+      ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | 0x2fL
 
   // ---- RV32C (16-bit) encoders ----
   // Each helper takes logical operands and places them in the RVC bit fields as
@@ -404,6 +412,96 @@ class RiscvCoreTest extends AnyFunSuite {
     )
   }
 
+  // RV32A program: LR/SC success and mismatch-failure, plus all nine AMO
+  // operations and a dependent add to exercise AMO-result forwarding. 32-bit
+  // instructions; self-loop (jal x0,0) at 0x8C.
+  val rv32aProgram = Seq[Long](
+    encI(5, 0, 0, 1),             // 0x00 addi x1,x0,5
+    encS(0, 1, 0, 2),             // 0x04 sw   x1,0(x0)        mem[0]=5
+    encI(3, 0, 0, 3),             // 0x08 addi x3,x0,3
+    encAmo(0x00, 3, 0, 2, 2),     // 0x0C AMOADD.W  x2,x3,(x0) x2=5, mem=8
+    encR(0, 1, 2, 0, 4, 0x33),    // 0x10 add  x4,x2,x1      x4=10 (AMO result dependency)
+    encI(99, 0, 0, 6),            // 0x14 addi x6,x0,99
+    encAmo(0x01, 6, 0, 2, 5),     // 0x18 AMOSWAP.W x5,x6,(x0) x5=8, mem=99
+    encI(0, 0, 2, 7, 0x03),       // 0x1C lw   x7,0(x0)      x7=99
+    encAmo(0x02, 0, 0, 2, 8),     // 0x20 LR.W x8,(x0)       x8=99, reservation=0
+    encI(7, 0, 0, 10),            // 0x24 addi x10,x0,7
+    encAmo(0x03, 10, 0, 2, 9),    // 0x28 SC.W x9,x10,(x0)   x9=0, mem=7
+    encI(0, 0, 2, 11, 0x03),      // 0x2C lw   x11,0(x0)     x11=7
+    encAmo(0x02, 0, 0, 2, 12),    // 0x30 LR.W x12,(x0)      x12=7, reservation=0
+    encI(4, 0, 0, 15),            // 0x34 addi x15,x0,4
+    encI(0x55, 0, 0, 6),          // 0x38 addi x6,x0,0x55
+    encS(0, 6, 15, 2),            // 0x3C sw   x6,0(x15)     mem[4]=0x55 sentinel
+    encI(1, 0, 0, 14),            // 0x40 addi x14,x0,1
+    encAmo(0x03, 14, 15, 2, 13),  // 0x44 SC.W x13,x14,0(x15) x13=1 (mismatch), no store
+    encI(0, 15, 2, 15, 0x03),     // 0x48 lw   x15,0(x15)    x15=0x55 (SC failure wrote nothing)
+    encI(0xF, 0, 0, 16),          // 0x4C addi x16,x0,15
+    encAmo(0x04, 16, 0, 2, 17),   // 0x50 AMOXOR.W  x17,x16,(x0) x17=7, mem=0x08
+    encI(0xC, 0, 0, 18),          // 0x54 addi x18,x0,12
+    encAmo(0x0c, 18, 0, 2, 19),   // 0x58 AMOAND.W  x19,x18,(x0) x19=8, mem=0x08
+    encI(0x30, 0, 0, 20),         // 0x5C addi x20,x0,48
+    encAmo(0x08, 20, 0, 2, 21),   // 0x60 AMOOR.W   x21,x20,(x0) x21=8, mem=0x38
+    encI(-1, 0, 0, 22),           // 0x64 addi x22,x0,-1
+    encAmo(0x10, 22, 0, 2, 23),   // 0x68 AMOMIN.W  x23,x22,(x0) x23=0x38, mem=0xFFFFFFFF
+    encI(5, 0, 0, 24),            // 0x6C addi x24,x0,5
+    encAmo(0x14, 24, 0, 2, 25),   // 0x70 AMOMAX.W  x25,x24,(x0) x25=0xFFFFFFFF, mem=5
+    encI(2, 0, 0, 26),            // 0x74 addi x26,x0,2
+    encAmo(0x18, 26, 0, 2, 27),   // 0x78 AMOMINU.W x27,x26,(x0) x27=5, mem=2
+    encI(0xA, 0, 0, 28),          // 0x7C addi x28,x0,10
+    encAmo(0x1c, 28, 0, 2, 29),   // 0x80 AMOMAXU.W x29,x28,(x0) x29=2, mem=0x0A
+    encI(0, 0, 2, 30, 0x03),      // 0x84 lw   x30,0(x0)     x30=0x0A
+    encAmo(0x00, 2, 0, 2, 31),    // 0x88 AMOADD.W  x31,x2,(x0) x31=0x0A, mem=0x0F
+    0x0000006FL                   // 0x8C jal x0,0
+  )
+
+  // RV64A program: LR.D/SC.D, AMO.D 64-bit add, and AMO.W sign-extension /
+  // 32-bit unsigned max. Self-loop (jal x0,0) at 0x80.
+  val rv64aProgram = Seq[Long](
+    encI(5, 0, 0, 1),             // 0x00 addi x1,x0,5
+    encS(0, 1, 0, 3),             // 0x04 sd   x1,0(x0)        mem[0]=5
+    encI(3, 0, 0, 3),             // 0x08 addi x3,x0,3
+    encAmo(0x00, 3, 0, 3, 2),     // 0x0C AMOADD.D x2,x3,(x0)  x2=5, mem=8
+    encI(0, 0, 3, 4, 0x03),       // 0x10 ld   x4,0(x0)        x4=8
+    encI(1, 0, 0, 6),             // 0x14 addi x6,x0,1
+    encI(32, 6, 1, 6),            // 0x18 slli x6,x6,32        x6=1<<32
+    encS(8, 6, 0, 3),             // 0x1C sd   x6,8(x0)        mem[8]=0x100000000
+    encAmo(0x02, 0, 0, 3, 7),     // 0x20 LR.D x7,(x0)         x7=8
+    encI(7, 0, 0, 9),             // 0x24 addi x9,x0,7
+    encAmo(0x03, 9, 0, 3, 8),     // 0x28 SC.D x8,x9,(x0)      x8=0, mem[0]=7
+    encI(0, 0, 3, 10, 0x03),      // 0x2C ld   x10,0(x0)       x10=7
+    encAmo(0x02, 0, 0, 3, 11),    // 0x30 LR.D x11,(x0)        x11=7
+    encI(8, 0, 0, 13),            // 0x34 addi x13,x0,8
+    encAmo(0x03, 13, 13, 3, 12),  // 0x38 SC.D x12,x13,8(x13)  x12=1 (mismatch), no store
+    encI(8, 0, 3, 14, 0x03),      // 0x3C ld   x14,8(x0)       x14=0x100000000
+    encI(-1, 0, 0, 15),           // 0x40 addi x15,x0,-1
+    encI(31, 15, 1, 15),          // 0x44 slli x15,x15,31      x15=0xFFFFFFFF80000000
+    encAmo(0x01, 15, 0, 2, 16),   // 0x48 AMOSWAP.W x16,x15,(x0) x16=7, mem=0x80000000
+    encI(0, 0, 3, 17, 0x03),      // 0x4C ld   x17,0(x0)       x17=0x80000000
+    encI(1, 0, 0, 18),            // 0x50 addi x18,x0,1
+    encAmo(0x14, 18, 0, 2, 19),   // 0x54 AMOMAX.W x19,x18,(x0) x19=signExt(0x80000000), mem=1
+    encI(0, 0, 3, 20, 0x03),      // 0x58 ld   x20,0(x0)       x20=1
+    encI(-1, 0, 0, 22),           // 0x5C addi x22,x0,-1
+    encAmo(0x1c, 22, 0, 2, 21),   // 0x60 AMOMAXU.W x21,x22,(x0) x21=1, mem=0xFFFFFFFF
+    encI(0, 0, 3, 23, 0x03),      // 0x64 ld   x23,0(x0)       x23=0xFFFFFFFF
+    encAmo(0x00, 1, 0, 3, 24),    // 0x68 AMOADD.D x24,x1,(x0) x24=0xFFFFFFFF, mem=0x100000004
+    encI(0, 0, 3, 25, 0x03),      // 0x6C ld   x25,0(x0)       x25=0x100000004
+    encI(12, 0, 0, 26),           // 0x70 addi x26,x0,12       high 32 bits of memory word 1
+    encI(5, 0, 0, 27),            // 0x74 addi x27,x0,5
+    encAmo(0x00, 27, 26, 2, 28),  // 0x78 AMOADD.W x28,x27,0(x26) x28=1 (old high word), mem high=6
+    encI(0, 26, 3, 29, 0x03),     // 0x7C ld   x29,0(x26)      x29=0x600000000
+    0x0000006FL                   // 0x80 jal x0,0
+  )
+
+  // Misaligned A accesses must trap before any memory side effect.
+  val rv32aLrMisalignedProgram = Seq[Long](
+    encI(2, 0, 0, 1),             // 0x00 addi x1,x0,2
+    encAmo(0x02, 0, 1, 2, 2)      // 0x04 LR.W x2,(x1)  misaligned -> cause 4, mepc=4
+  )
+  val rv32aAmoMisalignedProgram = Seq[Long](
+    encI(2, 0, 0, 1),             // 0x00 addi x1,x0,2
+    encAmo(0x00, 0, 1, 2, 2)      // 0x04 AMOADD.W x2,x0,(x1) misaligned -> cause 6, mepc=4
+  )
+
   def runUntil(tb: CpuTb, maxCycles: Int, pc: BigInt, reg: Int, value: BigInt): Int = {
     var cycles = 0
     while (cycles < maxCycles) {
@@ -675,6 +773,109 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugRegs(2).toBigInt == 16, "x2 = sp 16")
         assert(dut.io.debugRegs(1).toBigInt == 7, "x1 = 32-bit instr at pc[1]=1 spliced")
         println(s"PASS: RV64C finished in $cycles cycles")
+      }
+  }
+
+  test("RV32A atomics program") {
+    val cfg = CoreConfig.rv32ima
+    val lastPc = 4 * (rv32aProgram.length - 1)
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32aProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 800, lastPc, 31, 0xAL)
+        assert(cycles < 800, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(2).toBigInt == 5, "x2 = AMOADD.W old value")
+        assert(dut.io.debugRegs(4).toBigInt == 10, "x4 = x2 + x1 (AMO result forwarded)")
+        assert(dut.io.debugRegs(5).toBigInt == 8, "x5 = AMOSWAP.W old value")
+        assert(dut.io.debugRegs(7).toBigInt == 99, "x7 = mem after AMOSWAP")
+        assert(dut.io.debugRegs(8).toBigInt == 99, "x8 = LR.W old value")
+        assert(dut.io.debugRegs(9).toBigInt == 0, "x9 = SC.W success")
+        assert(dut.io.debugRegs(11).toBigInt == 7, "x11 = mem after successful SC.W")
+        assert(dut.io.debugRegs(12).toBigInt == 7, "x12 = LR.W for mismatch test")
+        assert(dut.io.debugRegs(13).toBigInt == 1, "x13 = SC.W failure (address mismatch)")
+        assert(dut.io.debugRegs(15).toBigInt == 0x55L, "x15 = failed SC.W left the sentinel untouched")
+        assert(dut.io.debugRegs(17).toBigInt == 7, "x17 = AMOXOR.W old value")
+        assert(dut.io.debugRegs(19).toBigInt == 8, "x19 = AMOAND.W old value")
+        assert(dut.io.debugRegs(21).toBigInt == 8, "x21 = AMOOR.W old value")
+        assert(dut.io.debugRegs(23).toBigInt == 0x38L, "x23 = AMOMIN.W old value")
+        assert(dut.io.debugRegs(25).toBigInt == 0xFFFFFFFFL, "x25 = AMOMAX.W old value")
+        assert(dut.io.debugRegs(27).toBigInt == 5, "x27 = AMOMINU.W old value")
+        assert(dut.io.debugRegs(29).toBigInt == 2, "x29 = AMOMAXU.W old value")
+        assert(dut.io.debugRegs(30).toBigInt == 0xAL, "x30 = mem after AMOMAXU.W")
+        assert(dut.io.debugRegs(31).toBigInt == 0xAL, "x31 = final AMOADD.W old value")
+        println(s"PASS: RV32A finished in $cycles cycles")
+      }
+  }
+
+  test("RV64A atomics program") {
+    val cfg = CoreConfig.rv64ima
+    val lastPc = 4 * (rv64aProgram.length - 1)
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64aProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val cycles = runUntil(dut, 500, lastPc, 25, BigInt("100000004", 16))
+        assert(cycles < 500, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(2).toBigInt == 5, "x2 = AMOADD.D old value")
+        assert(dut.io.debugRegs(4).toBigInt == 8, "x4 = mem after AMOADD.D")
+        assert(dut.io.debugRegs(7).toBigInt == 8, "x7 = LR.D old value")
+        assert(dut.io.debugRegs(8).toBigInt == 0, "x8 = SC.D success")
+        assert(dut.io.debugRegs(10).toBigInt == 7, "x10 = mem after successful SC.D")
+        assert(dut.io.debugRegs(11).toBigInt == 7, "x11 = LR.D for mismatch test")
+        assert(dut.io.debugRegs(12).toBigInt == 1, "x12 = SC.D failure (address mismatch)")
+        assert(dut.io.debugRegs(14).toBigInt == BigInt("100000000", 16), "x14 = SC.D failure wrote nothing")
+        assert(dut.io.debugRegs(16).toBigInt == 7, "x16 = AMOSWAP.W old value")
+        assert(dut.io.debugRegs(17).toBigInt == BigInt("80000000", 16), "x17 = mem low word after AMOSWAP.W")
+        assert(dut.io.debugRegs(19).toBigInt == BigInt("FFFFFFFF80000000", 16), "x19 = AMOMAX.W sign-extended old")
+        assert(dut.io.debugRegs(20).toBigInt == 1, "x20 = mem after AMOMAX.W")
+        assert(dut.io.debugRegs(21).toBigInt == 1, "x21 = AMOMAXU.W old value")
+        assert(dut.io.debugRegs(23).toBigInt == BigInt("FFFFFFFF", 16), "x23 = mem low word after AMOMAXU.W")
+        assert(dut.io.debugRegs(24).toBigInt == BigInt("FFFFFFFF", 16), "x24 = AMOADD.D old value")
+        assert(dut.io.debugRegs(25).toBigInt == BigInt("100000004", 16), "x25 = 64-bit AMOADD.D sum")
+        assert(dut.io.debugRegs(28).toBigInt == 1, "x28 = AMOADD.W high-word old value at address 12")
+        assert(dut.io.debugRegs(29).toBigInt == BigInt("600000000", 16), "x29 = AMOADD.W wrote the high word")
+        println(s"PASS: RV64A finished in $cycles cycles")
+      }
+  }
+
+  test("RV32A misaligned LR traps (cause 4)") {
+    val cfg = CoreConfig.rv32ima
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32aLrMisalignedProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 4, "misaligned LR.W -> load address misaligned")
+        assert(dut.io.debugMepc.toBigInt == 4, "mepc points at the faulting LR.W")
+        println("PASS: RV32A misaligned LR trap")
+      }
+  }
+
+  test("RV32A misaligned AMO traps (cause 6)") {
+    val cfg = CoreConfig.rv32ima
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32aAmoMisalignedProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 6, "misaligned AMO -> store address misaligned")
+        assert(dut.io.debugMepc.toBigInt == 4, "mepc points at the faulting AMO")
+        println("PASS: RV32A misaligned AMO trap")
       }
   }
 }

@@ -10,8 +10,8 @@ rv32c 的全部可配置项集中在两层模型：**ISA 配置**（`rv32c.isa` 
 | 扩展 | `rv32c.isa.RvExtension` | 命名扩展（M/A/C/F/D/Zicsr/Zifencei） | `implemented`（当前 RTL 可执行）vs `reserved`（roadmap） |
 | 特权 | `rv32c.isa.PrivConfig` | 特权栈形状（M/M-U/M-S-U） | `hasUser/hasSupervisor/hasHypervisor`、栈名 |
 | CSR | `rv32c.isa.CsrMap` | CSR 地址、只读性、最低特权 | `implementedFor(isa)` / `readOnlyFor(isa)`，供 CSR 读解码与 EX 合法性检查共用 |
-| 异常码 | `rv32c.isa.ExceptionCode` | `mcause` 同步异常编号 | 具名常量（2/3/8/9/11），消除 trap 通路魔法数字 |
-| 核 | `CoreConfig` | 复位向量、预测器/缓存占位、多核、调试 | 组合 `IsaConfig`，转发 `xlen/misaValue/hasMulDiv` |
+| 异常码 | `rv32c.isa.ExceptionCode` | `mcause` 同步异常编号 | 具名常量（2/3/4/6/8/9/11），消除 trap 通路魔法数字 |
+| 核 | `CoreConfig` | 复位向量、预测器/缓存占位、多核、调试 | 组合 `IsaConfig`，转发 `xlen/misaValue/hasMulDiv/hasAtomic` |
 
 > 译码器 `Decoder` 与 CSR 文件 `CsrFile` 均接收 `IsaConfig`：M 扩展使能、misa 值等不再以散布尔/常量参数传入，而由配置层派生。EX 级 CSR 合法集（已实现地址、只读地址）来自 `CsrMap`，不再硬编码地址链。特权模式合法性同样配置驱动：`PrivConfig.supportedEncodings` 决定哪些 `MPP`/模式编码合法，`privAtLeast(minPriv)` 决定 CSR 访问权限；当 M/U 栈扩展为 M/S/U 时无需改写判定结构。
 
@@ -28,7 +28,7 @@ case class IsaConfig(
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
 | `xlen` | 32 | 数据路径位宽，`isa-support` 以配置为准生成 |
-| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Zicsr`、`Compressed`（C，RV32 与 RV64 均支持）为 `implemented`；A/F/D/Zifencei 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
+| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Atomic`（A）、`Zicsr`、`Compressed`（C，RV32 与 RV64 均支持）为 `implemented`；F/D/Zifencei 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
 | `priv` | `M/U` | 结构规则由 `PrivConfig` 强制：M 必选、S 蕴含 U、H 蕴含 S；S/H 为 RV64 专用（当前 RTL 仅实现 M/U） |
 
 ### 预设
@@ -38,10 +38,12 @@ IsaConfig.rv32    // RV32I_Zicsr,   M/U   —— 默认 RV32 MCU 基线
 IsaConfig.rv32im  // RV32IM_Zicsr,  M/U   —— 含乘除扩展
 IsaConfig.rv32imc // RV32IMC_Zicsr, M/U   —— 含乘除与 RV32C 压缩扩展
 IsaConfig.rv64imc // RV64IMC_Zicsr, M/U   —— 含乘除与 RV64C 压缩扩展
+IsaConfig.rv32ima // RV32IMA_Zicsr, M/U   —— 含乘除与 RV32A 原子扩展
+IsaConfig.rv64ima // RV64IMA_Zicsr, M/U   —— 含乘除与 RV64A 原子扩展
 IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— S 模式未实现故被拒绝；RV64I/M 请用 M/U 栈配置
 ```
 
-**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位。
+**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位。
 
 ## CoreConfig 字段
 
@@ -60,7 +62,7 @@ case class CoreConfig(
 
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
-| `isa` | `IsaConfig.rv32` | ISA 三轴。`CoreConfig` 转发 `xlen/isRV64/hasMulDiv/misaValue/priv` |
+| `isa` | `IsaConfig.rv32` | ISA 三轴。`CoreConfig` 转发 `xlen/isRV64/hasMulDiv/hasAtomic/misaValue/priv` |
 | `resetVector` | 0x00000000 | 上电后 PC 起始地址，常见 SoC 用 0x80000000 |
 | `branchPredictor` | staticNotTaken | 预留：当前固定"不跳转"预测，可换 BHT/gshare |
 | `withICache/DCache` | None | 预留：在总线接口后插入缓存 |
@@ -83,7 +85,7 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 生成三个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）与 `rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+`RiscvCoreGen` 生成五个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）与 `rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
 
 ### 启用 RV32C 压缩扩展（RV32IMC）
 
@@ -100,6 +102,15 @@ val config = CoreConfig.rv64imc       // isa = IsaConfig.rv64imc
 ```
 
 RV32 与 RV64 共用同一压缩取指通路（2 字节 PC 粒度、`pc[1]` 半字选择、`mis32` 拼接），译码按 `xlen` 展开专属编码：RV64 支持 `C.LD/C.SD`、`C.LDSP/C.SDSP`、`C.ADDIW`、`C.SUBW/C.ADDW` 与 6 位 shamt 的压缩移位；RV32 专属的 `C.JAL` 在 RV64 上置 illegal，反之 RV64 专属编码在 RV32 上置 illegal。
+
+### 启用 RV32A / RV64A 原子扩展
+
+```scala
+val config = CoreConfig.rv32ima       // isa = IsaConfig.rv32ima
+val config64 = CoreConfig.rv64ima     // isa = IsaConfig.rv64ima
+```
+
+原子通路仅在 `isa.hasAtomic` 时生成；默认配置不含 A，访存与转发逐拍保持原行为。AMO 的「读→改→写」在 MEM 级以两态状态机完成并冻结流水线，LR/SC 预约集在内核内维护；A 关闭时该分支连同 `reserved`、状态机全部被剪除。
 
 ### 切换到 RV64IM（M/U 栈）
 
@@ -137,12 +148,12 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、Zicsr、C）；RV64 下 M 扩展按 W 后缀形式实现，C 扩展 RV32 与 RV64 均支持
-- 拒绝：S/H 模式、未实现的扩展（A/F/D/Zifencei）、无 Zicsr、纯 M（无 U）
+- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、A、Zicsr、C）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持
+- 拒绝：S/H 模式、未实现的扩展（F/D/Zifencei）、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 
 ## 参数传递原则
 
 - 配置采用**单点注入**：`CoreConfig` 传入 `RiscvCore`，逐层传给各子模块（ALU、寄存器堆、译码器）
 - 一切与指令/CSR/模式相关的位宽与能力均来自 `config.isa`（经 `CoreConfig` 转发），保证全链路一致
-- 未实现的扩展（A/F/D/Zifencei）与 S/H 模式、缓存、分支预测器通过 `reserved` 集合与配置旋钮 + 文档说明预留，避免死代码进入 RTL
+- 未实现的扩展（F/D/Zifencei）与 S/H 模式、缓存、分支预测器通过 `reserved` 集合与配置旋钮 + 文档说明预留，避免死代码进入 RTL

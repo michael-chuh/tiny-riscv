@@ -44,6 +44,11 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val memWrite = Bool()
   val memSize = UInt(2 bits)   // 0=byte, 1=half, 2=word, 3=doubleword
   val memSign = Bool()
+  // --- A extension (LR/SC/AMO) ---
+  val atomic = Bool()          // this is an A-extension memory op
+  val isLr = Bool()            // LR (sets a reservation)
+  val isSc = Bool()            // SC (conditional store, fail bit in rd)
+  val amoOp = UInt(5 bits)     // funct5 for AMO*; 0 for LR/SC
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
   val rd = UInt(5 bits)
@@ -69,11 +74,13 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withMulDiv: Boolean = isa.hasMulDiv
   private val isRV64: Boolean = isa.isRV64
   private val withCompressed: Boolean = isa.hasCompressed
+  private val withAtomic: Boolean = isa.hasAtomic
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
   val funct3 = instr(14 downto 12)
   val funct7 = instr(31 downto 25)
+  val funct5 = instr(31 downto 27)
   val rs1Num = instr(19 downto 15).asUInt
   val rdNum = instr(11 downto 7).asUInt
 
@@ -98,6 +105,10 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   d.memWrite := False
   d.memSize := U(2, 2 bits)
   d.memSign := False
+  d.atomic := False
+  d.isLr := False
+  d.isSc := False
+  d.amoOp := U(0, 5 bits)
   d.rs1 := rs1Num
   d.rs2 := instr(24 downto 20).asUInt
   d.rd := rdNum
@@ -454,6 +465,42 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           else { d.illegal := True; d.valid := False }
         }
         default { d.illegal := True; d.valid := False }
+      }
+    }
+    is(M"0101111") { // AMO (A extension): LR / SC / AMO*
+      if (withAtomic) {
+        d.regWrite := True
+        d.rs1 := rs1Num
+        d.rs2 := instr(24 downto 20).asUInt
+        d.rd := rdNum
+        d.amoOp := funct5.asUInt
+        // The effective address is rs1 with no offset: fold an explicit zero
+        // immediate into the ALU so rs2 stays the AMO/SC operand.
+        d.aluSrc := True
+        d.imm := S(0, xlen bits)
+        // W is funct3=010; D (funct3=011) exists only on RV64.
+        val sizeOk = if (isRV64) (funct3 === M"010") || (funct3 === M"011") else funct3 === M"010"
+        when(sizeOk) {
+          when(funct3 === M"010") { d.memSize := U(2, 2 bits) } otherwise { d.memSize := U(3, 2 bits) }
+          switch(funct5) {
+            is(M"00010") { // LR.W / LR.D: ordinary load + reservation
+              d.isLr := True; d.memRead := True; d.wbSel := WbSel.MEM
+            }
+            is(M"00011") { // SC.W / SC.D: conditional store + fail bit in rd
+              d.isSc := True; d.atomic := True; d.memWrite := True
+            }
+            is(M"00000", M"00001", M"00100", M"01000", M"01100",
+               M"10000", M"10100", M"11000", M"11100") { // AMO*.W / AMO*.D
+              d.atomic := True; d.memRead := True // memRead routes the WB result + hazard
+            }
+            default { d.illegal := True; d.valid := False }
+          }
+        } otherwise {
+          d.illegal := True; d.valid := False
+        }
+      } else {
+        d.illegal := True // A-extension disabled by config
+        d.valid := False
       }
     }
     is(M"0010011") { // OP-IMM
