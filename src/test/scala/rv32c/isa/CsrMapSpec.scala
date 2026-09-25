@@ -18,7 +18,14 @@ class CsrMapSpec extends AnyFunSuite {
 
   test("implementedFor includes every machine CSR on an M/U hart") {
     val impl = CsrMap.implementedFor(IsaConfig.rv32)
-    assert(impl.map(_.addr).toSet == CsrMap.all.map(_.addr).toSet)
+    // On a hart without an FPU the FP CSRs (fcsr/fflags/frm) are absent.
+    val expected = CsrMap.all.filter(!_.requiresFpu).map(_.addr).toSet
+    assert(impl.map(_.addr).toSet == expected)
+  }
+
+  test("implementedFor exposes the FP CSRs on an FPU hart") {
+    val impl = CsrMap.implementedFor(IsaConfig.rv64d).map(_.addr).toSet
+    assert(impl.contains(0x001) && impl.contains(0x002) && impl.contains(0x003))
   }
 
   test("read-only set is exactly misa / mip / mhartid") {

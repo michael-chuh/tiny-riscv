@@ -30,11 +30,11 @@ object RvExtension {
   case object Compressed extends RvExtension("C") {
     override val misaLetter: Option[Char] = Some('C')
   }
-  /** F: single-precision float. Reserved. */
+  /** F: single-precision float. Implemented (FLEN=32). */
   case object SingleFloat extends RvExtension("F") {
     override val misaLetter: Option[Char] = Some('F')
   }
-  /** D: double-precision float. Reserved. */
+  /** D: double-precision float. Implemented on RV64 (FLEN=64); D implies F. */
   case object DoubleFloat extends RvExtension("D") {
     override val misaLetter: Option[Char] = Some('D')
   }
@@ -43,11 +43,12 @@ object RvExtension {
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
-  /** Extensions the current RTL can execute (M, A, Zicsr, C). */
-  val implemented: Set[RvExtension] = Set(MulDiv, Atomic, Zicsr, Compressed)
+  /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C). */
+  val implemented: Set[RvExtension] =
+    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
-    Set(SingleFloat, DoubleFloat, Zifencei)
+    Set(Zifencei)
 
   private val byName: Map[String, RvExtension] =
     (implemented ++ reserved).map(e => e.name -> e).toMap

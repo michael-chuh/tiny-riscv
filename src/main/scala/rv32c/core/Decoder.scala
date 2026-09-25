@@ -49,6 +49,16 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val isLr = Bool()            // LR (sets a reservation)
   val isSc = Bool()            // SC (conditional store, fail bit in rd)
   val amoOp = UInt(5 bits)     // funct5 for AMO*; 0 for LR/SC
+  // --- F/D floating point ---
+  val fp = Bool()              // this is a floating-point instruction
+  val fpWrite = Bool()         // result is written to the FP register file
+  val fpLoad = Bool()          // FP load (FLW/FLD)
+  val fpStore = Bool()         // FP store (FSW/FSD)
+  val fpIntRd = Bool()         // FP instruction whose result goes to an integer register
+  val fpOp = UInt(6 bits)      // FPU operation selector (FpOp)
+  val fpRm = UInt(3 bits)      // effective rounding mode
+  val fpFmt = Bool()           // false = single (S), true = double (D)
+  val rs3 = UInt(5 bits)       // FMA addend register
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
   val rd = UInt(5 bits)
@@ -75,6 +85,8 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val isRV64: Boolean = isa.isRV64
   private val withCompressed: Boolean = isa.hasCompressed
   private val withAtomic: Boolean = isa.hasAtomic
+  private val withFloat: Boolean = isa.hasFpu
+  private val withDouble: Boolean = isa.hasDoubleFloat
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -109,6 +121,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   d.isLr := False
   d.isSc := False
   d.amoOp := U(0, 5 bits)
+  d.fp := False
+  d.fpWrite := False
+  d.fpLoad := False
+  d.fpStore := False
+  d.fpIntRd := False
+  d.fpOp := U(0, 6 bits)
+  d.fpRm := U(0, 3 bits)
+  d.fpFmt := False
+  d.rs3 := instr(31 downto 27).asUInt
   d.rs1 := rs1Num
   d.rs2 := instr(24 downto 20).asUInt
   d.rd := rdNum
@@ -466,6 +487,44 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         }
         default { d.illegal := True; d.valid := False }
       }
+    }
+    is(M"0000111") { // Loads (FP): FLW / FLD
+      if (withFloat) {
+        d.fp := True
+        d.fpWrite := True
+        d.fpLoad := True
+        d.aluSrc := True
+        switch(funct3) {
+          is(M"010") { // FLW
+            d.memRead := True; d.wbSel := WbSel.MEM
+            d.memSize := U(2, 2 bits); d.rd := rdNum
+          }
+          is(M"011") { // FLD (D only, RV64)
+            if (withDouble) {
+              d.memRead := True; d.wbSel := WbSel.MEM
+              d.memSize := U(3, 2 bits); d.rd := rdNum
+            } else { d.illegal := True; d.valid := False }
+          }
+          default { d.illegal := True; d.valid := False }
+        }
+      } else { d.illegal := True; d.valid := False }
+    }
+    is(M"0100111") { // Stores (FP): FSW / FSD
+      if (withFloat) {
+        d.fp := True
+        d.fpStore := True
+        d.memWrite := True
+        d.aluSrc := True
+        d.imm := immS
+        switch(funct3) {
+          is(M"010") { d.memSize := U(2, 2 bits) } // FSW
+          is(M"011") { // FSD (D only, RV64)
+            if (withDouble) { d.memSize := U(3, 2 bits) }
+            else { d.illegal := True; d.valid := False }
+          }
+          default { d.illegal := True; d.valid := False }
+        }
+      } else { d.illegal := True; d.valid := False }
     }
     is(M"0101111") { // AMO (A extension): LR / SC / AMO*
       if (withAtomic) {

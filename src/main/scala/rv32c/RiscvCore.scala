@@ -45,8 +45,14 @@ class IdExBundle(xlen: Int) extends Bundle {
   val isLr = Bool()
   val isSc = Bool()
   val amoOp = UInt(5 bits)     // funct5 for AMO*
+  // --- F/D floating point ---
+  val fp = Bool()              // floating-point instruction
+  val fpWrite = Bool()         // writes the FP register file
+  val fpLoad = Bool()          // FP load (FLW/FLD)
+  val fpStore = Bool()         // FP store (FSW/FSD)
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
+  val rs3 = UInt(5 bits)
   val rd = UInt(5 bits)
   val imm = SInt(xlen bits)
   // --- Zicsr / exception control ---
@@ -80,8 +86,13 @@ object IdExBundle {
     b.isLr := False
     b.isSc := False
     b.amoOp := U(0, 5 bits)
+    b.fp := False
+    b.fpWrite := False
+    b.fpLoad := False
+    b.fpStore := False
     b.rs1 := U(0, 5 bits)
     b.rs2 := U(0, 5 bits)
+    b.rs3 := U(0, 5 bits)
     b.rd := U(0, 5 bits)
     b.imm := S(0, xlen bits)
     b.illegal := False
@@ -105,6 +116,12 @@ class ExMemBundle(xlen: Int) extends Bundle {
   val isLr = Bool()
   val isSc = Bool()
   val amoOp = UInt(5 bits)
+  // --- F/D floating point ---
+  val fp = Bool()
+  val fpWrite = Bool()         // writes the FP register file at WB
+  val fpLoad = Bool()          // FP load: WB data comes from the load path
+  val fpStore = Bool()         // FP store: store data comes from the FP file
+  val fpRs2Data = Bits(xlen bits) // FP store data (flen bits, zero-extended)
   val regWrite = Bool()
   val rd = UInt(5 bits)
   val wbSel = UInt(3 bits)     // WbSel: ALU / MEM / PC4 / CSR
@@ -127,6 +144,11 @@ object ExMemBundle {
     b.isLr := False
     b.isSc := False
     b.amoOp := U(0, 5 bits)
+    b.fp := False
+    b.fpWrite := False
+    b.fpLoad := False
+    b.fpStore := False
+    b.fpRs2Data := B(0, xlen bits)
     b.regWrite := False
     b.rd := U(0, 5 bits)
     b.wbSel := U(0, 3 bits)
@@ -146,6 +168,8 @@ class MemWbBundle(xlen: Int) extends Bundle {
   val rd = UInt(5 bits)
   val wbSel = UInt(3 bits)     // WbSel: ALU / MEM / PC4 / CSR
   val wbData = Bits(xlen bits)
+  val fp = Bool()              // floating-point instruction
+  val fpWrite = Bool()         // writes the FP register file
   val csrOp = CsrOp()
   val csrWe = Bool()
   val csrAddr = UInt(12 bits)
@@ -159,6 +183,8 @@ object MemWbBundle {
     b.rd := U(0, 5 bits)
     b.wbSel := U(0, 3 bits)
     b.wbData := B(0, xlen bits)
+    b.fp := False
+    b.fpWrite := False
     b.csrOp := CsrOp.NONE
     b.csrWe := False
     b.csrAddr := U(0, 12 bits)
@@ -289,6 +315,11 @@ class RiscvCore(config: CoreConfig) extends Component {
   // a value latched one cycle early at the ID/EX boundary.
   val regFile = new RegisterFile(xlen)
 
+  // ===== Floating-point register file (F/D) =====
+  val withFloat = config.hasFloat
+  val flen = config.flen
+  val fpRegFile = if (withFloat) Some(new FpRegisterFile(flen)) else None
+
   // ===== CSR file =====
   val csrFile = new CsrFile(xlen, config.hartId, config.isa)
   csrFile.io.timerInterrupt := io.timerInterrupt
@@ -301,10 +332,29 @@ class RiscvCore(config: CoreConfig) extends Component {
   regFile.io.rs1 := idEx.rs1
   regFile.io.rs2 := idEx.rs2
 
+  // FP register file read ports (addressed from EX, like the integer file).
+  val fpRs1Data = Bits(flen max 1 bits)
+  val fpRs2Data = Bits(flen max 1 bits)
+  val fpRs3Data = Bits(flen max 1 bits)
+  if (withFloat) {
+    val frf = fpRegFile.get
+    frf.io.rs1 := idEx.rs1
+    frf.io.rs2 := idEx.rs2
+    frf.io.rs3 := idEx.rs3
+    fpRs1Data := frf.io.rs1Data
+    fpRs2Data := frf.io.rs2Data
+    fpRs3Data := frf.io.rs3Data
+  } else {
+    fpRs1Data := B(0, flen max 1 bits)
+    fpRs2Data := B(0, flen max 1 bits)
+    fpRs3Data := B(0, flen max 1 bits)
+  }
+
   // ===== CSR state readouts used by EX / trap logic =====
   val curMode = csrFile.io.curMode
   val mstatusMie = csrFile.io.mstatusMie
   val mstatusMpp = csrFile.io.mstatusMpp
+  val mstatusFs = csrFile.io.mstatusFs
   val mieMtie = csrFile.io.mieMtie
   val mtvecRegBits = csrFile.io.mtvec
   val mepcRead = csrFile.io.mepc
@@ -439,6 +489,10 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val csrRoWrite = isCsrInst && csrReadOnly && idEx.csrOp === CsrOp.WRITE && idEx.csrWe
   val csrUnimpl = isCsrInst && !csrImplemented
+  // FP CSRs (fcsr/fflags/frm) are inaccessible while the FP unit is off.
+  val csrFsOff = if (withFloat) isCsrInst && mstatusFs === U(0, 2 bits) &&
+    (idEx.csrAddr === U(0x001, 12 bits) || idEx.csrAddr === U(0x002, 12 bits) ||
+      idEx.csrAddr === U(0x003, 12 bits)) else False
   // A CSR is illegal unless the current mode is at least its minimum privilege
   // (each CsrDef carries that level). With the current M/U stack this means
   // "no CSR is accessible from U mode", matching the spec subset.
@@ -447,7 +501,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val mtvecModeBad = isCsrInst && idEx.csrWe && idEx.csrAddr === U(0x305, 12 bits) &&
     (idEx.csrOp === CsrOp.WRITE || idEx.csrOp === CsrOp.SET) &&
     csrWrDataEx(1 downto 0) =/= B(0, 2 bits)
-  val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad) && idEx.valid
+  val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad || csrFsOff) && idEx.valid
 
   // ===== Synchronous exception decode (EX stage) =====
   // Only one case applies per instruction (SYSTEM ops and CSR ops are mutually
@@ -498,6 +552,23 @@ class RiscvCore(config: CoreConfig) extends Component {
         exTrapTval := aluResult
       }
     }
+    // FP instructions are illegal while the FP state is Off (mstatus.FS=Off).
+    when(idEx.fp && mstatusFs === U(0, 2 bits)) {
+      exTrapEna := True
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
+    }
+    // FP loads/stores require natural alignment (W: 4 bytes, D: 8 bytes).
+    when(idEx.fpLoad || idEx.fpStore) {
+      val fpAlignOk = Mux(idEx.memSize === U(3, 2 bits),
+        aluResult(2 downto 0) === B"000", aluResult(1 downto 0) === B"00")
+      when(!fpAlignOk) {
+        exTrapEna := True
+        exTrapCause := Mux(idEx.fpLoad,
+          U(ExceptionCode.loadMisaligned, xlen bits),
+          U(ExceptionCode.storeMisaligned, xlen bits)).asBits
+        exTrapTval := aluResult
+      }
+    }
   }
 
   // ===== MRET / interrupt resolution =====
@@ -519,9 +590,14 @@ class RiscvCore(config: CoreConfig) extends Component {
   // Loads and CSR reads produce rd only at WB, so a consumer in ID whose source
   // is produced by such an instruction currently in EX must be bubbled one cycle
   // (the existing load-use stall extended to CSR results).
-  val stallData = idEx.valid && idEx.rd =/= U(0) &&
+  val intStallData = idEx.valid && !idEx.fpWrite && idEx.rd =/= U(0) &&
     (idEx.memRead || idEx.atomic || (idEx.wbSel === WbSel.CSR && idEx.regWrite)) &&
     (idEx.rd === dec.rs1 || idEx.rd === dec.rs2)
+  // FP load-use: an FP load's result is only available at WB, so an FP consumer
+  // whose source matches the load destination stalls one cycle.
+  val fpStallData = idEx.valid && idEx.fpWrite && idEx.memRead && dec.fp &&
+    (idEx.rd === dec.rs1 || idEx.rd === dec.rs2 || idEx.rd === dec.rs3)
+  val stallData = intStallData || fpStallData
   val fetchStall = !io.iBus.ready
   val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !exMem.atomic && !io.dBus.ready
 
@@ -703,6 +779,16 @@ class RiscvCore(config: CoreConfig) extends Component {
   csrFile.io.trapTval := Mux(intrTake, B(0, xlen bits), exTrapTval)
   csrFile.io.mretEna := exMret
 
+  // An FP instruction (register write or FP CSR write) committed at WB marks the
+  // FP state dirty (mstatus.FS <- Dirty).
+  if (withFloat) {
+    val isFpCsr = memWb.csrAddr === U(0x001, 12 bits) ||
+      memWb.csrAddr === U(0x002, 12 bits) || memWb.csrAddr === U(0x003, 12 bits)
+    csrFile.io.fpDirty := memWb.valid && (memWb.fpWrite || (memWb.csrWe && isFpCsr))
+  } else {
+    csrFile.io.fpDirty := False
+  }
+
   // ===== Control redirection =====
   // A branch/jump flush only invalidates the two younger stages; the
   // redirecting instruction itself still flows to WB (needed for JAL link
@@ -766,8 +852,13 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.isLr := dec.isLr
     idEx.isSc := dec.isSc
     idEx.amoOp := dec.amoOp
+    idEx.fp := dec.fp
+    idEx.fpWrite := dec.fpWrite
+    idEx.fpLoad := dec.fpLoad
+    idEx.fpStore := dec.fpStore
     idEx.rs1 := dec.rs1
     idEx.rs2 := dec.rs2
+    idEx.rs3 := dec.rs3
     idEx.rd := dec.rd
     idEx.imm := dec.imm
     idEx.illegal := dec.illegal
@@ -793,6 +884,11 @@ class RiscvCore(config: CoreConfig) extends Component {
     exMem.isLr := idEx.isLr
     exMem.isSc := idEx.isSc
     exMem.amoOp := idEx.amoOp
+    exMem.fp := idEx.fp
+    exMem.fpWrite := idEx.fpWrite
+    exMem.fpLoad := idEx.fpLoad
+    exMem.fpStore := idEx.fpStore
+    exMem.fpRs2Data := fpRs2Data.resize(xlen)
     exMem.regWrite := idEx.regWrite
     exMem.rd := idEx.rd
     exMem.wbSel := idEx.wbSel
@@ -820,8 +916,10 @@ class RiscvCore(config: CoreConfig) extends Component {
   // RV64 needs 3 offset bits to reach the high half of a word (addresses 4..7).
   val byteOffsetWidth = log2Up(xlen / 8)
   val storeOffset = memAddr(byteOffsetWidth - 1 downto 0).asUInt
-  // AMO write uses the combined value; ordinary stores use rs2.
-  val storeValue = Mux(amoDriveWrite, amoNewValue, exMem.rs2Data)
+  // AMO write uses the combined value; ordinary stores use rs2; FP stores use
+  // the FP register file's rs2 read port.
+  val intStoreValue = Mux(amoDriveWrite, amoNewValue, exMem.rs2Data)
+  val storeValue = Mux(exMem.fpStore, exMem.fpRs2Data, intStoreValue)
   io.dBus.writeData := B(0, xlen bits)
   io.dBus.writeMask := B(0, xlen / 8 bits)
   switch(exMem.memSize) {
@@ -867,13 +965,31 @@ class RiscvCore(config: CoreConfig) extends Component {
     }
   }
 
+  // FP load result: FLW yields a 32-bit value (NaN-boxed into the high half when
+  // FLEN=64); FLD passes the full 64-bit doubleword.
+  val fpLoadData = Bits(flen max 1 bits)
+  if (withFloat) {
+    if (flen == 64) {
+      fpLoadData := Mux(exMem.memSize === U(3, 2 bits), loadResult,
+        B((BigInt(1) << 32) - 1, 32 bits) ## loadResult(31 downto 0))
+    } else {
+      fpLoadData := loadResult(31 downto 0)
+    }
+  } else {
+    fpLoadData := B(0, flen max 1 bits)
+  }
+
   // ===== MEM/WB update =====
   when(!freezeAll) {
     memWb.valid := exMem.valid
     memWb.regWrite := exMem.regWrite
     memWb.rd := exMem.rd
     memWb.wbSel := exMem.wbSel
-    when(exMem.atomic) {
+    memWb.fp := exMem.fp
+    memWb.fpWrite := exMem.fpWrite
+    when(exMem.fpLoad) {
+      memWb.wbData := fpLoadData.resize(xlen)
+    } elsewhen (exMem.atomic) {
       // SC returns 0 on success / 1 on failure; AMO returns the original value.
       memWb.wbData := Mux(exMem.isSc,
         Mux(scSuccess, B(0, xlen bits), B(1, xlen bits)), amoOldValue)
@@ -895,6 +1011,15 @@ class RiscvCore(config: CoreConfig) extends Component {
   regFile.io.rd := memWb.rd
   regFile.io.writeData := wbWriteData
   regFile.io.writeEnable := memWb.valid && memWb.regWrite
+
+  // FP register file write port (single writer, same WB point as the integer
+  // file). FLW/FLD and (later) FP compute results commit here.
+  if (withFloat) {
+    val frf = fpRegFile.get
+    frf.io.rd := memWb.rd
+    frf.io.writeData := memWb.wbData.resize(flen)
+    frf.io.writeEnable := memWb.valid && memWb.fpWrite
+  }
 
   // ===== Debug =====
   io.debugPc := pcReg

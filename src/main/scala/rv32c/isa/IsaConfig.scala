@@ -23,6 +23,10 @@ case class IsaConfig(
   require(!priv.hasSupervisor || xlen == 64, "S mode is an RV64 roadmap feature")
   require(!priv.hasHypervisor || xlen == 64, "H mode is an RV64 roadmap feature")
   require(!priv.hasHypervisor || priv.hasSupervisor, "H mode builds on S mode")
+  require(!extensions.contains(RvExtension.DoubleFloat) || extensions.contains(RvExtension.SingleFloat),
+    "D implies F: enable SingleFloat together with DoubleFloat")
+  require(!extensions.contains(RvExtension.DoubleFloat) || xlen == 64,
+    "D (double-precision float) is an RV64 feature in this core")
 
   // ---- convenience probes -------------------------------------------------
   def hasMulDiv: Boolean = extensions.contains(RvExtension.MulDiv)
@@ -30,9 +34,13 @@ case class IsaConfig(
   def hasCompressed: Boolean = extensions.contains(RvExtension.Compressed)
   def hasSingleFloat: Boolean = extensions.contains(RvExtension.SingleFloat)
   def hasDoubleFloat: Boolean = extensions.contains(RvExtension.DoubleFloat)
-  def hasFpu: Boolean = hasSingleFloat || hasDoubleFloat
+  def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
+
+  /** Floating-point register width (FLEN): 64 with D, 32 with F only, 0 without
+    * a floating-point unit. */
+  def flen: Int = if (hasDoubleFloat) 64 else if (hasSingleFloat) 32 else 0
 
   def isRV32: Boolean = xlen == 32
   def isRV64: Boolean = xlen == 64
@@ -94,6 +102,18 @@ object IsaConfig {
   /** RV64 with M and A (RV64IMA_Zicsr, M/U): atomic-enabled rv64 hart. */
   val rv64ima: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Atomic), PrivConfig.MU)
+
+  /** RV32 with F (RV32F_Zicsr, M/U): single-precision float rv32 hart. */
+  val rv32f: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.SingleFloat), PrivConfig.MU)
+
+  /** RV64 with F (RV64F_Zicsr, M/U): single-precision float rv64 hart. */
+  val rv64f: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.SingleFloat), PrivConfig.MU)
+
+  /** RV64 with F and D (RV64D_Zicsr, M/U): double-precision float rv64 hart. */
+  val rv64d: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.SingleFloat, RvExtension.DoubleFloat), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */

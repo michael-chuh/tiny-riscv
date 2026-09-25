@@ -44,6 +44,11 @@ case class CoreConfig(
   def hasMulDiv: Boolean = isa.hasMulDiv
   def hasAtomic: Boolean = isa.hasAtomic
   def hasCompressed: Boolean = isa.hasCompressed
+  def hasSingleFloat: Boolean = isa.hasSingleFloat
+  def hasDoubleFloat: Boolean = isa.hasDoubleFloat
+  def hasFloat: Boolean = isa.hasFpu
+  /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
+  def flen: Int = isa.flen
   def misaValue: BigInt = isa.misaValue
   def priv: PrivConfig = isa.priv
 
@@ -66,4 +71,13 @@ object CoreConfig {
 
   /** RV64IMA + Zicsr on the M/U stack: the atomic-enabled rv64 hart. */
   def rv64ima: CoreConfig = CoreConfig(isa = IsaConfig.rv64ima)
+
+  /** RV32F + Zicsr on the M/U stack: single-precision float rv32 hart. */
+  def rv32f: CoreConfig = CoreConfig(isa = IsaConfig.rv32f)
+
+  /** RV64F + Zicsr on the M/U stack: single-precision float rv64 hart. */
+  def rv64f: CoreConfig = CoreConfig(isa = IsaConfig.rv64f)
+
+  /** RV64D + Zicsr on the M/U stack: double-precision float rv64 hart. */
+  def rv64d: CoreConfig = CoreConfig(isa = IsaConfig.rv64d)
 }

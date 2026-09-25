@@ -1,6 +1,7 @@
 package rv32c.isa
 
 import org.scalatest.funsuite.AnyFunSuite
+import rv32c.CoreConfig
 
 /** Pure-Scala sanity checks for the ISA configuration model.
   *
@@ -59,6 +60,47 @@ class IsaConfigSpec extends AnyFunSuite {
   test("extension letters are bit-indexed from 'A'") {
     def bit(c: Char) = c - 'A'
     assert(bit('I') == 8 && bit('M') == 12 && bit('U') == 20 && bit('S') == 18)
+  }
+
+  // ---- F/D floating-point configuration ------------------------------------
+  test("rv32f misa is MXL=1 | I | F | U") {
+    val isa = IsaConfig.rv32f
+    assert(!isa.isRV64 && isa.hasSingleFloat && isa.hasFpu)
+    assert(!isa.hasDoubleFloat)
+    assert(isa.flen == 32)
+    val expected = (BigInt(1) << 30) | (BigInt(1) << ('I' - 'A')) |
+      (BigInt(1) << ('F' - 'A')) | (BigInt(1) << ('U' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
+  test("rv64d misa is MXL=2 | I | F | D | U and FLEN=64") {
+    val isa = IsaConfig.rv64d
+    assert(isa.isRV64 && isa.hasSingleFloat && isa.hasDoubleFloat)
+    assert(isa.flen == 64)
+    val expected = (BigInt(2) << 62) | (BigInt(1) << ('I' - 'A')) |
+      (BigInt(1) << ('F' - 'A')) | (BigInt(1) << ('D' - 'A')) | (BigInt(1) << ('U' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
+  test("D implies F") {
+    intercept[IllegalArgumentException] {
+      IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.DoubleFloat), PrivConfig.MU)
+    }
+  }
+
+  test("D on RV32 is rejected") {
+    intercept[IllegalArgumentException] {
+      IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.SingleFloat, RvExtension.DoubleFloat), PrivConfig.MU)
+    }
+  }
+
+  test("F/D CSRs appear only when the FPU is enabled") {
+    val withF = CoreConfig.rv64d
+    val without = CoreConfig()
+    assert(CsrMap.implementedFor(without.isa).forall(!_.requiresFpu))
+    assert(CsrMap.implementedFor(withF.isa).exists(_.name == "fcsr"))
+    assert(CsrMap.implementedFor(withF.isa).exists(_.name == "fflags"))
+    assert(CsrMap.implementedFor(withF.isa).exists(_.name == "frm"))
   }
 
   test("misa tracks which extensions are enabled") {

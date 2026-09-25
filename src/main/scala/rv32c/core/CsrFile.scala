@@ -35,10 +35,13 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     val trapCause = in Bits(xlen bits)
     val trapTval = in Bits(xlen bits)
     val mretEna = in Bool()
+    // FP: an FP instruction (or FP CSR write) committed this cycle -> FS <- Dirty.
+    val fpDirty = in Bool()
     // ---- control readouts ----
     val curMode = out UInt(2 bits)
     val mstatusMie = out Bool()
     val mstatusMpp = out UInt(2 bits)
+    val mstatusFs = out UInt(2 bits)
     val mieMtie = out Bool()
     val mtvec = out Bits(xlen bits)
     val mepc = out UInt(xlen bits)
@@ -60,13 +63,16 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val mcauseReg = Reg(Bits(xlen bits)) init B(0, xlen bits)
   val mtvalReg = Reg(Bits(xlen bits)) init B(0, xlen bits)
   val curModeReg = Reg(UInt(2 bits)) init MODE_M
+  // FP CSRs; only meaningful (and only wired) when the hart has an FPU.
+  val fflagsReg = Reg(Bits(5 bits)) init B(0, 5 bits)
+  val frmReg = Reg(Bits(3 bits)) init B(0, 3 bits)
 
   // misa is read-only and comes from the ISA configuration: MXL (by xlen) +
   // I base + enabled extension letters + U/S capability bits (see IsaConfig).
   // mhartid is a constant. Neither goes through the write port.
 
   // Writable masks (WARL).
-  private def mstatusMask: BigInt = (1 << 12) | (1 << 11) | (1 << 7) | (1 << 3)
+  private def mstatusMask: BigInt = (3 << 13) | (1 << 12) | (1 << 11) | (1 << 7) | (1 << 3)
   private def mieMask: BigInt = 1 << 7
 
   // ---- Combinational read (returns the current value for a CSR address) ----
@@ -86,6 +92,12 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     is(U(0x344, 12 bits)) { readData := mipBits }
     is(U(0xF14, 12 bits)) { readData := B(hartId, xlen bits) }
     default { readData := B(0, xlen bits) }
+  }
+  // FP CSRs (present only with an FPU). fcsr = frm[7:5] | fflags[4:0].
+  if (isa.hasFpu) {
+    when(io.csrAddr === U(0x001, 12 bits)) { readData := fflagsReg.resize(xlen) }
+    when(io.csrAddr === U(0x002, 12 bits)) { readData := frmReg.resize(xlen) }
+    when(io.csrAddr === U(0x003, 12 bits)) { readData := (frmReg ## fflagsReg).resize(xlen) }
   }
   io.rdData := readData
 
@@ -129,6 +141,10 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     mstatusNext(12 downto 11) := MODE_M.asBits    // MPP <- M (minimal U rule, R5.3)
   } otherwise {
     mstatusNext := mstatusPostWb
+  }
+  // Committing an FP instruction leaves the FP state dirty.
+  if (isa.hasFpu) {
+    when(io.fpDirty) { mstatusNext(14 downto 13) := B"11" }
   }
 
   // ---- curMode: M on trap; on MRET restore the *pre-update* MPP (the mode the
@@ -176,6 +192,23 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val mscratchNext = Bits(xlen bits)
   when(wbHit(0x340)) { mscratchNext := opNew } otherwise { mscratchNext := mscratchReg }
 
+  // ---- FP CSRs: fflags(0x001) / frm(0x002) / fcsr(0x003) ----
+  val fflagsNext = Bits(5 bits)
+  val frmNext = Bits(3 bits)
+  if (isa.hasFpu) {
+    fflagsNext := fflagsReg
+    frmNext := frmReg
+    when(wbHit(0x001)) { fflagsNext := opNew(4 downto 0) }
+    when(wbHit(0x002)) { frmNext := opNew(7 downto 5) }
+    when(wbHit(0x003)) {
+      fflagsNext := opNew(4 downto 0)
+      frmNext := opNew(7 downto 5)
+    }
+  } else {
+    fflagsNext := fflagsReg
+    frmNext := frmReg
+  }
+
   // ---- Register updates ----
   mstatusReg := mstatusNext
   mieReg := mieNext
@@ -185,11 +218,14 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   mcauseReg := mcauseNext
   mtvalReg := mtvalNext
   curModeReg := curModeNext
+  fflagsReg := fflagsNext
+  frmReg := frmNext
 
   // ---- Readouts ----
   io.curMode := curModeReg
   io.mstatusMie := mstatusReg(3)
   io.mstatusMpp := mstatusReg(12 downto 11).asUInt
+  io.mstatusFs := mstatusReg(14 downto 13).asUInt
   io.mieMtie := mieReg(7)
   io.mtvec := mtvecReg
   io.mepc := mepcReg.asUInt

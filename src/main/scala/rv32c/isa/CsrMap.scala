@@ -9,7 +9,8 @@ package rv32c.isa
   * `PrivMode.M`; supervisor/hypervisor CSRs are a roadmap item and would be
   * filtered in automatically once `isa.priv` carries the mode.
   */
-case class CsrDef(addr: Int, name: String, readOnly: Boolean, minPriv: PrivMode)
+case class CsrDef(addr: Int, name: String, readOnly: Boolean, minPriv: PrivMode,
+    requiresFpu: Boolean = false)
 
 /** Single source of truth for which CSRs exist and how they may be accessed.
   *
@@ -31,9 +32,16 @@ object CsrMap {
   val mip      = CsrDef(0x344, "mip",      readOnly = true,  PrivMode.M)
   val mhartid  = CsrDef(0xF14, "mhartid",  readOnly = true,  PrivMode.M)
 
+  // ---- Floating-point CSRs (specs/fp-extension/requirements.md R2) ----
+  // Non-privileged (U-accessible) and only present when the hart has an FPU.
+  val fflags = CsrDef(0x001, "fflags", readOnly = false, PrivMode.U, requiresFpu = true)
+  val frm    = CsrDef(0x002, "frm",    readOnly = false, PrivMode.U, requiresFpu = true)
+  val fcsr   = CsrDef(0x003, "fcsr",   readOnly = false, PrivMode.U, requiresFpu = true)
+
   /** Every CSR this design family knows about. */
   val all: Seq[CsrDef] = Seq(
-    mstatus, misa, mie, mtvec, mscratch, mepc, mcause, mtval, mip, mhartid
+    mstatus, misa, mie, mtvec, mscratch, mepc, mcause, mtval, mip, mhartid,
+    fflags, frm, fcsr
   )
 
   require(all.map(_.addr).distinct.size == all.size, "duplicate CSR address")
@@ -41,9 +49,9 @@ object CsrMap {
   val byAddr: Map[Int, CsrDef] = all.map(d => d.addr -> d).toMap
 
   /** CSRs accessible on a hart built from `isa`: a CSR is present when the hart
-    * implements its minimum privilege level. */
+    * implements its minimum privilege level and, for FP CSRs, an FPU. */
   def implementedFor(isa: IsaConfig): Seq[CsrDef] =
-    all.filter(d => isa.priv.modes.contains(d.minPriv))
+    all.filter(d => isa.priv.modes.contains(d.minPriv) && (!d.requiresFpu || isa.hasFpu))
 
   /** Subset of `implementedFor` that rejects any write intent. */
   def readOnlyFor(isa: IsaConfig): Seq[CsrDef] =

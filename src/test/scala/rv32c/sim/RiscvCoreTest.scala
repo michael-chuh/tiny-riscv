@@ -878,4 +878,125 @@ class RiscvCoreTest extends AnyFunSuite {
         println("PASS: RV32A misaligned AMO trap")
       }
   }
+
+  // ---- F/D extension test programs ----
+  // Enable mstatus.FS = Initial (bit13) before any FP instruction: csrrw x0,
+  // mstatus, with x3 = 0x2000.
+  private val fsEnable: Seq[Long] = Seq(
+    encU(0x00002, 3),              // lui x3, 2   -> x3 = 0x2000 (FS=01)
+    encI(0x300, 3, 1, 0, 0x73)     // csrrw x0, mstatus, x3
+  )
+
+  val rv32fLoadStoreProgram: Seq[Long] = fsEnable ++ Seq[Long](
+    encI(42, 0, 0, 1, 0x13),       // addi x1, x0, 42
+    encS(4, 1, 0, 2, 0x23),        // sw   x1, 4(x0)
+    encI(4, 0, 2, 1, 0x07),        // flw  f1, 4(x0)
+    encS(8, 1, 0, 2, 0x27),        // fsw  f1, 8(x0)   (FP load-use on f1)
+    encI(8, 0, 2, 2, 0x03),        // lw   x2, 8(x0)
+    encI(0x5F, 0, 0, 5, 0x13),     // addi x5, x0, 0x5F
+    encI(0x003, 5, 1, 0, 0x73),    // csrrw x0, fcsr, x5
+    encI(0x003, 0, 2, 6, 0x73),    // csrrs x6, fcsr, x0
+    encI(0x300, 0, 2, 7, 0x73)     // csrrs x7, mstatus, x0
+  )
+
+  val rv32fFsOffProgram: Seq[Long] = Seq[Long](
+    encI(42, 0, 0, 1, 0x13),       // addi x1, x0, 42
+    encS(4, 1, 0, 2, 0x23),        // sw   x1, 4(x0)
+    encI(4, 0, 2, 1, 0x07)         // flw  f1, 4(x0) -> FS=Off illegal at pc 8
+  )
+
+  val rv32fFsOffCsrProgram: Seq[Long] = Seq[Long](
+    encI(0x003, 0, 2, 6, 0x73)     // csrrs x6, fcsr, x0 -> FS=Off illegal at pc 0
+  )
+
+  val rv32fMisalignedLoadProgram: Seq[Long] = fsEnable ++ Seq[Long](
+    encI(2, 0, 2, 2, 0x07)         // flw f2, 2(x0) -> load misaligned at pc 8
+  )
+
+  val rv32fMisalignedStoreProgram: Seq[Long] = fsEnable ++ Seq[Long](
+    encS(2, 1, 0, 2, 0x27)         // fsw f1, 2(x0) -> store misaligned at pc 8
+  )
+
+  test("RV32F load/store + fcsr + FS dirtying") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fLoadStoreProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val lastPc = 4 * (rv32fLoadStoreProgram.length - 1)
+        val cycles = runUntil(dut, 400, lastPc, 2, 42)
+        assert(cycles < 400, "program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(1).toBigInt == 42, "x1 = 42")
+        assert(dut.io.debugRegs(2).toBigInt == 42, "x2 = FLW/FSW round-trip")
+        assert(dut.io.debugRegs(6).toBigInt == 0x5FL, "x6 = fcsr readback (frm|fflags)")
+        assert((dut.io.debugRegs(7).toBigInt & 0x6000) == 0x6000,
+          "mstatus.FS dirtied after FP commit")
+        println(s"PASS: RV32F load/store finished in $cycles cycles")
+      }
+  }
+
+  test("RV32F FP op with FS=Off traps (cause 2)") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fFsOffProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 2, "FLW while FS=Off -> illegal instruction")
+        assert(dut.io.debugMepc.toBigInt == 8, "mepc points at the faulting FLW")
+        println("PASS: RV32F FS=Off FP op trap")
+      }
+  }
+
+  test("RV32F fcsr access with FS=Off traps (cause 2)") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fFsOffCsrProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 2, "fcsr access while FS=Off -> illegal")
+        assert(dut.io.debugMepc.toBigInt == 0, "mepc points at the faulting CSR access")
+        println("PASS: RV32F FS=Off fcsr trap")
+      }
+  }
+
+  test("RV32F misaligned FLW traps (cause 4)") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fMisalignedLoadProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 4, "misaligned FLW -> load address misaligned")
+        assert(dut.io.debugMepc.toBigInt == 8, "mepc points at the faulting FLW")
+        println("PASS: RV32F misaligned FLW trap")
+      }
+  }
+
+  test("RV32F misaligned FSW traps (cause 6)") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fMisalignedStoreProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        dut.clockDomain.waitSampling(20)
+        assert(dut.io.debugMcause.toBigInt == 6, "misaligned FSW -> store address misaligned")
+        assert(dut.io.debugMepc.toBigInt == 8, "mepc points at the faulting FSW")
+        println("PASS: RV32F misaligned FSW trap")
+      }
+  }
 }
