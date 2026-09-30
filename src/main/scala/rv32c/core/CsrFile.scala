@@ -37,11 +37,15 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     val mretEna = in Bool()
     // FP: an FP instruction (or FP CSR write) committed this cycle -> FS <- Dirty.
     val fpDirty = in Bool()
+    // FP: accrued exception flags from a committed FP instruction (sticky OR).
+    val fpFlagsWe = in Bool()
+    val fpFlags = in Bits(5 bits)
     // ---- control readouts ----
     val curMode = out UInt(2 bits)
     val mstatusMie = out Bool()
     val mstatusMpp = out UInt(2 bits)
     val mstatusFs = out UInt(2 bits)
+    val frm = out Bits(3 bits)
     val mieMtie = out Bool()
     val mtvec = out Bits(xlen bits)
     val mepc = out UInt(xlen bits)
@@ -196,14 +200,14 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val fflagsNext = Bits(5 bits)
   val frmNext = Bits(3 bits)
   if (isa.hasFpu) {
-    fflagsNext := fflagsReg
     frmNext := frmReg
-    when(wbHit(0x001)) { fflagsNext := opNew(4 downto 0) }
     when(wbHit(0x002)) { frmNext := opNew(7 downto 5) }
-    when(wbHit(0x003)) {
-      fflagsNext := opNew(4 downto 0)
-      frmNext := opNew(7 downto 5)
-    }
+    when(wbHit(0x003)) { frmNext := opNew(7 downto 5) }
+    // Exception flags from a committing FP instruction accumulate (sticky).
+    // Combine with the register/CSR write via a pure expression to avoid a
+    // self-referential combinational assignment on fflagsNext.
+    val fflagsCsr = Mux(wbHit(0x003) || wbHit(0x001), opNew(4 downto 0), fflagsReg)
+    fflagsNext := Mux(io.fpFlagsWe, fflagsCsr | io.fpFlags, fflagsCsr)
   } else {
     fflagsNext := fflagsReg
     frmNext := frmReg
@@ -226,6 +230,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   io.mstatusMie := mstatusReg(3)
   io.mstatusMpp := mstatusReg(12 downto 11).asUInt
   io.mstatusFs := mstatusReg(14 downto 13).asUInt
+  io.frm := frmReg
   io.mieMtie := mieReg(7)
   io.mtvec := mtvecReg
   io.mepc := mepcReg.asUInt

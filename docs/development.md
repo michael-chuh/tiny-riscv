@@ -35,7 +35,12 @@ src/main/scala/rv32c/
 ├── isa/ExceptionCode.scala# mcause 同步异常编号常量
 ├── bus/BusInterfaces.scala
 ├── core/Alu.scala         # ALU + 操作枚举
+├── core/MulDiv.scala      # EX 段多周期乘除器
+├── core/CsrFile.scala     # CSR 文件与 trap 写口
 ├── core/RegisterFile.scala
+├── core/FpRegisterFile.scala # 浮点寄存器堆（单写端口）
+├── core/FpOp.scala        # 浮点操作枚举
+├── core/FpUnit.scala      # 参数化 IEEE-754 运算单元（F/D）
 ├── core/Decoder.scala     # 组合译码 + 立即数生成
 └── sim/SyncRamSim.scala   # 仿真内存模型
 ```

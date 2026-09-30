@@ -26,6 +26,20 @@ class RiscvCoreTest extends AnyFunSuite {
       ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
       ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | 0x2fL
 
+  // OP-FP (opcode 0x53): funct7 = funct6<<1 | fmt, then rs2[24:20], rs1[19:15],
+  // rm[14:12], rd[11:7]. For SGNJ/MIN/MAX/COMPARE/MV/CLASS/CVT, rm doubles as the
+  // funct3 sub-selector.
+  private def encOpFp(funct6: Int, fmt: Int, rs2: Int, rs1: Int, rm: Int, rd: Int): Long =
+    (((funct6 & 0x3f) << 1 | (fmt & 1)).toLong << 25) |
+      ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((rm & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | 0x53L
+  // FMA (opcodes 0x43/0x47/0x4b/0x4f): rs3[31:27], fmt[26:25], rs2[24:20],
+  // rs1[19:15], rm[14:12], rd[11:7].
+  private def encFma(opc: Int, rs3: Int, rs2: Int, rs1: Int, rm: Int, rd: Int, fmt: Int = 0): Long =
+    ((rs3 & 0x1f).toLong << 27) | ((fmt & 0x3).toLong << 25) |
+      ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
+      ((rm & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+
   // ---- RV32C (16-bit) encoders ----
   // Each helper takes logical operands and places them in the RVC bit fields as
   // extracted by Decoder.scala. Register-prime operands are the 3-bit index
@@ -997,6 +1011,84 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(dut.io.debugMcause.toBigInt == 6, "misaligned FSW -> store address misaligned")
         assert(dut.io.debugMepc.toBigInt == 8, "mepc points at the faulting FSW")
         println("PASS: RV32F misaligned FSW trap")
+      }
+  }
+
+  // ---- RV32F arithmetic / compare / classify / FMA ----
+  val rv32fArithProgram: Seq[Long] = fsEnable ++ Seq[Long](
+    encI(3, 0, 0, 1, 0x13),                       // addi x1, x0, 3
+    encI(4, 0, 0, 2, 0x13),                       // addi x2, x0, 4
+    encOpFp(0x34, 0, 0, 1, 0, 1),                 // fcvt.s.w f1, x1   -> 3.0
+    encOpFp(0x34, 0, 0, 2, 0, 2),                 // fcvt.s.w f2, x2   -> 4.0
+    encOpFp(0x00, 0, 2, 1, 0, 3),                 // fadd.s f3, f1, f2 -> 7.0
+    encOpFp(0x38, 0, 0, 3, 0, 4),                 // fmv.x.w x4, f3
+    encOpFp(0x02, 0, 1, 2, 0, 4),                 // fsub.s f4, f2, f1 -> 1.0
+    encOpFp(0x38, 0, 0, 4, 0, 5),                 // fmv.x.w x5, f4
+    encOpFp(0x04, 0, 2, 1, 0, 5),                 // fmul.s f5, f1, f2 -> 12.0
+    encOpFp(0x38, 0, 0, 5, 0, 6),                 // fmv.x.w x6, f5
+    encOpFp(0x06, 0, 1, 2, 0, 6),                 // fdiv.s f6, f2, f1 -> 4/3
+    encOpFp(0x38, 0, 0, 6, 0, 7),                 // fmv.x.w x7, f6
+    encOpFp(0x16, 0, 0, 2, 0, 7),                 // fsqrt.s f7, f2    -> 2.0
+    encOpFp(0x38, 0, 0, 7, 0, 8),                 // fmv.x.w x8, f7
+    encFma(0x43, 1, 2, 1, 0, 8),                  // fmadd.s f8, f1, f2, f1 -> 15.0
+    encOpFp(0x38, 0, 0, 8, 0, 9),                 // fmv.x.w x9, f8
+    encOpFp(0x28, 0, 2, 1, 1, 10),                // flt.s x10, f1, f2 -> 1
+    encOpFp(0x28, 0, 2, 2, 2, 11),                // feq.s x11, f2, f2 -> 1
+    encOpFp(0x38, 0, 0, 1, 1, 12),                // fclass.s x12, f1  -> 0x40
+    encI(0, 0, 0, 0, 0x13)                        // nop (trailing retire slot)
+  )
+
+  test("FpUnit standalone sanity (F)") {
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new rv32c.core.FpUnit(8, 23))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.io.rm #= 0
+        dut.io.c #= 0L
+        def eval(op: Int, a: Long, b: Long): Long = {
+          dut.io.op #= op
+          dut.io.a #= a
+          dut.io.b #= b
+          dut.clockDomain.waitSampling(2)
+          (dut.io.result.toBigInt.toLong & 0xffffffffL)
+        }
+        assert(eval(0, 0x40400000L, 0x40800000L) == 0x40e00000L, "3.0 + 4.0 = 7.0")
+        assert(eval(1, 0x40800000L, 0x40400000L) == 0x3f800000L, "4.0 - 3.0 = 1.0")
+        assert(eval(2, 0x40400000L, 0x40800000L) == 0x41400000L, "3.0 * 4.0 = 12.0")
+        assert(eval(3, 0x40800000L, 0x40400000L) == 0x3faaaaabL, "4.0 / 3.0")
+        assert(eval(4, 0x40800000L, 0L) == 0x40000000L, "sqrt(4.0) = 2.0")
+        assert(eval(0, 0x3f800000L, 0x3f800000L) == 0x40000000L, "1.0 + 1.0 = 2.0")
+        assert(eval(0, 0x3f800000L, 0x40000000L) == 0x40400000L, "1.0 + 2.0 = 3.0")
+        assert(eval(2, 0x3f800000L, 0x3f800000L) == 0x3f800000L, "1.0 * 1.0 = 1.0")
+        println("PASS: FpUnit standalone sanity")
+      }
+  }
+
+  test("RV32F arithmetic, compare, classify, FMA") {
+    val cfg = CoreConfig.rv32f
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32fArithProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5) // flush reset
+
+        val lastPc = 4 * (rv32fArithProgram.length - 1)
+        val cycles = runUntil(dut, 600, lastPc, 12, 0x40)
+        assert(cycles < 600, "FP arithmetic program did not finish")
+        dut.clockDomain.waitSampling(5) // settle
+
+        assert(dut.io.debugRegs(4).toBigInt == 0x40E00000L, "fadd.s 3+4 = 7.0")
+        assert(dut.io.debugRegs(5).toBigInt == 0x3F800000L, "fsub.s 4-3 = 1.0")
+        assert(dut.io.debugRegs(6).toBigInt == 0x41400000L, "fmul.s 3*4 = 12.0")
+        assert(dut.io.debugRegs(7).toBigInt == 0x3FAAAAABL, "fdiv.s 4/3")
+        assert(dut.io.debugRegs(8).toBigInt == 0x40000000L, "fsqrt.s sqrt(4) = 2.0")
+        assert(dut.io.debugRegs(9).toBigInt == 0x41700000L, "fmadd.s 3*4+3 = 15.0")
+        assert(dut.io.debugRegs(10).toBigInt == 1, "flt.s 3<4 = 1")
+        assert(dut.io.debugRegs(11).toBigInt == 1, "feq.s 4==4 = 1")
+        assert(dut.io.debugRegs(12).toBigInt == 0x40, "fclass.s 3.0 = positive normal")
+        println(s"PASS: RV32F arithmetic finished in $cycles cycles")
       }
   }
 }

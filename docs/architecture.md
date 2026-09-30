@@ -26,6 +26,7 @@ graph LR
 - 组合译码器 `Decoder` 生成全部控制信号：寄存器写使能、ALU 操作、访存属性、分支类型、写回选择、立即数，以及 CSR/异常指令的 `csrOp/csrWe/csrAddr/sysOp` 控制域
 - 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽；RV32C / RV64C 使能时，16 位压缩指令在译码级展开为等价的标准操作（与 32 位路径写入同一组控制域），非法/保留压缩编码置 `illegal`（cause 2）
 - **RV32A / RV64A（`isa.hasAtomic`）**：opcode `0101111` 按 `funct5[31:27]` 展开 LR/SC/AMO 控制域（`atomic/isLr/isSc/amoOp`），有效地址为 `rs1`；`funct3` 决定 `.W`/`.D`，非本宽度的 `funct3`、未知 `funct5` 或 A 关闭时置 `illegal`（cause 2）
+- **RV32F / RV64F（`isa.hasFpu`）**：opcode `0000111`/`0100111` 译为 FLW/FSW（FLD/FSD 仅 D），opcode `1010011` 按 `funct6`/`funct3` 展开 FADD/FSUB/FMUL/FDIV/FSQRT/FSGNJ/FMIN/FMAX/FCMP/FCLASS/FMV/FCVT 控制域（`fpWrite/fpOp/fpRm/fpFmt`），opcode `1000011/1000111/1001011/1001111` 展开四种 FMA；F 核上 fmt=01（D）编码置 `illegal`。FP CSR 的合法性在 EX 结合 `mstatus.FS` 判定
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
@@ -36,6 +37,8 @@ graph LR
 - JALR 目标 = `rs1 + imm` 并强制按 2 字节对齐（清 LSB）
 - 异常（`ecall/ebreak/非法指令/mret 违例`）在 EX 段判定并提交 trap（见「CSR 与异常/中断通路」）
 - **A 扩展对齐检查**：LR/SC 与 AMO 的地址未按访问宽度自然对齐时在 EX 段判定并提交 trap——LR 为 cause 4，SC/AMO 为 cause 6，`mtval` 记录故障地址；异常先于任何内存副作用
+- **FP 执行（`isa.hasFpu`）**：`FpUnit(expw, sigw)` 在 EX 段组合完成全部 IEEE-754 运算（含 FMA 单次舍入、FSQRT、5 种舍入模式），产生 `fpResult/fpFlags`；源操作数取自浮点寄存器堆（EX 组合读 + WB 级 FP 转发），结果经 EX/MEM 携带到 WB 写入 FP 寄存器堆；`fpStall` 拉高时冻结 1 拍，复用统一 `freezeAll`
+- **FP 状态与合法性**：`mstatus.FS=Off` 时任何 FP 指令或 FP CSR 访问在 EX 置 illegal（cause 2）；提交 FP 指令累积 `fflags` 并置 `mstatus.FS=Dirty`
 
 ### MEM（访存）
 
@@ -48,6 +51,7 @@ graph LR
 
 - 选择写回源：ALU 结果 / 访存结果 / `pc + instrLen`（JAL/JALR 链接，压缩指令为 pc+2）/ CSR 读回旧值（`rd=x0` 时忽略）
 - 写入寄存器堆（`rd == 0` 时忽略，符合 RISC-V 规范）；寄存器堆为**单写端口**，WB 是唯一写入口
+- **FP 写回（`isa.hasFpu`）**：FP 指令与 FLW 在 WB 写入独立的浮点寄存器堆（同样单写端口，由 `memWb.valid && memWb.fpWrite` 驱动），`frd=0` 不被忽略；FLEN=64（D）时把单精度结果 NaN-boxing 到高 32 位后再写回
 
 ## 冒险处理
 
@@ -105,6 +109,18 @@ LR 是普通载入并置位预约；SC 在预约校验失败时不驱动总线�
 
 `freezeAll = otherFreeze || amoStall`，因此 AMO 读写两拍间所有阶段保持；A 关闭时该分支、预约寄存器与状态机被整体剪除。
 
+### 浮点数据冒险（FP 转发 + 停顿 1 拍）
+
+FP 源操作数在 EX 段由三路构成：WB 级 FP 转发（`memWb.fpWrite`）优先，其次 EX 段组合读浮点寄存器堆。若 EX 段 FP 指令的源寄存器正好是 EX 段或 MEM 段中尚未到达 WB 的 FP 生产者（即相距 1–2 槽），则 `fpStallData` 拉高，冻结 1 拍，等生产者进入 WB 后再转发：
+
+```text
+检测: (EX 是 FP 生产者 && EX.rd == 本指令任一 FP 源) ||
+      (MEM 是 FP 生产者 && MEM.rd == 本指令任一 FP 源)
+动作: stallData = intStallData || fpStallData
+```
+
+FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻辑与整数 load/CSR 停顿同构。FS=Off 的 FP 指令不进入该停顿判定（其已在 EX 判非法）。
+
 ### 控制冒险
 
 分支在 EX 判定，跳转发生时：
@@ -125,6 +141,7 @@ LR 是普通载入并置位预约；SC 在预约校验失败时不驱动总线�
 - 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/cause/epc/tval`）、`mretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
 - 读口：WB 读口（返回写前旧值，作为 `csrr*` 的 rd 源）、EX 控制读口（`mtvec/mepc/mstatus` 域、`curMode`，供 trap 重定向与非法复核）
 - `mstatus` 可写域：`MIE(bit3)/MPIE(bit7)/MPP(bit12:11)/FS`；`mie` 可写域：`MTIE(bit7)`
+- **浮点 CSR（`isa.hasFpu`）**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 由 `CsrMap.implementedFor` 在 F 使能时纳入；提交 FP 指令时 `fpFlagsWe/fpFlags` 累积异常标志到 `fflags`（与 WB 写口同拍 OR 合并），`fpDirty` 把 `mstatus.FS` 置 Dirty；`fcsr` 高 5 位即 `frm`、低 5 位即 `fflags`
 
 ### 同步异常（EX 级判定并提交）
 
@@ -168,10 +185,11 @@ LR 是普通载入并置位预约；SC 在预约校验失败时不驱动总线�
 | RV32M 乘法 | ALU 内组合乘法 | 单周期出结果，零流水线代价 |
 | RV32M 除法 | EX 段恢复除法器 + 整条流水线冻结 | 面积/时序友好；`IsaConfig` 不含 `MulDiv` 时不实例化 |
 | RV32A / RV64A 原子 | MEM 段「读→改→写」状态机 + 流水线冻结；LR/SC 预约集 | 单核下无需总线锁即可保证原子性；`IsaConfig` 不含 `Atomic` 时整体剪除 |
+| RV32F / RV64F 浮点 | EX 段参数化组合 FPU + 单冻结周期；独立浮点寄存器堆；FP 结果仅 WB 转发 | 复用统一 `freezeAll` 与停滞框架；`expw/sigw` 参数化让 D 复用同一单元；F 关闭时 FPU/FP 寄存器堆整体剪除 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码与 RV64A 原子（`.W`/`.D`）已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）与 RV64F/RV64D 浮点（参数化 FPU）已实现；S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合

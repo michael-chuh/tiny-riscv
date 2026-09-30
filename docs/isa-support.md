@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO），以及 **RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持，默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`）。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO）、**RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码），以及 **RV32F / RV64F** 单精度浮点扩展（FLW/FSW、算术/比较/分类/转换/FMA，5 种舍入与 fflags）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持），F 扩展由 `RvExtension.SingleFloat` 使能（D 由 `DoubleFloat` 使能，仅 RV64）；默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`，浮点核配置为 `rv32f` / `rv64f` / `rv64d`。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -144,6 +144,53 @@ A 扩展的 `funct5` 位于 `instr[31:27]`；`funct3=010` 为 `.W`（32 位）�
 >
 > 对齐：A 访问地址未按访问宽度自然对齐时触发地址非对齐异常——LR 为 cause 4（load address misaligned），SC/AMO 为 cause 6（store/AMO address misaligned），`mtval` 记录故障地址，且在产生任何内存副作用之前陷阱。非本宽度的 `funct3`、未知 `funct5`、以及 A 关闭时出现 opcode `0101111` 均触发 cause 2。
 
+### 浮点指令（RV32F / RV64F，仅当 `RvExtension.SingleFloat` 使能）
+
+F 扩展使用独立的 32 位浮点寄存器堆（`f0`–`f31`，无硬连线零寄存器）。指令按 `.S`（单精度，fmt=00）编码；D 扩展（fmt=01，仅 RV64）复用同一参数化 FPU（FLEN=64）。FP 指令通路仅在 `isa.hasFpu` 时生成，且要求 `mstatus.FS != Off`，否则触发 illegal（cause 2）。
+
+**访存（opcode 0000111 / 0100111）**
+
+| 指令 | funct3 | 语义 |
+|------|--------|------|
+| FLW | 010 | 32 位载入到 `frd` |
+| FSW | 010 | 32 位存储 `frs2` |
+| FLD / FSD | 011 | 64 位载入/存储（仅 RV64 + D） |
+
+> F 核（FLEN=32）下 FLW/FSW 地址按 4 字节对齐检查，未对齐触发 cause 4 / 6；D 核下 FLD/FSD 按 8 字节对齐。FLEN=64 时 FP 写回做 NaN-boxing：单精度结果的高 32 位置 1。FS=Off 时 FP 访存同样触发 cause 2。
+
+**算术（OP-FP, opcode 1010011，funct7 = funct6<<1 | fmt）**
+
+| 指令 | funct6 | 语义 |
+|------|--------|------|
+| FADD.S / FADD.D | 000000 | 加法（单次舍入） |
+| FSUB.S / FSUB.D | 000010 | 减法 |
+| FMUL.S / FMUL.D | 000100 | 乘法 |
+| FDIV.S / FDIV.D | 000110 | 除法 |
+| FSQRT.S / FSQRT.D | 010110 | 平方根 |
+| FSGNJ / FSGNJN / FSGNJX | 001000 | 符号注入（funct3 000/001/010） |
+| FMIN / FMAX | 001010 | 最小/最大（NaN 与 ±0 按规范处理，funct3 000/001） |
+| FLE / FLT / FEQ | 101000 | 比较，结果写整数 rd（funct3 000/001/010） |
+| FCLASS | 111000 (funct3=001) | 分类结果写整数 rd（10 位掩码） |
+| FMV.X.W | 111000 (funct3=000) | FP→整数寄存器搬运 |
+| FMV.W.X | 111100 (funct3=000) | 整数→FP 搬运 |
+| FCVT.W.* / WU / L / LU | 110000 | FP→整数转换（源格式由 fmt 域选择；`WU` 与 RV64 专属 `L/LU` 由 rs2 域选择） |
+| FCVT.S.W / WU / L / LU | 110100 | 整数→FP 转换（目标格式由 fmt 域选择；RV64 专属 `L/LU` 由 rs2 域选择） |
+
+> 双精度与单精度之间的转换（`FCVT.S.D` / `FCVT.D.S`）尚未实现，当前置 illegal（cause 2）。
+
+**融合乘加（opcode 1000011/1000111/1001011/1001111）**
+
+| 指令 | opcode | 语义 |
+|------|--------|------|
+| FMADD.S / .D | 1000011 | `a*b + c`（单次舍入） |
+| FMSUB.S / .D | 1000111 | `a*b - c` |
+| FNMSUB.S / .D | 1001011 | `-(a*b) + c` |
+| FNMADD.S / .D | 1001111 | `-(a*b) - c` |
+
+> **运算单元**：`FpUnit(expw, sigw)` 参数化——单精度为 `(8, 23)`，双精度为 `(11, 52)`；工作精度 `P = sigw + 1`，内部保留 `P+3` 位（含保护/舍入/粘滞位）统一 `roundPack`。支持 5 种舍入模式（RNE/RTZ/RDN/RUP/RMM）：动态模式取自 `frm`，静态模式来自指令 `rm`（`rm=111` 时使用 `frm`）。运算在 EX 段组合完成，置 `fpStall` 冻结 1 拍（复用统一 `freezeAll`），结果仅经 WB 旁路。
+>
+> **CSR 与状态**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 仅在 FPU 使能时实现；提交任意 FP 算术指令会累积 NV/DZ/OF/UF/NX 异常标志到 `fflags`，并将 `mstatus.FS` 置 Dirty(11)。`frm` 为 WARL，仅接受 0–4。`mstatus.FS` 为 WARL（`FS=Off` 时 FP 指令与 FP CSR 访问均非法）。
+
 ### 分支（BRANCH, 1100011）
 
 | 指令 | funct3 | 实现状态 |
@@ -197,6 +244,7 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
   - `mtvec` 的 MODE 域写入非 0 值触发 cause 2；trap 重定向恒按 direct 模式取 `{mtvec.BASE,2'b00}`
   - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
   - `mstatus` 可写域：`MIE/MPIE/MPP(3)/FS`；`mie.MTIE` 是唯一可写中断使能位
+- 浮点 CSR（仅 `RvExtension.SingleFloat` 使能时）：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)`；`frm` 为 WARL 仅接受 0–4，提交 FP 指令累积 `fflags` 并把 `mstatus.FS` 置 Dirty
 - 同步异常 cause：ECALL(M)=11、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP` 不在配置特权栈的 MRET=2
 - 机器定时器中断：`mip.MTIP && mie.MTIE && mstatus.MIE && curMode=M` 时在取指边界接受，cause=0x80000007，`mtval=0`
 - 复位 `debugPc` 回到 `resetVector`，内部 CSR/模式全部清零/复位为 M
@@ -221,5 +269,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 ## 后续扩展计划
 
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
-- **F/D**：浮点扩展（`RvExtension` 的 `reserved` 集合）
+- **F/D**：RV32F / RV64F 已实现；D 双精度（RV64，FLEN=64，含 FCVT.S.D/FCVT.D.S）在 FPU 参数化通路上实现，测试与 RTL 生成待补
 - **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）

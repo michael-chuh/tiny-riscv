@@ -93,6 +93,8 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   val funct3 = instr(14 downto 12)
   val funct7 = instr(31 downto 25)
   val funct5 = instr(31 downto 27)
+  val funct6 = instr(31 downto 26)
+  val convSel = instr(21 downto 20) // OP-FP rs2[1:0]: W / WU / L / LU
   val rs1Num = instr(19 downto 15).asUInt
   val rdNum = instr(11 downto 7).asUInt
 
@@ -524,6 +526,137 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
           default { d.illegal := True; d.valid := False }
         }
+      } else { d.illegal := True; d.valid := False }
+    }
+    is(M"1010011") { // OP-FP: arithmetic, compare, classify, convert, move
+      if (withFloat) {
+        d.fp := True
+        d.fpFmt := instr(25)
+        d.fpRm := funct3.asUInt
+        d.rd := rdNum
+        d.rs1 := rs1Num
+        d.rs2 := instr(24 downto 20).asUInt
+        // D-format encodings are rejected unless the D extension is configured.
+        if (!withDouble) { when(instr(25)) { d.illegal := True; d.valid := False } }
+        switch(funct6) {
+          is(B"000000") { d.fpWrite := True; d.fpOp := FpOp.ADD }
+          is(B"000010") { d.fpWrite := True; d.fpOp := FpOp.SUB }
+          is(B"000100") { d.fpWrite := True; d.fpOp := FpOp.MUL }
+          is(B"000110") { d.fpWrite := True; d.fpOp := FpOp.DIV }
+          is(B"010110") { d.fpWrite := True; d.fpOp := FpOp.SQRT }
+          is(B"001000") { // FSGNJ / FSGNJN / FSGNJX
+            d.fpWrite := True
+            switch(funct3) {
+              is(B"000") { d.fpOp := FpOp.SGNJ }
+              is(B"001") { d.fpOp := FpOp.SGNJN }
+              is(B"010") { d.fpOp := FpOp.SGNJX }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(B"001010") { // FMIN / FMAX
+            d.fpWrite := True
+            switch(funct3) {
+              is(B"000") { d.fpOp := FpOp.MIN }
+              is(B"001") { d.fpOp := FpOp.MAX }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(B"101000") { // FEQ / FLT / FLE
+            d.regWrite := True
+            d.fpIntRd := True
+            switch(funct3) {
+              is(B"000") { d.fpOp := FpOp.LE }
+              is(B"001") { d.fpOp := FpOp.LT }
+              is(B"010") { d.fpOp := FpOp.EQ }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(B"111000") { // FCLASS / FMV.X.W (D-format on RV64)
+            d.regWrite := True
+            d.fpIntRd := True
+            switch(funct3) {
+              is(B"000") { d.fpOp := FpOp.MV_X_W }
+              is(B"001") { d.fpOp := FpOp.CLASS }
+              default { d.illegal := True; d.valid := False }
+            }
+          }
+          is(B"111100") { // FMV.W.X (D-format on RV64)
+            d.fpWrite := True
+            d.fpOp := FpOp.MV_W_X
+            when(funct3 =/= B"000") { d.illegal := True; d.valid := False }
+          }
+          is(B"110000") { // FCVT.W / WU / L / LU (int <- FP)
+            d.regWrite := True
+            d.fpIntRd := True
+            switch(convSel) {
+              is(B"00") { d.fpOp := FpOp.CVT_W_S }
+              is(B"01") { d.fpOp := FpOp.CVT_WU_S }
+              is(B"10") {
+                if (isRV64) { d.fpOp := FpOp.CVT_L_S }
+                else { d.illegal := True; d.valid := False }
+              }
+              default {
+                if (isRV64) { d.fpOp := FpOp.CVT_LU_S }
+                else { d.illegal := True; d.valid := False }
+              }
+            }
+          }
+          is(B"110100") { // FCVT.S / D .W / WU / L / LU (FP <- int)
+            d.fpWrite := True
+            switch(convSel) {
+              is(B"00") { d.fpOp := FpOp.CVT_S_W }
+              is(B"01") { d.fpOp := FpOp.CVT_S_WU }
+              is(B"10") {
+                if (isRV64) { d.fpOp := FpOp.CVT_S_L }
+                else { d.illegal := True; d.valid := False }
+              }
+              default {
+                if (isRV64) { d.fpOp := FpOp.CVT_S_LU }
+                else { d.illegal := True; d.valid := False }
+              }
+            }
+          }
+          default { d.illegal := True; d.valid := False } // incl. FCVT.S.D / FCVT.D.S
+        }
+      } else {
+        d.illegal := True
+        d.valid := False
+      }
+    }
+    is(M"1000011") { // FMADD
+      if (withFloat) {
+        d.fp := True; d.fpWrite := True; d.fpOp := FpOp.FMA
+        d.fpFmt := instr(25); d.fpRm := funct3.asUInt
+        d.rs1 := rs1Num; d.rs2 := instr(24 downto 20).asUInt
+        d.rs3 := instr(31 downto 27).asUInt; d.rd := rdNum
+        if (!withDouble) { when(instr(25)) { d.illegal := True; d.valid := False } }
+      } else { d.illegal := True; d.valid := False }
+    }
+    is(M"1000111") { // FMSUB
+      if (withFloat) {
+        d.fp := True; d.fpWrite := True; d.fpOp := FpOp.FMSUB
+        d.fpFmt := instr(25); d.fpRm := funct3.asUInt
+        d.rs1 := rs1Num; d.rs2 := instr(24 downto 20).asUInt
+        d.rs3 := instr(31 downto 27).asUInt; d.rd := rdNum
+        if (!withDouble) { when(instr(25)) { d.illegal := True; d.valid := False } }
+      } else { d.illegal := True; d.valid := False }
+    }
+    is(M"1001011") { // FNMSUB
+      if (withFloat) {
+        d.fp := True; d.fpWrite := True; d.fpOp := FpOp.FNMSUB
+        d.fpFmt := instr(25); d.fpRm := funct3.asUInt
+        d.rs1 := rs1Num; d.rs2 := instr(24 downto 20).asUInt
+        d.rs3 := instr(31 downto 27).asUInt; d.rd := rdNum
+        if (!withDouble) { when(instr(25)) { d.illegal := True; d.valid := False } }
+      } else { d.illegal := True; d.valid := False }
+    }
+    is(M"1001111") { // FNMADD
+      if (withFloat) {
+        d.fp := True; d.fpWrite := True; d.fpOp := FpOp.FNMADD
+        d.fpFmt := instr(25); d.fpRm := funct3.asUInt
+        d.rs1 := rs1Num; d.rs2 := instr(24 downto 20).asUInt
+        d.rs3 := instr(31 downto 27).asUInt; d.rd := rdNum
+        if (!withDouble) { when(instr(25)) { d.illegal := True; d.valid := False } }
       } else { d.illegal := True; d.valid := False }
     }
     is(M"0101111") { // AMO (A extension): LR / SC / AMO*

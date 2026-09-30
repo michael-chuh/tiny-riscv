@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 39 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 52 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -32,6 +32,13 @@ graph LR
 | RV64A atomics program | `LR.D/SC.D`、`AMOADD.D` 64 位运算、`AMO*.W` 在 RV64 上的低字/高字访问（含地址 12 的高 32 位）与符号扩展回写、`AMOMAXU.W` 32 位无符号比较 | x2==5、x4==8、x12==1、x19==0xFFFFFFFF80000000、x28==1、x29==0x600000000，其余逐项 |
 | RV32A misaligned LR trap | `LR.W` 地址未按宽度对齐 | `mcause==4`、`mepc` 指向故障指令 |
 | RV32A misaligned AMO trap | `AMOADD.W` 地址未按宽度对齐 | `mcause==6`、`mepc` 指向故障指令 |
+| RV32F load/store + fcsr + FS dirtying | `FLW/FSW` 往返（含 FP load-use 停顿）、`fcsr` 写读、`mstatus.FS` 提交置位 | x2==42、x6==0x5F、`mstatus & 0x6000 == 0x6000` |
+| RV32F arithmetic / compare / classify / FMA | `fcvt.s.w`、`fadd.s/fsub.s/fmul.s/fdiv.s/fsqrt.s`、`fmadd.s`、`flt.s/feq.s`、`fclass.s`、`fmv.x.w` 全链路 | x4=0x40E00000(7.0)、x5=0x3F800000(1.0)、x6=0x41400000(12.0)、x7=0x3FAAAAAB(4/3)、x8=0x40000000(2.0)、x9=0x41700000(15.0)、x10==1、x11==1、x12==0x40 |
+| RV32F FP op with FS=Off traps | `FS=Off` 时执行 `FLW` | `mcause==2`、`mepc` 指向故障指令 |
+| RV32F fcsr access with FS=Off traps | `FS=Off` 时访问 `fcsr` | `mcause==2`、`mepc` 指向故障 CSR 访问 |
+| RV32F misaligned FLW traps | `FLW` 地址未按宽度对齐 | `mcause==4`、`mepc` 指向故障指令 |
+| RV32F misaligned FSW traps | `FSW` 地址未按宽度对齐 | `mcause==6`、`mepc` 指向故障指令 |
+| FpUnit standalone sanity (F) | 直接驱动参数化 `FpUnit(8,23)` 的 ADD/SUB/MUL/DIV/SQRT | 3+4=0x40E00000、4-3=1.0、3*4=0x41400000、4/3=0x3FAAAAAB、sqrt(4)=0x40000000、1+1=2.0、1+2=3.0、1*1=1.0 |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -39,7 +46,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、异常码）共 22 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 28 项。
 
 ## 运行方式
 

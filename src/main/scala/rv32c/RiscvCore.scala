@@ -50,6 +50,10 @@ class IdExBundle(xlen: Int) extends Bundle {
   val fpWrite = Bool()         // writes the FP register file
   val fpLoad = Bool()          // FP load (FLW/FLD)
   val fpStore = Bool()         // FP store (FSW/FSD)
+  val fpIntRd = Bool()         // result goes to an integer register
+  val fpOp = UInt(6 bits)      // FPU operation selector (FpOp)
+  val fpRm = UInt(3 bits)      // rounding mode field (DYN = 111)
+  val fpFmt = Bool()           // false = single (S), true = double (D)
   val rs1 = UInt(5 bits)
   val rs2 = UInt(5 bits)
   val rs3 = UInt(5 bits)
@@ -90,6 +94,10 @@ object IdExBundle {
     b.fpWrite := False
     b.fpLoad := False
     b.fpStore := False
+    b.fpIntRd := False
+    b.fpOp := U(0, 6 bits)
+    b.fpRm := U(0, 3 bits)
+    b.fpFmt := False
     b.rs1 := U(0, 5 bits)
     b.rs2 := U(0, 5 bits)
     b.rs3 := U(0, 5 bits)
@@ -121,6 +129,7 @@ class ExMemBundle(xlen: Int) extends Bundle {
   val fpWrite = Bool()         // writes the FP register file at WB
   val fpLoad = Bool()          // FP load: WB data comes from the load path
   val fpStore = Bool()         // FP store: store data comes from the FP file
+  val fpFlags = Bits(5 bits)   // accrued FP exception flags (NV/DZ/OF/UF/NX)
   val fpRs2Data = Bits(xlen bits) // FP store data (flen bits, zero-extended)
   val regWrite = Bool()
   val rd = UInt(5 bits)
@@ -148,6 +157,7 @@ object ExMemBundle {
     b.fpWrite := False
     b.fpLoad := False
     b.fpStore := False
+    b.fpFlags := B(0, 5 bits)
     b.fpRs2Data := B(0, xlen bits)
     b.regWrite := False
     b.rd := U(0, 5 bits)
@@ -170,6 +180,7 @@ class MemWbBundle(xlen: Int) extends Bundle {
   val wbData = Bits(xlen bits)
   val fp = Bool()              // floating-point instruction
   val fpWrite = Bool()         // writes the FP register file
+  val fpFlags = Bits(5 bits)   // accrued FP exception flags
   val csrOp = CsrOp()
   val csrWe = Bool()
   val csrAddr = UInt(12 bits)
@@ -185,6 +196,7 @@ object MemWbBundle {
     b.wbData := B(0, xlen bits)
     b.fp := False
     b.fpWrite := False
+    b.fpFlags := B(0, 5 bits)
     b.csrOp := CsrOp.NONE
     b.csrWe := False
     b.csrAddr := U(0, 12 bits)
@@ -317,8 +329,17 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   // ===== Floating-point register file (F/D) =====
   val withFloat = config.hasFloat
+  val withDouble = config.hasDoubleFloat
   val flen = config.flen
   val fpRegFile = if (withFloat) Some(new FpRegisterFile(flen)) else None
+
+  // ===== Floating-point unit (F/D) =====
+  // Parameterized by the configured FP format: binary32 for F, binary64 for D.
+  // The unit is combinational; the pipeline freezes for one cycle while an FP
+  // instruction sits in EX so its result can be latched like an ALU result.
+  val fpUnit = if (withFloat)
+    Some(new FpUnit(if (withDouble) 11 else 8, if (withDouble) 52 else 23))
+  else None
 
   // ===== CSR file =====
   val csrFile = new CsrFile(xlen, config.hartId, config.isa)
@@ -355,6 +376,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val mstatusMie = csrFile.io.mstatusMie
   val mstatusMpp = csrFile.io.mstatusMpp
   val mstatusFs = csrFile.io.mstatusFs
+  val csrFrm = csrFile.io.frm
   val mieMtie = csrFile.io.mieMtie
   val mtvecRegBits = csrFile.io.mtvec
   val mepcRead = csrFile.io.mepc
@@ -390,6 +412,24 @@ class RiscvCore(config: CoreConfig) extends Component {
     forwardRs2 := wbWriteData
   } otherwise {
     forwardRs2 := regFile.io.rs2Data
+  }
+
+  // ===== FP operand forwarding =====
+  // The FP register file has no EX/MEM result bus, so a consumer whose FP source
+  // was produced 1-2 slots earlier stalls (fpStallData); a producer that has
+  // reached WB is forwarded here. This mirrors the integer file's structure.
+  val fpFwdRs1 = Bits(flen max 1 bits)
+  val fpFwdRs2 = Bits(flen max 1 bits)
+  val fpFwdRs3 = Bits(flen max 1 bits)
+  if (withFloat) {
+    val fpWb = memWb.valid && memWb.fpWrite && memWb.rd =/= U(0)
+    fpFwdRs1 := Mux(fpWb && memWb.rd === idEx.rs1, memWb.wbData.resize(flen), fpRs1Data)
+    fpFwdRs2 := Mux(fpWb && memWb.rd === idEx.rs2, memWb.wbData.resize(flen), fpRs2Data)
+    fpFwdRs3 := Mux(fpWb && memWb.rd === idEx.rs3, memWb.wbData.resize(flen), fpRs3Data)
+  } else {
+    fpFwdRs1 := B(0, flen max 1 bits)
+    fpFwdRs2 := B(0, flen max 1 bits)
+    fpFwdRs3 := B(0, flen max 1 bits)
   }
 
   // ===== Execute stage =====
@@ -593,10 +633,15 @@ class RiscvCore(config: CoreConfig) extends Component {
   val intStallData = idEx.valid && !idEx.fpWrite && idEx.rd =/= U(0) &&
     (idEx.memRead || idEx.atomic || (idEx.wbSel === WbSel.CSR && idEx.regWrite)) &&
     (idEx.rd === dec.rs1 || idEx.rd === dec.rs2)
-  // FP load-use: an FP load's result is only available at WB, so an FP consumer
-  // whose source matches the load destination stalls one cycle.
-  val fpStallData = idEx.valid && idEx.fpWrite && idEx.memRead && dec.fp &&
-    (idEx.rd === dec.rs1 || idEx.rd === dec.rs2 || idEx.rd === dec.rs3)
+  // FP consumer stall: an FP result is not forwarded from EX/MEM, so a consumer
+  // in ID whose FP source is produced by an FP instruction in EX or MEM waits
+  // until the producer reaches WB (where it is forwarded).
+  def fpSrcMatch(rd: UInt): Bool =
+    dec.fp && (rd === dec.rs1 || rd === dec.rs2 || rd === dec.rs3)
+  val fpProducerEx = idEx.valid && idEx.fpWrite && idEx.rd =/= U(0)
+  val fpProducerMem = exMem.valid && exMem.fpWrite && exMem.rd =/= U(0)
+  val fpStallData = (fpProducerEx && fpSrcMatch(idEx.rd)) ||
+    (fpProducerMem && fpSrcMatch(exMem.rd))
   val stallData = intStallData || fpStallData
   val fetchStall = !io.iBus.ready
   val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !exMem.atomic && !io.dBus.ready
@@ -646,6 +691,52 @@ class RiscvCore(config: CoreConfig) extends Component {
     divStall := False
     exAluResult := aluResult
   }
+
+  // ===== F/D floating-point execute =====
+  // Arithmetic/comparison/conversion run combinationally here; FP loads/stores
+  // use the ordinary memory path with the FP register file as data source/sink.
+  val isFpCompute = idEx.valid && idEx.fp && !idEx.fpLoad && !idEx.fpStore
+  // FP <- integer operand sources (FCVT.S.W/L*, FMV.W.X) read the integer file.
+  val isFpFromInt = idEx.fpOp === FpOp.CVT_S_W || idEx.fpOp === FpOp.CVT_S_WU ||
+    idEx.fpOp === FpOp.CVT_S_L || idEx.fpOp === FpOp.CVT_S_LU ||
+    idEx.fpOp === FpOp.MV_W_X
+  val isFpMvW = idEx.fpOp === FpOp.MV_W_X
+  val isFpMvX = idEx.fpOp === FpOp.MV_X_W
+  // Rounding mode 111 (DYN) selects the dynamic frm CSR value.
+  val fpRmEx = Mux(idEx.fpRm === U(7, 3 bits), csrFrm.asUInt, idEx.fpRm)
+
+  val fpuResult = Bits(64 bits)
+  val fpuFlags = Bits(5 bits)
+  if (withFloat) {
+    val fpu = fpUnit.get
+    fpu.io.op := idEx.fpOp
+    fpu.io.rm := fpRmEx
+    // The integer operand is passed in its low bits; doIntToFp reads the sign
+    // from bit (w-1) of the value, which matches the extended register value.
+    fpu.io.a := Mux(isFpFromInt, forwardRs1.resize(64), fpFwdRs1.resize(64))
+    fpu.io.b := fpFwdRs2.resize(64)
+    fpu.io.c := fpFwdRs3.resize(64)
+    fpuResult := fpu.io.result
+    fpuFlags := fpu.io.flags
+  } else {
+    fpuResult := B(0, 64 bits)
+    fpuFlags := B(0, 5 bits)
+  }
+
+  // FP -> integer result. Conversions already return a 64-bit (sign/zero)
+  // extended value; FMV.X.W needs an explicit sign extension of bit 31 on RV64.
+  val fpToIntResult = Bits(xlen bits)
+  if (flen == 64) {
+    fpToIntResult := Mux(isFpMvX && !idEx.fpFmt,
+      fpuResult(31 downto 0).asSInt.resize(xlen).asBits, fpuResult.resize(xlen))
+  } else {
+    fpToIntResult := Mux(isFpMvX,
+      fpuResult(31 downto 0).asSInt.resize(xlen).asBits, fpuResult.resize(xlen))
+  }
+  // FP -> FP result lands in the low FLEN bits (NaN-boxed later when FLEN=64).
+  val fpToFpResult = fpuResult.resize(xlen)
+  val exAluResultFp = Bits(xlen bits)
+  exAluResultFp := Mux(isFpCompute, Mux(idEx.fpIntRd, fpToIntResult, fpToFpResult), exAluResult)
 
   // ===== A extension: LR/SC reservation + AMO read-modify-write =====
   // LR is an ordinary load that also sets a reservation; SC is a conditional
@@ -785,8 +876,12 @@ class RiscvCore(config: CoreConfig) extends Component {
     val isFpCsr = memWb.csrAddr === U(0x001, 12 bits) ||
       memWb.csrAddr === U(0x002, 12 bits) || memWb.csrAddr === U(0x003, 12 bits)
     csrFile.io.fpDirty := memWb.valid && (memWb.fpWrite || (memWb.csrWe && isFpCsr))
+    csrFile.io.fpFlagsWe := memWb.valid && memWb.fpWrite
+    csrFile.io.fpFlags := memWb.fpFlags
   } else {
     csrFile.io.fpDirty := False
+    csrFile.io.fpFlagsWe := False
+    csrFile.io.fpFlags := B(0, 5 bits)
   }
 
   // ===== Control redirection =====
@@ -856,6 +951,10 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.fpWrite := dec.fpWrite
     idEx.fpLoad := dec.fpLoad
     idEx.fpStore := dec.fpStore
+    idEx.fpIntRd := dec.fpIntRd
+    idEx.fpOp := dec.fpOp
+    idEx.fpRm := dec.fpRm
+    idEx.fpFmt := dec.fpFmt
     idEx.rs1 := dec.rs1
     idEx.rs2 := dec.rs2
     idEx.rs3 := dec.rs3
@@ -888,11 +987,12 @@ class RiscvCore(config: CoreConfig) extends Component {
     exMem.fpWrite := idEx.fpWrite
     exMem.fpLoad := idEx.fpLoad
     exMem.fpStore := idEx.fpStore
-    exMem.fpRs2Data := fpRs2Data.resize(xlen)
+    exMem.fpFlags := fpuFlags
+    exMem.fpRs2Data := fpFwdRs2.resize(xlen)
     exMem.regWrite := idEx.regWrite
     exMem.rd := idEx.rd
     exMem.wbSel := idEx.wbSel
-    exMem.aluResult := exAluResult
+    exMem.aluResult := exAluResultFp
     exMem.rs2Data := forwardRs2
     exMem.csrOp := idEx.csrOp
     exMem.csrWe := idEx.csrWe
@@ -987,6 +1087,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     memWb.wbSel := exMem.wbSel
     memWb.fp := exMem.fp
     memWb.fpWrite := exMem.fpWrite
+    memWb.fpFlags := exMem.fpFlags
     when(exMem.fpLoad) {
       memWb.wbData := fpLoadData.resize(xlen)
     } elsewhen (exMem.atomic) {
