@@ -1091,4 +1091,111 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV32F arithmetic finished in $cycles cycles")
       }
   }
+
+  // ---- FpUnit spec battery: rounding, conversion, compare, min/max, sign ----
+  test("FpUnit spec battery (F)") {
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new rv32c.core.FpUnit(8, 23))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        def ev(op: Int, a: Long, b: Long = 0L, c: Long = 0L, rm: Int = 0): (Long, Int) = {
+          def u64(v: Long): BigInt = BigInt(v) & ((BigInt(1) << 64) - 1)
+          dut.io.op #= op
+          dut.io.a #= u64(a)
+          dut.io.b #= u64(b)
+          dut.io.c #= u64(c)
+          dut.io.rm #= rm
+          dut.clockDomain.waitSampling(2)
+          ((dut.io.result.toBigInt.toLong & 0xffffffffL), dut.io.flags.toBigInt.toInt)
+        }
+        def hx(v: Long): String = f"${v & 0xffffffffL}%08x"
+        def nv(flags: Int): Boolean = ((flags >> 4) & 1) == 1
+
+        // opcodes: ADD 0 SUB 1 MUL 2 DIV 3 SQRT 4 MIN 5 MAX 6
+        // SGNJ 7 SGNJN 8 SGNJX 9 EQ 10 LT 11 LE 12 CLASS 13
+        // CVT_W_S 16 CVT_WU_S 17 CVT_L_S 18 CVT_LU_S 19
+        // CVT_S_W 20 CVT_S_WU 21 CVT_S_L 22 CVT_S_LU 23 FMA 24 FMSUB 25 FNMSUB 26 FNMADD 27
+
+        // rounding: 1.0 + 2^-24 is an exact tie, ULP(1.0)=2^-23
+        assert(ev(0, 0x3F800000L, 0x33800000L) == (0x3F800000L, 0x01), "RNE tie to even")
+        assert(ev(0, 0x3F800000L, 0x33800000L, rm = 1) == (0x3F800000L, 0x01), "RTZ tie down")
+        assert(ev(0, 0x3F800000L, 0x33800000L, rm = 2) == (0x3F800000L, 0x01), "RDN tie down")
+        assert(ev(0, 0x3F800000L, 0x33800000L, rm = 3) == (0x3F800001L, 0x01), "RUP tie up")
+        assert(ev(0, 0x3F800000L, 0x33800000L, rm = 4) == (0x3F800001L, 0x01), "RMM tie away")
+
+        assert(ev(0, 0x3F800000L, 0xBF800000L) == (0x00000000L, 0), "+1 + -1 = +0")
+        assert(ev(0, 0x3F800000L, 0xBF800000L, rm = 2) == (0x80000000L, 0), "+1 + -1 = -0 under RDN")
+
+        // division
+        assert(ev(3, 0x3F800000L, 0x40000000L) == (0x3F000000L, 0), "1/2 = 0.5")
+        assert(ev(3, 0x3F800000L, 0x40400000L) == (0x3EAAAAABL, 0x01), "1/3 = RNE, NX")
+        assert(ev(3, 0x3F800000L, 0x00000000L) == (0x7F800000L, 0x08), "1/0 = +inf, DZ")
+        assert(ev(3, 0x00000000L, 0x00000000L) == (0x7FC00000L, 0x10), "0/0 = qNaN, NV")
+
+        // sqrt
+        assert(ev(4, 0x40800000L) == (0x40000000L, 0), "sqrt(4) = 2")
+        assert(ev(4, 0x40000000L) == (0x3FB504F3L, 0x01), "sqrt(2) = RNE, NX")
+        assert(ev(4, 0x80000000L) == (0x80000000L, 0), "sqrt(-0) = -0")
+        assert(ev(4, 0xBF800000L) == (0x7FC00000L, 0x10), "sqrt(-1) = qNaN, NV")
+
+        // min/max
+        assert(ev(5, 0x3F800000L, 0x40000000L) == (0x3F800000L, 0), "min(1,2) = 1")
+        assert(ev(6, 0x3F800000L, 0x40000000L) == (0x40000000L, 0), "max(1,2) = 2")
+        assert(ev(5, 0x80000000L, 0x00000000L) == (0x80000000L, 0), "min(-0,+0) = -0")
+        assert(ev(6, 0x80000000L, 0x00000000L) == (0x00000000L, 0), "max(-0,+0) = +0")
+        assert(ev(5, 0x7FC00000L, 0x3F800000L) == (0x3F800000L, 0), "min(qNaN,1) = 1")
+        assert(ev(5, 0x7F800001L, 0x3F800000L) == (0x3F800000L, 0x10), "min(sNaN,1) = 1, NV")
+        assert(ev(6, 0x7FC00000L, 0x7FC00000L) == (0x7FC00000L, 0), "max(qNaN,qNaN) = qNaN")
+
+        // sign injection
+        assert(ev(7, 0x3F800000L, 0xBF800000L) == (0xBF800000L, 0), "sgnj(1,-2) = -1")
+        assert(ev(8, 0x3F800000L, 0xBF800000L) == (0x3F800000L, 0), "sgnjn(1,-2) = +1")
+        assert(ev(9, 0x3F800000L, 0xBF800000L) == (0xBF800000L, 0), "sgnjx(1,-2) = -1")
+        assert(ev(9, 0xBF800000L, 0xBF800000L) == (0x3F800000L, 0), "sgnjx(-1,-2) = +1")
+
+        // compare
+        assert(ev(11, 0x3F800000L, 0x40000000L) == (1L, 0), "1 < 2")
+        assert(ev(11, 0x40000000L, 0x3F800000L) == (0L, 0), "2 < 1 false")
+        assert(ev(11, 0x7FC00000L, 0x40000000L) == (0L, 0x10), "NaN < 2 false, NV")
+        assert(ev(12, 0x3F800000L, 0x3F800000L) == (1L, 0), "1 <= 1")
+        assert(ev(10, 0x3F800000L, 0x3F800000L) == (1L, 0), "1 == 1")
+        assert(ev(10, 0x7FC00000L, 0x7FC00000L) == (0L, 0), "NaN == NaN false, no NV")
+
+        // classify
+        assert(ev(13, 0x3F800000L) == (0x40L, 0), "class(1.0) = positive normal")
+        assert(ev(13, 0x00000001L) == (0x20L, 0), "class(min subnormal) = positive subnormal")
+        assert(ev(13, 0xBF800000L) == (0x02L, 0), "class(-1.0) = negative normal")
+        assert(ev(13, 0x00000000L) == (0x10L, 0), "class(+0) = positive zero")
+        assert(ev(13, 0x80000000L) == (0x08L, 0), "class(-0) = negative zero")
+        assert(ev(13, 0x7F800000L) == (0x80L, 0), "class(+inf) = positive infinity")
+        assert(ev(13, 0xFF800000L) == (0x01L, 0), "class(-inf) = negative infinity")
+        assert(ev(13, 0x7FC00000L) == (0x200L, 0), "class(qNaN)")
+        assert(ev(13, 0x7F800001L) == (0x100L, 0), "class(sNaN)")
+
+        // FMA family: 2*3 (+/-) 4
+        assert(ev(24, 0x40000000L, 0x40400000L, 0x40800000L) == (0x41200000L, 0), "fma 2*3+4 = 10")
+        assert(ev(25, 0x40000000L, 0x40400000L, 0x40800000L) == (0x40000000L, 0), "fmsub 2*3-4 = 2")
+        assert(ev(26, 0x40000000L, 0x40400000L, 0x40800000L) == (0xC0000000L, 0), "fnmsub -(2*3)+4 = -2")
+        assert(ev(27, 0x40000000L, 0x40400000L, 0x40800000L) == (0xC1200000L, 0), "fnmadd -(2*3)-4 = -10")
+
+        // conversions with rounding
+        assert(ev(16, 0x40200000L) == (2L, 0x01), "cvt.w.s 2.5 RNE = 2, NX")
+        assert(ev(16, 0x40200000L, rm = 3) == (3L, 0x01), "cvt.w.s 2.5 RUP = 3, NX")
+        assert(ev(16, 0xC0200000L, rm = 0) == (0xFFFFFFFEL, 0x01), "cvt.w.s -2.5 RNE = -2, NX")
+        assert(ev(16, 0xC0200000L, rm = 2) == (0xFFFFFFFDL, 0x01), "cvt.w.s -2.5 RDN = -3, NX")
+        assert(ev(16, 0x7F800000L) == (0x7FFFFFFFL, 0x10), "cvt.w.s +inf = INT_MAX, NV")
+        assert(ev(16, 0xFF800000L) == (0x80000000L, 0x10), "cvt.w.s -inf = INT_MIN, NV")
+        assert(ev(17, 0x40000000L) == (2L, 0), "cvt.wu.s 2.0 = 2")
+        assert(ev(17, 0xBF800000L) == (0L, 0x10), "cvt.wu.s -1.0 = 0, NV")
+        assert(ev(17, 0x7F800000L) == (0xFFFFFFFFL, 0x10), "cvt.wu.s +inf = UINT_MAX, NV")
+        assert(ev(20, 3L) == (0x40400000L, 0), "cvt.s.w 3 = 3.0")
+        assert(ev(21, 0xFFFFFFFFL) == (0x4F800000L, 0x01), "cvt.s.wu 4294967295 = 2^32, NX")
+        assert(ev(22, 5L) == (0x40A00000L, 0), "cvt.s.l 5 = 5.0")
+        assert(ev(23, -1L) == (0x5F800000L, 0x01), "cvt.s.lu 2^64-1 = 2^64, NX")
+        assert(ev(18, 0x40400000L) == (3L, 0), "cvt.l.s 3.0 = 3")
+
+        println("PASS: FpUnit spec battery")
+      }
+  }
 }

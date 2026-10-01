@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 52 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 53 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -39,6 +39,7 @@ graph LR
 | RV32F misaligned FLW traps | `FLW` 地址未按宽度对齐 | `mcause==4`、`mepc` 指向故障指令 |
 | RV32F misaligned FSW traps | `FSW` 地址未按宽度对齐 | `mcause==6`、`mepc` 指向故障指令 |
 | FpUnit standalone sanity (F) | 直接驱动参数化 `FpUnit(8,23)` 的 ADD/SUB/MUL/DIV/SQRT | 3+4=0x40E00000、4-3=1.0、3*4=0x41400000、4/3=0x3FAAAAAB、sqrt(4)=0x40000000、1+1=2.0、1+2=3.0、1*1=1.0 |
+| FpUnit spec battery (F) | 5 种舍入模式（含 ties-to-even/away 与 RDN/RUP）、DIV/SQRT 边界、min/max（NaN/±0/sNaN NV）、FSGNJ 系列、FCMP、FCLASS 全 10 类、FMA 四变体、整数↔浮点转换（含负值→无符号 NV、饱和、NX/carry） | 逐项结果与 NV/DZ/OF/UF/NX 标志位 |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 

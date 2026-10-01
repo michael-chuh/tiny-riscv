@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCoreF
-// Git hash  : 8022bd50e338376ca7c90aaa7abf0b9e06d7edf5
+// Git hash  : 315e41b9a80e183597f34c6177fb1f2bc6859e2d
 
 `timescale 1ns/1ps
 
@@ -2050,12 +2050,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_6_1;
   wire       [57:0]   _zz__zz_flagUF_6_2;
   wire       [4:0]    _zz__zz_flagUF_6_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_2;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_2;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_2_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_2_2;
-  wire                _zz__zz_when_FpUnit_l150_2_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_2_4;
-  wire                _zz__zz_when_FpUnit_l150_2_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_2_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_2_3;
+  wire                _zz__zz_when_FpUnit_l150_2_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_2_5;
+  wire                _zz__zz_when_FpUnit_l150_2_6;
+  wire                _zz__zz_when_FpUnit_l150_2_7;
   wire       [23:0]   _zz__zz_res_2;
   wire       [23:0]   _zz__zz_res_2_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_4;
@@ -2094,12 +2096,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_17_1;
   wire       [57:0]   _zz__zz_flagUF_17_2;
   wire       [4:0]    _zz__zz_flagUF_17_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_7;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_7;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_7_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_7_2;
-  wire                _zz__zz_when_FpUnit_l150_7_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_7_4;
-  wire                _zz__zz_when_FpUnit_l150_7_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_7_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_7_3;
+  wire                _zz__zz_when_FpUnit_l150_7_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_7_5;
+  wire                _zz__zz_when_FpUnit_l150_7_6;
+  wire                _zz__zz_when_FpUnit_l150_7_7;
   wire       [23:0]   _zz__zz_res_8;
   wire       [23:0]   _zz__zz_res_8_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_9;
@@ -2126,12 +2130,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_28_1;
   wire       [57:0]   _zz__zz_flagUF_28_2;
   wire       [4:0]    _zz__zz_flagUF_28_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_12;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_12;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_12_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_12_2;
-  wire                _zz__zz_when_FpUnit_l150_12_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_12_4;
-  wire                _zz__zz_when_FpUnit_l150_12_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_12_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_12_3;
+  wire                _zz__zz_when_FpUnit_l150_12_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_12_5;
+  wire                _zz__zz_when_FpUnit_l150_12_6;
+  wire                _zz__zz_when_FpUnit_l150_12_7;
   wire       [23:0]   _zz__zz_res_14;
   wire       [23:0]   _zz__zz_res_14_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_14;
@@ -2166,12 +2172,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_40_1;
   wire       [57:0]   _zz__zz_flagUF_40_2;
   wire       [4:0]    _zz__zz_flagUF_40_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_17;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_17;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_17_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_17_2;
-  wire                _zz__zz_when_FpUnit_l150_17_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_17_4;
-  wire                _zz__zz_when_FpUnit_l150_17_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_17_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_17_3;
+  wire                _zz__zz_when_FpUnit_l150_17_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_17_5;
+  wire                _zz__zz_when_FpUnit_l150_17_6;
+  wire                _zz__zz_when_FpUnit_l150_17_7;
   wire       [23:0]   _zz__zz_res_20;
   wire       [23:0]   _zz__zz_res_20_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_19;
@@ -2515,12 +2523,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_53_1;
   wire       [57:0]   _zz__zz_flagUF_53_2;
   wire       [4:0]    _zz__zz_flagUF_53_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_22;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_22;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_22_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_22_2;
-  wire                _zz__zz_when_FpUnit_l150_22_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_22_4;
-  wire                _zz__zz_when_FpUnit_l150_22_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_22_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_22_3;
+  wire                _zz__zz_when_FpUnit_l150_22_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_22_5;
+  wire                _zz__zz_when_FpUnit_l150_22_6;
+  wire                _zz__zz_when_FpUnit_l150_22_7;
   wire       [23:0]   _zz__zz_res_26;
   wire       [23:0]   _zz__zz_res_26_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_24;
@@ -2551,11 +2561,12 @@ module FpUnit (
   wire       [53:0]   _zz__zz_when_FpUnit_l84_138_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_139;
   wire       [53:0]   _zz__zz_when_FpUnit_l84_139_1;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_140;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_140;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_140_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_140_2;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_140_3;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_140_3;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_140_4;
+  wire       [54:0]   _zz__zz_when_FpUnit_l84_140_5;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_142;
   wire       [11:0]   _zz__zz_flagUF_62;
   wire       [11:0]   _zz__zz_flagUF_62_1;
@@ -2574,12 +2585,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_67_1;
   wire       [57:0]   _zz__zz_flagUF_67_2;
   wire       [4:0]    _zz__zz_flagUF_67_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_27;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_27;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_27_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_27_2;
-  wire                _zz__zz_when_FpUnit_l150_27_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_27_4;
-  wire                _zz__zz_when_FpUnit_l150_27_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_27_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_27_3;
+  wire                _zz__zz_when_FpUnit_l150_27_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_27_5;
+  wire                _zz__zz_when_FpUnit_l150_27_6;
+  wire                _zz__zz_when_FpUnit_l150_27_7;
   wire       [23:0]   _zz__zz_res_42;
   wire       [23:0]   _zz__zz_res_42_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_29;
@@ -2609,11 +2622,12 @@ module FpUnit (
   wire       [53:0]   _zz__zz_when_FpUnit_l84_146_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_147;
   wire       [53:0]   _zz__zz_when_FpUnit_l84_147_1;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_148;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_148;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_148_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_148_2;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_148_3;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_148_3;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_148_4;
+  wire       [54:0]   _zz__zz_when_FpUnit_l84_148_5;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_150;
   wire       [11:0]   _zz__zz_flagUF_76;
   wire       [11:0]   _zz__zz_flagUF_76_1;
@@ -2632,12 +2646,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_81_1;
   wire       [57:0]   _zz__zz_flagUF_81_2;
   wire       [4:0]    _zz__zz_flagUF_81_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_32;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_32;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_32_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_32_2;
-  wire                _zz__zz_when_FpUnit_l150_32_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_32_4;
-  wire                _zz__zz_when_FpUnit_l150_32_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_32_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_32_3;
+  wire                _zz__zz_when_FpUnit_l150_32_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_32_5;
+  wire                _zz__zz_when_FpUnit_l150_32_6;
+  wire                _zz__zz_when_FpUnit_l150_32_7;
   wire       [23:0]   _zz__zz_res_47;
   wire       [23:0]   _zz__zz_res_47_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_34;
@@ -2667,11 +2683,12 @@ module FpUnit (
   wire       [53:0]   _zz__zz_when_FpUnit_l84_154_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_155;
   wire       [53:0]   _zz__zz_when_FpUnit_l84_155_1;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_156;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_156;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_156_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_156_2;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_156_3;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_156_3;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_156_4;
+  wire       [54:0]   _zz__zz_when_FpUnit_l84_156_5;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_158;
   wire       [11:0]   _zz__zz_flagUF_90;
   wire       [11:0]   _zz__zz_flagUF_90_1;
@@ -2690,12 +2707,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_95_1;
   wire       [57:0]   _zz__zz_flagUF_95_2;
   wire       [4:0]    _zz__zz_flagUF_95_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_37;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_37;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_37_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_37_2;
-  wire                _zz__zz_when_FpUnit_l150_37_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_37_4;
-  wire                _zz__zz_when_FpUnit_l150_37_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_37_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_37_3;
+  wire                _zz__zz_when_FpUnit_l150_37_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_37_5;
+  wire                _zz__zz_when_FpUnit_l150_37_6;
+  wire                _zz__zz_when_FpUnit_l150_37_7;
   wire       [23:0]   _zz__zz_res_52;
   wire       [23:0]   _zz__zz_res_52_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_39;
@@ -2725,11 +2744,12 @@ module FpUnit (
   wire       [53:0]   _zz__zz_when_FpUnit_l84_162_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_163;
   wire       [53:0]   _zz__zz_when_FpUnit_l84_163_1;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_164;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_164;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_164_1;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_164_2;
-  wire       [54:0]   _zz__zz_when_FpUnit_l84_164_3;
+  wire       [55:0]   _zz__zz_when_FpUnit_l84_164_3;
   wire       [54:0]   _zz__zz_when_FpUnit_l84_164_4;
+  wire       [54:0]   _zz__zz_when_FpUnit_l84_164_5;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_166;
   wire       [11:0]   _zz__zz_flagUF_104;
   wire       [11:0]   _zz__zz_flagUF_104_1;
@@ -2748,81 +2768,79 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagUF_109_1;
   wire       [57:0]   _zz__zz_flagUF_109_2;
   wire       [4:0]    _zz__zz_flagUF_109_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_42;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_42;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_42_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_42_2;
-  wire                _zz__zz_when_FpUnit_l150_42_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_42_4;
-  wire                _zz__zz_when_FpUnit_l150_42_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_42_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_42_3;
+  wire                _zz__zz_when_FpUnit_l150_42_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_42_5;
+  wire                _zz__zz_when_FpUnit_l150_42_6;
+  wire                _zz__zz_when_FpUnit_l150_42_7;
   wire       [23:0]   _zz__zz_res_57;
   wire       [23:0]   _zz__zz_res_57_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_44;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_44_1;
   wire       [7:0]    _zz__zz_res_60;
   wire       [11:0]   _zz__zz_res_60_1;
-  wire       [11:0]   _zz__zz_when_FpUnit_l445;
+  wire       [11:0]   _zz__zz_when_FpUnit_l447;
   wire       [11:0]   _zz__zz_flagNX_2;
-  wire       [23:0]   _zz__zz_when_FpUnit_l470;
+  wire       [23:0]   _zz__zz_when_FpUnit_l474;
   wire       [23:0]   _zz__zz_flagNX_1;
   wire       [23:0]   _zz__zz_flagNX_1_1;
   wire       [54:0]   _zz__zz_flagNX_1_2;
   wire       [4:0]    _zz__zz_flagNX_1_3;
-  wire       [96:0]   _zz__zz_when_FpUnit_l470_1;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_2;
-  wire       [5:0]    _zz__zz_when_FpUnit_l470_3;
-  wire       [11:0]   _zz__zz_when_FpUnit_l470_4;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_1_1;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_1_2;
-  wire       [0:0]    _zz__zz_when_FpUnit_l470_1_3;
+  wire       [96:0]   _zz__zz_when_FpUnit_l474_1;
+  wire       [33:0]   _zz__zz_when_FpUnit_l474_2;
+  wire       [5:0]    _zz__zz_when_FpUnit_l474_3;
+  wire       [11:0]   _zz__zz_when_FpUnit_l474_4;
+  wire       [33:0]   _zz__zz_when_FpUnit_l474_1_1;
+  wire       [0:0]    _zz__zz_when_FpUnit_l474_1_2;
   wire       [31:0]   _zz__zz_res_62;
   wire       [63:0]   _zz_res_92;
   wire       [31:0]   _zz_res_93;
-  wire       [11:0]   _zz__zz_when_FpUnit_l445_1;
+  wire       [11:0]   _zz__zz_when_FpUnit_l447_1;
   wire       [11:0]   _zz__zz_flagNX_4;
-  wire       [23:0]   _zz__zz_when_FpUnit_l470_2_1;
+  wire       [23:0]   _zz__zz_when_FpUnit_l474_2_1;
   wire       [23:0]   _zz__zz_flagNX_3;
   wire       [23:0]   _zz__zz_flagNX_3_1;
   wire       [54:0]   _zz__zz_flagNX_3_2;
   wire       [4:0]    _zz__zz_flagNX_3_3;
-  wire       [96:0]   _zz__zz_when_FpUnit_l470_2_2;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_2_3;
-  wire       [5:0]    _zz__zz_when_FpUnit_l470_2_4;
-  wire       [11:0]   _zz__zz_when_FpUnit_l470_2_5;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_3_1;
-  wire       [33:0]   _zz__zz_when_FpUnit_l470_3_2;
-  wire       [0:0]    _zz__zz_when_FpUnit_l470_3_3;
+  wire       [96:0]   _zz__zz_when_FpUnit_l474_2_2;
+  wire       [33:0]   _zz__zz_when_FpUnit_l474_2_3;
+  wire       [5:0]    _zz__zz_when_FpUnit_l474_2_4;
+  wire       [11:0]   _zz__zz_when_FpUnit_l474_2_5;
+  wire       [33:0]   _zz__zz_when_FpUnit_l474_3_1;
+  wire       [0:0]    _zz__zz_when_FpUnit_l474_3_2;
   wire       [31:0]   _zz__zz_res_63;
   wire       [63:0]   _zz_res_94;
-  wire       [11:0]   _zz__zz_when_FpUnit_l445_2;
+  wire       [11:0]   _zz__zz_when_FpUnit_l447_2;
   wire       [11:0]   _zz__zz_flagNX_6;
-  wire       [23:0]   _zz__zz_when_FpUnit_l470_4_1;
+  wire       [23:0]   _zz__zz_when_FpUnit_l474_4_1;
   wire       [23:0]   _zz__zz_flagNX_5;
   wire       [23:0]   _zz__zz_flagNX_5_1;
   wire       [54:0]   _zz__zz_flagNX_5_2;
   wire       [4:0]    _zz__zz_flagNX_5_3;
-  wire       [192:0]  _zz__zz_when_FpUnit_l470_4_2;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_4_3;
-  wire       [6:0]    _zz__zz_when_FpUnit_l470_4_4;
-  wire       [11:0]   _zz__zz_when_FpUnit_l470_4_5;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_5;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_5_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l470_5_2;
+  wire       [192:0]  _zz__zz_when_FpUnit_l474_4_2;
+  wire       [65:0]   _zz__zz_when_FpUnit_l474_4_3;
+  wire       [6:0]    _zz__zz_when_FpUnit_l474_4_4;
+  wire       [11:0]   _zz__zz_when_FpUnit_l474_4_5;
+  wire       [65:0]   _zz__zz_when_FpUnit_l474_5;
+  wire       [0:0]    _zz__zz_when_FpUnit_l474_5_1;
   wire       [63:0]   _zz__zz_res_64;
   wire       [63:0]   _zz_res_95;
-  wire       [11:0]   _zz__zz_when_FpUnit_l445_3;
+  wire       [11:0]   _zz__zz_when_FpUnit_l447_3;
   wire       [11:0]   _zz__zz_flagNX_8;
-  wire       [23:0]   _zz__zz_when_FpUnit_l470_6;
+  wire       [23:0]   _zz__zz_when_FpUnit_l474_6;
   wire       [23:0]   _zz__zz_flagNX_7;
   wire       [23:0]   _zz__zz_flagNX_7_1;
   wire       [54:0]   _zz__zz_flagNX_7_2;
   wire       [4:0]    _zz__zz_flagNX_7_3;
-  wire       [192:0]  _zz__zz_when_FpUnit_l470_6_1;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_6_2;
-  wire       [6:0]    _zz__zz_when_FpUnit_l470_6_3;
-  wire       [11:0]   _zz__zz_when_FpUnit_l470_6_4;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_7;
-  wire       [65:0]   _zz__zz_when_FpUnit_l470_7_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l470_7_2;
+  wire       [192:0]  _zz__zz_when_FpUnit_l474_6_1;
+  wire       [65:0]   _zz__zz_when_FpUnit_l474_6_2;
+  wire       [6:0]    _zz__zz_when_FpUnit_l474_6_3;
+  wire       [11:0]   _zz__zz_when_FpUnit_l474_6_4;
+  wire       [65:0]   _zz__zz_when_FpUnit_l474_7;
+  wire       [0:0]    _zz__zz_when_FpUnit_l474_7_1;
   wire       [63:0]   _zz__zz_res_65;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_168;
   wire       [55:0]   _zz__zz_when_FpUnit_l84_168_1;
@@ -2844,12 +2862,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagNX_13_1;
   wire       [57:0]   _zz__zz_flagNX_13_2;
   wire       [4:0]    _zz__zz_flagNX_13_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_47;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_47;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_47_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_47_2;
-  wire                _zz__zz_when_FpUnit_l150_47_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_47_4;
-  wire                _zz__zz_when_FpUnit_l150_47_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_47_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_47_3;
+  wire                _zz__zz_when_FpUnit_l150_47_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_47_5;
+  wire                _zz__zz_when_FpUnit_l150_47_6;
+  wire                _zz__zz_when_FpUnit_l150_47_7;
   wire       [23:0]   _zz__zz_res_67;
   wire       [23:0]   _zz__zz_res_67_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_49;
@@ -2876,12 +2896,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagNX_21_1;
   wire       [57:0]   _zz__zz_flagNX_21_2;
   wire       [4:0]    _zz__zz_flagNX_21_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_52;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_52;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_52_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_52_2;
-  wire                _zz__zz_when_FpUnit_l150_52_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_52_4;
-  wire                _zz__zz_when_FpUnit_l150_52_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_52_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_52_3;
+  wire                _zz__zz_when_FpUnit_l150_52_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_52_5;
+  wire                _zz__zz_when_FpUnit_l150_52_6;
+  wire                _zz__zz_when_FpUnit_l150_52_7;
   wire       [23:0]   _zz__zz_res_73;
   wire       [23:0]   _zz__zz_res_73_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_54;
@@ -2908,12 +2930,14 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagNX_29_1;
   wire       [57:0]   _zz__zz_flagNX_29_2;
   wire       [4:0]    _zz__zz_flagNX_29_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_57;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_57;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_57_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_57_2;
-  wire                _zz__zz_when_FpUnit_l150_57_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_57_4;
-  wire                _zz__zz_when_FpUnit_l150_57_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_57_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_57_3;
+  wire                _zz__zz_when_FpUnit_l150_57_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_57_5;
+  wire                _zz__zz_when_FpUnit_l150_57_6;
+  wire                _zz__zz_when_FpUnit_l150_57_7;
   wire       [23:0]   _zz__zz_res_79;
   wire       [23:0]   _zz__zz_res_79_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_59;
@@ -2940,19 +2964,21 @@ module FpUnit (
   wire       [26:0]   _zz__zz_flagNX_37_1;
   wire       [57:0]   _zz__zz_flagNX_37_2;
   wire       [4:0]    _zz__zz_flagNX_37_3;
-  wire       [23:0]   _zz__zz_when_FpUnit_l150_62;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_62;
   wire       [23:0]   _zz__zz_when_FpUnit_l150_62_1;
-  wire       [0:0]    _zz__zz_when_FpUnit_l150_62_2;
-  wire                _zz__zz_when_FpUnit_l150_62_3;
-  wire       [2:0]    _zz__zz_when_FpUnit_l150_62_4;
-  wire                _zz__zz_when_FpUnit_l150_62_5;
+  wire       [24:0]   _zz__zz_when_FpUnit_l150_62_2;
+  wire       [0:0]    _zz__zz_when_FpUnit_l150_62_3;
+  wire                _zz__zz_when_FpUnit_l150_62_4;
+  wire       [2:0]    _zz__zz_when_FpUnit_l150_62_5;
+  wire                _zz__zz_when_FpUnit_l150_62_6;
+  wire                _zz__zz_when_FpUnit_l150_62_7;
   wire       [23:0]   _zz__zz_res_85;
   wire       [23:0]   _zz__zz_res_85_1;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_64;
   wire       [11:0]   _zz__zz_when_FpUnit_l150_64_1;
   wire       [7:0]    _zz__zz_res_88;
   wire       [11:0]   _zz__zz_res_88_1;
-  wire                when_FpUnit_l475;
+  wire                when_FpUnit_l481;
   wire       [7:0]    _zz_when_FpUnit_l270;
   wire       [22:0]   _zz_when_FpUnit_l270_1;
   wire                _zz_when_FpUnit_l270_2;
@@ -2973,7 +2999,7 @@ module FpUnit (
   wire                _zz_when_FpUnit_l267_3;
   wire                when_FpUnit_l267;
   wire                when_FpUnit_l207;
-  wire                when_FpUnit_l391;
+  wire                when_FpUnit_l393;
   wire                _zz_flagNV_1;
   wire       [9:0]    _zz_when_FpUnit_l180_1;
   wire       [23:0]   _zz_when_FpUnit_l84;
@@ -3471,18 +3497,18 @@ module FpUnit (
   wire                when_FpUnit_l154_4;
   reg        [31:0]   _zz_res_30;
   wire                when_FpUnit_l305;
+  wire                when_FpUnit_l396;
   wire                when_FpUnit_l394;
-  wire                when_FpUnit_l392;
   wire                _zz_res_31;
   wire                _zz_res_32;
   reg        [31:0]   _zz_res_33;
-  wire                when_FpUnit_l389;
+  wire                when_FpUnit_l391;
+  wire                when_FpUnit_l396_1;
   wire                when_FpUnit_l394_1;
-  wire                when_FpUnit_l392_1;
   wire                _zz_res_34;
   wire                _zz_res_35;
   reg        [31:0]   _zz_res_36;
-  wire                when_FpUnit_l389_1;
+  wire                when_FpUnit_l391_1;
   reg        [31:0]   _zz_res_37;
   wire                _zz_res_38;
   wire                _zz_res_39;
@@ -3944,50 +3970,50 @@ module FpUnit (
   wire                when_FpUnit_l358_3;
   wire                when_FpUnit_l359_3;
   wire                when_FpUnit_l360_3;
-  wire       [11:0]   _zz_when_FpUnit_l445;
-  reg        [33:0]   _zz_when_FpUnit_l470;
+  wire       [11:0]   _zz_when_FpUnit_l447;
+  reg        [33:0]   _zz_when_FpUnit_l474;
   reg                 _zz_flagNX_1;
-  wire                when_FpUnit_l445;
+  wire                when_FpUnit_l447;
   wire       [11:0]   _zz_flagNX_2;
-  wire                when_FpUnit_l448;
-  wire                when_FpUnit_l451;
-  wire       [32:0]   _zz_when_FpUnit_l470_1;
-  wire                when_FpUnit_l470;
+  wire                when_FpUnit_l450;
+  wire                when_FpUnit_l453;
+  wire       [33:0]   _zz_when_FpUnit_l474_1;
+  wire                when_FpUnit_l474;
   reg        [31:0]   _zz_res_62;
-  wire                when_FpUnit_l473;
-  wire       [11:0]   _zz_when_FpUnit_l445_1;
-  reg        [33:0]   _zz_when_FpUnit_l470_2;
+  wire                when_FpUnit_l479;
+  wire       [11:0]   _zz_when_FpUnit_l447_1;
+  reg        [33:0]   _zz_when_FpUnit_l474_2;
   reg                 _zz_flagNX_3;
-  wire                when_FpUnit_l445_1;
+  wire                when_FpUnit_l447_1;
   wire       [11:0]   _zz_flagNX_4;
-  wire                when_FpUnit_l448_1;
-  wire                when_FpUnit_l451_1;
-  wire       [32:0]   _zz_when_FpUnit_l470_3;
-  wire                when_FpUnit_l470_1;
+  wire                when_FpUnit_l450_1;
+  wire                when_FpUnit_l453_1;
+  wire       [33:0]   _zz_when_FpUnit_l474_3;
+  wire                when_FpUnit_l474_1;
   reg        [31:0]   _zz_res_63;
-  wire                when_FpUnit_l473_1;
-  wire       [11:0]   _zz_when_FpUnit_l445_2;
-  reg        [65:0]   _zz_when_FpUnit_l470_4;
+  wire                when_FpUnit_l479_1;
+  wire       [11:0]   _zz_when_FpUnit_l447_2;
+  reg        [65:0]   _zz_when_FpUnit_l474_4;
   reg                 _zz_flagNX_5;
-  wire                when_FpUnit_l445_2;
+  wire                when_FpUnit_l447_2;
   wire       [11:0]   _zz_flagNX_6;
-  wire                when_FpUnit_l448_2;
-  wire                when_FpUnit_l451_2;
-  wire       [64:0]   _zz_when_FpUnit_l470_5;
-  wire                when_FpUnit_l470_2;
+  wire                when_FpUnit_l450_2;
+  wire                when_FpUnit_l453_2;
+  wire       [65:0]   _zz_when_FpUnit_l474_5;
+  wire                when_FpUnit_l474_2;
   reg        [63:0]   _zz_res_64;
-  wire                when_FpUnit_l473_2;
-  wire       [11:0]   _zz_when_FpUnit_l445_3;
-  reg        [65:0]   _zz_when_FpUnit_l470_6;
+  wire                when_FpUnit_l479_2;
+  wire       [11:0]   _zz_when_FpUnit_l447_3;
+  reg        [65:0]   _zz_when_FpUnit_l474_6;
   reg                 _zz_flagNX_7;
-  wire                when_FpUnit_l445_3;
+  wire                when_FpUnit_l447_3;
   wire       [11:0]   _zz_flagNX_8;
-  wire                when_FpUnit_l448_3;
-  wire                when_FpUnit_l451_3;
-  wire       [64:0]   _zz_when_FpUnit_l470_7;
-  wire                when_FpUnit_l470_3;
+  wire                when_FpUnit_l450_3;
+  wire                when_FpUnit_l453_3;
+  wire       [65:0]   _zz_when_FpUnit_l474_7;
+  wire                when_FpUnit_l474_3;
   reg        [63:0]   _zz_res_65;
-  wire                when_FpUnit_l473_3;
+  wire                when_FpUnit_l479_3;
   wire                _zz_res_66;
   wire       [31:0]   _zz_when_FpUnit_l84_167;
   wire       [55:0]   _zz_when_FpUnit_l84_168;
@@ -4076,7 +4102,7 @@ module FpUnit (
   reg        [31:0]   _zz_res_70;
   wire                when_FpUnit_l154_9;
   reg        [31:0]   _zz_res_71;
-  wire                when_FpUnit_l492;
+  wire                when_FpUnit_l498;
   wire                _zz_res_72;
   wire       [31:0]   _zz_when_FpUnit_l84_169;
   wire       [55:0]   _zz_when_FpUnit_l84_170;
@@ -4165,7 +4191,7 @@ module FpUnit (
   reg        [31:0]   _zz_res_76;
   wire                when_FpUnit_l154_10;
   reg        [31:0]   _zz_res_77;
-  wire                when_FpUnit_l492_1;
+  wire                when_FpUnit_l498_1;
   wire                _zz_res_78;
   wire       [63:0]   _zz_when_FpUnit_l84_171;
   wire       [87:0]   _zz_when_FpUnit_l84_172;
@@ -4286,7 +4312,7 @@ module FpUnit (
   reg        [31:0]   _zz_res_82;
   wire                when_FpUnit_l154_11;
   reg        [31:0]   _zz_res_83;
-  wire                when_FpUnit_l492_2;
+  wire                when_FpUnit_l498_2;
   wire                _zz_res_84;
   wire       [63:0]   _zz_when_FpUnit_l84_173;
   wire       [87:0]   _zz_when_FpUnit_l84_174;
@@ -4407,7 +4433,7 @@ module FpUnit (
   reg        [31:0]   _zz_res_88;
   wire                when_FpUnit_l154_12;
   reg        [31:0]   _zz_res_89;
-  wire                when_FpUnit_l492_3;
+  wire                when_FpUnit_l498_3;
 
   assign _zz__zz_when_FpUnit_l180 = ($signed(_zz__zz_when_FpUnit_l180_1) - $signed(10'h07f));
   assign _zz__zz_when_FpUnit_l180_1 = _zz__zz_when_FpUnit_l180_2;
@@ -4424,7 +4450,7 @@ module FpUnit (
   assign _zz__zz_when_FpUnit_l329_1_3 = _zz_when_FpUnit_l361;
   assign _zz__zz_when_FpUnit_l329_1_2 = {2'd0, _zz__zz_when_FpUnit_l329_1_3};
   assign _zz__zz_when_FpUnit_l84_1 = {1'd0, _zz_when_FpUnit_l361_1};
-  assign _zz_res_90 = 32'h40400000;
+  assign _zz_res_90 = 32'h7fc00000;
   assign _zz__zz_when_FpUnit_l84_4 = ({3'd0,_zz__zz_when_FpUnit_l84_4_1} <<< 2'd3);
   assign _zz__zz_when_FpUnit_l84_4_2 = (_zz_when_FpUnit_l180_2 ? _zz_when_FpUnit_l84 : _zz_flagNX);
   assign _zz__zz_when_FpUnit_l84_4_1 = {4'd0, _zz__zz_when_FpUnit_l84_4_2};
@@ -4457,9 +4483,10 @@ module FpUnit (
   assign _zz__zz_flagUF_6_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_6_3);
   assign _zz__zz_flagUF_6_1 = _zz__zz_flagUF_6_2[26:0];
   assign _zz__zz_flagUF_6_3 = _zz_when_FpUnit_l119[4:0];
-  assign _zz__zz_when_FpUnit_l150_2 = (_zz_when_FpUnit_l150_1 + _zz__zz_when_FpUnit_l150_2_1);
-  assign _zz__zz_when_FpUnit_l150_2_2 = ((io_rm == 3'b000) ? (_zz_flagUF_7 && ((_zz_flagUF_8 || _zz_flagUF_9) || _zz_when_FpUnit_l150_1[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_1) && (_zz__zz_when_FpUnit_l150_2_3 || _zz_flagUF_9)) : ((io_rm == _zz__zz_when_FpUnit_l150_2_4) ? (_zz_res_1 && _zz__zz_when_FpUnit_l150_2_5) : _zz_flagUF_7))));
-  assign _zz__zz_when_FpUnit_l150_2_1 = {23'd0, _zz__zz_when_FpUnit_l150_2_2};
+  assign _zz__zz_when_FpUnit_l150_2_1 = _zz_when_FpUnit_l150_1;
+  assign _zz__zz_when_FpUnit_l150_2 = {1'd0, _zz__zz_when_FpUnit_l150_2_1};
+  assign _zz__zz_when_FpUnit_l150_2_3 = ((io_rm == 3'b000) ? (_zz_flagUF_7 && ((_zz_flagUF_8 || _zz_flagUF_9) || _zz_when_FpUnit_l150_1[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_1 && (_zz__zz_when_FpUnit_l150_2_4 || _zz_flagUF_9)) : ((io_rm == _zz__zz_when_FpUnit_l150_2_5) ? (_zz__zz_when_FpUnit_l150_2_6 && _zz__zz_when_FpUnit_l150_2_7) : _zz_flagUF_7))));
+  assign _zz__zz_when_FpUnit_l150_2_2 = {24'd0, _zz__zz_when_FpUnit_l150_2_3};
   assign _zz__zz_res_2 = (_zz_when_FpUnit_l150_2 >>> 1'd1);
   assign _zz__zz_res_2_1 = _zz_when_FpUnit_l150_2[23:0];
   assign _zz__zz_when_FpUnit_l150_4 = (_zz_when_FpUnit_l150_3 ? _zz__zz_when_FpUnit_l150_4_1 : _zz_when_FpUnit_l150);
@@ -4498,9 +4525,10 @@ module FpUnit (
   assign _zz__zz_flagUF_17_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_17_3);
   assign _zz__zz_flagUF_17_1 = _zz__zz_flagUF_17_2[26:0];
   assign _zz__zz_flagUF_17_3 = _zz_when_FpUnit_l119_1[4:0];
-  assign _zz__zz_when_FpUnit_l150_7 = (_zz_when_FpUnit_l150_6 + _zz__zz_when_FpUnit_l150_7_1);
-  assign _zz__zz_when_FpUnit_l150_7_2 = ((io_rm == 3'b000) ? (_zz_flagUF_18 && ((_zz_flagUF_19 || _zz_flagUF_20) || _zz_when_FpUnit_l150_6[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_7) && (_zz__zz_when_FpUnit_l150_7_3 || _zz_flagUF_20)) : ((io_rm == _zz__zz_when_FpUnit_l150_7_4) ? (_zz_res_7 && _zz__zz_when_FpUnit_l150_7_5) : _zz_flagUF_18))));
-  assign _zz__zz_when_FpUnit_l150_7_1 = {23'd0, _zz__zz_when_FpUnit_l150_7_2};
+  assign _zz__zz_when_FpUnit_l150_7_1 = _zz_when_FpUnit_l150_6;
+  assign _zz__zz_when_FpUnit_l150_7 = {1'd0, _zz__zz_when_FpUnit_l150_7_1};
+  assign _zz__zz_when_FpUnit_l150_7_3 = ((io_rm == 3'b000) ? (_zz_flagUF_18 && ((_zz_flagUF_19 || _zz_flagUF_20) || _zz_when_FpUnit_l150_6[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_7 && (_zz__zz_when_FpUnit_l150_7_4 || _zz_flagUF_20)) : ((io_rm == _zz__zz_when_FpUnit_l150_7_5) ? (_zz__zz_when_FpUnit_l150_7_6 && _zz__zz_when_FpUnit_l150_7_7) : _zz_flagUF_18))));
+  assign _zz__zz_when_FpUnit_l150_7_2 = {24'd0, _zz__zz_when_FpUnit_l150_7_3};
   assign _zz__zz_res_8 = (_zz_when_FpUnit_l150_7 >>> 1'd1);
   assign _zz__zz_res_8_1 = _zz_when_FpUnit_l150_7[23:0];
   assign _zz__zz_when_FpUnit_l150_9 = (_zz_when_FpUnit_l150_8 ? _zz__zz_when_FpUnit_l150_9_1 : _zz_when_FpUnit_l150_5);
@@ -4527,9 +4555,10 @@ module FpUnit (
   assign _zz__zz_flagUF_28_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_28_3);
   assign _zz__zz_flagUF_28_1 = _zz__zz_flagUF_28_2[26:0];
   assign _zz__zz_flagUF_28_3 = _zz_when_FpUnit_l119_2[4:0];
-  assign _zz__zz_when_FpUnit_l150_12 = (_zz_when_FpUnit_l150_11 + _zz__zz_when_FpUnit_l150_12_1);
-  assign _zz__zz_when_FpUnit_l150_12_2 = ((io_rm == 3'b000) ? (_zz_flagUF_29 && ((_zz_flagUF_30 || _zz_flagUF_31) || _zz_when_FpUnit_l150_11[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_13) && (_zz__zz_when_FpUnit_l150_12_3 || _zz_flagUF_31)) : ((io_rm == _zz__zz_when_FpUnit_l150_12_4) ? (_zz_res_13 && _zz__zz_when_FpUnit_l150_12_5) : _zz_flagUF_29))));
-  assign _zz__zz_when_FpUnit_l150_12_1 = {23'd0, _zz__zz_when_FpUnit_l150_12_2};
+  assign _zz__zz_when_FpUnit_l150_12_1 = _zz_when_FpUnit_l150_11;
+  assign _zz__zz_when_FpUnit_l150_12 = {1'd0, _zz__zz_when_FpUnit_l150_12_1};
+  assign _zz__zz_when_FpUnit_l150_12_3 = ((io_rm == 3'b000) ? (_zz_flagUF_29 && ((_zz_flagUF_30 || _zz_flagUF_31) || _zz_when_FpUnit_l150_11[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_13 && (_zz__zz_when_FpUnit_l150_12_4 || _zz_flagUF_31)) : ((io_rm == _zz__zz_when_FpUnit_l150_12_5) ? (_zz__zz_when_FpUnit_l150_12_6 && _zz__zz_when_FpUnit_l150_12_7) : _zz_flagUF_29))));
+  assign _zz__zz_when_FpUnit_l150_12_2 = {24'd0, _zz__zz_when_FpUnit_l150_12_3};
   assign _zz__zz_res_14 = (_zz_when_FpUnit_l150_12 >>> 1'd1);
   assign _zz__zz_res_14_1 = _zz_when_FpUnit_l150_12[23:0];
   assign _zz__zz_when_FpUnit_l150_14 = (_zz_when_FpUnit_l150_13 ? _zz__zz_when_FpUnit_l150_14_1 : _zz_when_FpUnit_l150_10);
@@ -4564,9 +4593,10 @@ module FpUnit (
   assign _zz__zz_flagUF_40_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_40_3);
   assign _zz__zz_flagUF_40_1 = _zz__zz_flagUF_40_2[26:0];
   assign _zz__zz_flagUF_40_3 = _zz_when_FpUnit_l119_3[4:0];
-  assign _zz__zz_when_FpUnit_l150_17 = (_zz_when_FpUnit_l150_16 + _zz__zz_when_FpUnit_l150_17_1);
-  assign _zz__zz_when_FpUnit_l150_17_2 = ((io_rm == 3'b000) ? (_zz_flagUF_41 && ((_zz_flagUF_42 || _zz_flagUF_43) || _zz_when_FpUnit_l150_16[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_19) && (_zz__zz_when_FpUnit_l150_17_3 || _zz_flagUF_43)) : ((io_rm == _zz__zz_when_FpUnit_l150_17_4) ? (_zz_res_19 && _zz__zz_when_FpUnit_l150_17_5) : _zz_flagUF_41))));
-  assign _zz__zz_when_FpUnit_l150_17_1 = {23'd0, _zz__zz_when_FpUnit_l150_17_2};
+  assign _zz__zz_when_FpUnit_l150_17_1 = _zz_when_FpUnit_l150_16;
+  assign _zz__zz_when_FpUnit_l150_17 = {1'd0, _zz__zz_when_FpUnit_l150_17_1};
+  assign _zz__zz_when_FpUnit_l150_17_3 = ((io_rm == 3'b000) ? (_zz_flagUF_41 && ((_zz_flagUF_42 || _zz_flagUF_43) || _zz_when_FpUnit_l150_16[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_19 && (_zz__zz_when_FpUnit_l150_17_4 || _zz_flagUF_43)) : ((io_rm == _zz__zz_when_FpUnit_l150_17_5) ? (_zz__zz_when_FpUnit_l150_17_6 && _zz__zz_when_FpUnit_l150_17_7) : _zz_flagUF_41))));
+  assign _zz__zz_when_FpUnit_l150_17_2 = {24'd0, _zz__zz_when_FpUnit_l150_17_3};
   assign _zz__zz_res_20 = (_zz_when_FpUnit_l150_17 >>> 1'd1);
   assign _zz__zz_res_20_1 = _zz_when_FpUnit_l150_17[23:0];
   assign _zz__zz_when_FpUnit_l150_19 = (_zz_when_FpUnit_l150_18 ? _zz__zz_when_FpUnit_l150_19_1 : _zz_when_FpUnit_l150_15);
@@ -4910,9 +4940,10 @@ module FpUnit (
   assign _zz__zz_flagUF_53_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_53_3);
   assign _zz__zz_flagUF_53_1 = _zz__zz_flagUF_53_2[26:0];
   assign _zz__zz_flagUF_53_3 = _zz_when_FpUnit_l119_4[4:0];
-  assign _zz__zz_when_FpUnit_l150_22 = (_zz_when_FpUnit_l150_21 + _zz__zz_when_FpUnit_l150_22_1);
-  assign _zz__zz_when_FpUnit_l150_22_2 = ((io_rm == 3'b000) ? (_zz_flagUF_54 && ((_zz_flagUF_55 || _zz_flagUF_56) || _zz_when_FpUnit_l150_21[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_25) && (_zz__zz_when_FpUnit_l150_22_3 || _zz_flagUF_56)) : ((io_rm == _zz__zz_when_FpUnit_l150_22_4) ? (_zz_res_25 && _zz__zz_when_FpUnit_l150_22_5) : _zz_flagUF_54))));
-  assign _zz__zz_when_FpUnit_l150_22_1 = {23'd0, _zz__zz_when_FpUnit_l150_22_2};
+  assign _zz__zz_when_FpUnit_l150_22_1 = _zz_when_FpUnit_l150_21;
+  assign _zz__zz_when_FpUnit_l150_22 = {1'd0, _zz__zz_when_FpUnit_l150_22_1};
+  assign _zz__zz_when_FpUnit_l150_22_3 = ((io_rm == 3'b000) ? (_zz_flagUF_54 && ((_zz_flagUF_55 || _zz_flagUF_56) || _zz_when_FpUnit_l150_21[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_25 && (_zz__zz_when_FpUnit_l150_22_4 || _zz_flagUF_56)) : ((io_rm == _zz__zz_when_FpUnit_l150_22_5) ? (_zz__zz_when_FpUnit_l150_22_6 && _zz__zz_when_FpUnit_l150_22_7) : _zz_flagUF_54))));
+  assign _zz__zz_when_FpUnit_l150_22_2 = {24'd0, _zz__zz_when_FpUnit_l150_22_3};
   assign _zz__zz_res_26 = (_zz_when_FpUnit_l150_22 >>> 1'd1);
   assign _zz__zz_res_26_1 = _zz_when_FpUnit_l150_22[23:0];
   assign _zz__zz_when_FpUnit_l150_24 = (_zz_when_FpUnit_l150_23 ? _zz__zz_when_FpUnit_l150_24_1 : _zz_when_FpUnit_l150_20);
@@ -4943,11 +4974,12 @@ module FpUnit (
   assign _zz__zz_when_FpUnit_l84_138 = {1'd0, _zz__zz_when_FpUnit_l84_138_1};
   assign _zz__zz_when_FpUnit_l84_139_1 = _zz_when_FpUnit_l84_137;
   assign _zz__zz_when_FpUnit_l84_139 = {1'd0, _zz__zz_when_FpUnit_l84_139_1};
-  assign _zz__zz_when_FpUnit_l84_140 = ($signed(_zz__zz_when_FpUnit_l84_140_1) + $signed(_zz__zz_when_FpUnit_l84_140_3));
   assign _zz__zz_when_FpUnit_l84_140_1 = (_zz_when_FpUnit_l359_1 ? _zz__zz_when_FpUnit_l84_140_2 : _zz_when_FpUnit_l84_138);
+  assign _zz__zz_when_FpUnit_l84_140 = {{1{_zz__zz_when_FpUnit_l84_140_1[54]}}, _zz__zz_when_FpUnit_l84_140_1};
   assign _zz__zz_when_FpUnit_l84_140_2 = (- _zz_when_FpUnit_l84_138);
-  assign _zz__zz_when_FpUnit_l84_140_3 = (_zz_when_FpUnit_l359_2 ? _zz__zz_when_FpUnit_l84_140_4 : _zz_when_FpUnit_l84_139);
-  assign _zz__zz_when_FpUnit_l84_140_4 = (- _zz_when_FpUnit_l84_139);
+  assign _zz__zz_when_FpUnit_l84_140_4 = (_zz_when_FpUnit_l359_2 ? _zz__zz_when_FpUnit_l84_140_5 : _zz_when_FpUnit_l84_139);
+  assign _zz__zz_when_FpUnit_l84_140_3 = {{1{_zz__zz_when_FpUnit_l84_140_4[54]}}, _zz__zz_when_FpUnit_l84_140_4};
+  assign _zz__zz_when_FpUnit_l84_140_5 = (- _zz_when_FpUnit_l84_139);
   assign _zz__zz_when_FpUnit_l84_142 = (- _zz_when_FpUnit_l84_140);
   assign _zz__zz_flagUF_62 = _zz__zz_flagUF_62_1;
   assign _zz__zz_flagUF_62_1 = {6'd0, _zz_when_FpUnit_l91_5};
@@ -4966,9 +4998,10 @@ module FpUnit (
   assign _zz__zz_flagUF_67_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_67_3);
   assign _zz__zz_flagUF_67_1 = _zz__zz_flagUF_67_2[26:0];
   assign _zz__zz_flagUF_67_3 = _zz_when_FpUnit_l119_5[4:0];
-  assign _zz__zz_when_FpUnit_l150_27 = (_zz_when_FpUnit_l150_26 + _zz__zz_when_FpUnit_l150_27_1);
-  assign _zz__zz_when_FpUnit_l150_27_2 = ((io_rm == 3'b000) ? (_zz_flagUF_68 && ((_zz_flagUF_69 || _zz_flagUF_70) || _zz_when_FpUnit_l150_26[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_when_FpUnit_l84_141) && (_zz__zz_when_FpUnit_l150_27_3 || _zz_flagUF_70)) : ((io_rm == _zz__zz_when_FpUnit_l150_27_4) ? (_zz_when_FpUnit_l84_141 && _zz__zz_when_FpUnit_l150_27_5) : _zz_flagUF_68))));
-  assign _zz__zz_when_FpUnit_l150_27_1 = {23'd0, _zz__zz_when_FpUnit_l150_27_2};
+  assign _zz__zz_when_FpUnit_l150_27_1 = _zz_when_FpUnit_l150_26;
+  assign _zz__zz_when_FpUnit_l150_27 = {1'd0, _zz__zz_when_FpUnit_l150_27_1};
+  assign _zz__zz_when_FpUnit_l150_27_3 = ((io_rm == 3'b000) ? (_zz_flagUF_68 && ((_zz_flagUF_69 || _zz_flagUF_70) || _zz_when_FpUnit_l150_26[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_when_FpUnit_l84_141 && (_zz__zz_when_FpUnit_l150_27_4 || _zz_flagUF_70)) : ((io_rm == _zz__zz_when_FpUnit_l150_27_5) ? (_zz__zz_when_FpUnit_l150_27_6 && _zz__zz_when_FpUnit_l150_27_7) : _zz_flagUF_68))));
+  assign _zz__zz_when_FpUnit_l150_27_2 = {24'd0, _zz__zz_when_FpUnit_l150_27_3};
   assign _zz__zz_res_42 = (_zz_when_FpUnit_l150_27 >>> 1'd1);
   assign _zz__zz_res_42_1 = _zz_when_FpUnit_l150_27[23:0];
   assign _zz__zz_when_FpUnit_l150_29 = (_zz_when_FpUnit_l150_28 ? _zz__zz_when_FpUnit_l150_29_1 : _zz_when_FpUnit_l150_25);
@@ -4998,11 +5031,12 @@ module FpUnit (
   assign _zz__zz_when_FpUnit_l84_146 = {1'd0, _zz__zz_when_FpUnit_l84_146_1};
   assign _zz__zz_when_FpUnit_l84_147_1 = _zz_when_FpUnit_l84_145;
   assign _zz__zz_when_FpUnit_l84_147 = {1'd0, _zz__zz_when_FpUnit_l84_147_1};
-  assign _zz__zz_when_FpUnit_l84_148 = ($signed(_zz__zz_when_FpUnit_l84_148_1) + $signed(_zz__zz_when_FpUnit_l84_148_3));
   assign _zz__zz_when_FpUnit_l84_148_1 = (_zz_when_FpUnit_l359_3 ? _zz__zz_when_FpUnit_l84_148_2 : _zz_when_FpUnit_l84_146);
+  assign _zz__zz_when_FpUnit_l84_148 = {{1{_zz__zz_when_FpUnit_l84_148_1[54]}}, _zz__zz_when_FpUnit_l84_148_1};
   assign _zz__zz_when_FpUnit_l84_148_2 = (- _zz_when_FpUnit_l84_146);
-  assign _zz__zz_when_FpUnit_l84_148_3 = (_zz_when_FpUnit_l359_4 ? _zz__zz_when_FpUnit_l84_148_4 : _zz_when_FpUnit_l84_147);
-  assign _zz__zz_when_FpUnit_l84_148_4 = (- _zz_when_FpUnit_l84_147);
+  assign _zz__zz_when_FpUnit_l84_148_4 = (_zz_when_FpUnit_l359_4 ? _zz__zz_when_FpUnit_l84_148_5 : _zz_when_FpUnit_l84_147);
+  assign _zz__zz_when_FpUnit_l84_148_3 = {{1{_zz__zz_when_FpUnit_l84_148_4[54]}}, _zz__zz_when_FpUnit_l84_148_4};
+  assign _zz__zz_when_FpUnit_l84_148_5 = (- _zz_when_FpUnit_l84_147);
   assign _zz__zz_when_FpUnit_l84_150 = (- _zz_when_FpUnit_l84_148);
   assign _zz__zz_flagUF_76 = _zz__zz_flagUF_76_1;
   assign _zz__zz_flagUF_76_1 = {6'd0, _zz_when_FpUnit_l91_6};
@@ -5021,9 +5055,10 @@ module FpUnit (
   assign _zz__zz_flagUF_81_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_81_3);
   assign _zz__zz_flagUF_81_1 = _zz__zz_flagUF_81_2[26:0];
   assign _zz__zz_flagUF_81_3 = _zz_when_FpUnit_l119_6[4:0];
-  assign _zz__zz_when_FpUnit_l150_32 = (_zz_when_FpUnit_l150_31 + _zz__zz_when_FpUnit_l150_32_1);
-  assign _zz__zz_when_FpUnit_l150_32_2 = ((io_rm == 3'b000) ? (_zz_flagUF_82 && ((_zz_flagUF_83 || _zz_flagUF_84) || _zz_when_FpUnit_l150_31[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_when_FpUnit_l84_149) && (_zz__zz_when_FpUnit_l150_32_3 || _zz_flagUF_84)) : ((io_rm == _zz__zz_when_FpUnit_l150_32_4) ? (_zz_when_FpUnit_l84_149 && _zz__zz_when_FpUnit_l150_32_5) : _zz_flagUF_82))));
-  assign _zz__zz_when_FpUnit_l150_32_1 = {23'd0, _zz__zz_when_FpUnit_l150_32_2};
+  assign _zz__zz_when_FpUnit_l150_32_1 = _zz_when_FpUnit_l150_31;
+  assign _zz__zz_when_FpUnit_l150_32 = {1'd0, _zz__zz_when_FpUnit_l150_32_1};
+  assign _zz__zz_when_FpUnit_l150_32_3 = ((io_rm == 3'b000) ? (_zz_flagUF_82 && ((_zz_flagUF_83 || _zz_flagUF_84) || _zz_when_FpUnit_l150_31[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_when_FpUnit_l84_149 && (_zz__zz_when_FpUnit_l150_32_4 || _zz_flagUF_84)) : ((io_rm == _zz__zz_when_FpUnit_l150_32_5) ? (_zz__zz_when_FpUnit_l150_32_6 && _zz__zz_when_FpUnit_l150_32_7) : _zz_flagUF_82))));
+  assign _zz__zz_when_FpUnit_l150_32_2 = {24'd0, _zz__zz_when_FpUnit_l150_32_3};
   assign _zz__zz_res_47 = (_zz_when_FpUnit_l150_32 >>> 1'd1);
   assign _zz__zz_res_47_1 = _zz_when_FpUnit_l150_32[23:0];
   assign _zz__zz_when_FpUnit_l150_34 = (_zz_when_FpUnit_l150_33 ? _zz__zz_when_FpUnit_l150_34_1 : _zz_when_FpUnit_l150_30);
@@ -5053,11 +5088,12 @@ module FpUnit (
   assign _zz__zz_when_FpUnit_l84_154 = {1'd0, _zz__zz_when_FpUnit_l84_154_1};
   assign _zz__zz_when_FpUnit_l84_155_1 = _zz_when_FpUnit_l84_153;
   assign _zz__zz_when_FpUnit_l84_155 = {1'd0, _zz__zz_when_FpUnit_l84_155_1};
-  assign _zz__zz_when_FpUnit_l84_156 = ($signed(_zz__zz_when_FpUnit_l84_156_1) + $signed(_zz__zz_when_FpUnit_l84_156_3));
   assign _zz__zz_when_FpUnit_l84_156_1 = (_zz_when_FpUnit_l359_5 ? _zz__zz_when_FpUnit_l84_156_2 : _zz_when_FpUnit_l84_154);
+  assign _zz__zz_when_FpUnit_l84_156 = {{1{_zz__zz_when_FpUnit_l84_156_1[54]}}, _zz__zz_when_FpUnit_l84_156_1};
   assign _zz__zz_when_FpUnit_l84_156_2 = (- _zz_when_FpUnit_l84_154);
-  assign _zz__zz_when_FpUnit_l84_156_3 = (_zz_when_FpUnit_l359_6 ? _zz__zz_when_FpUnit_l84_156_4 : _zz_when_FpUnit_l84_155);
-  assign _zz__zz_when_FpUnit_l84_156_4 = (- _zz_when_FpUnit_l84_155);
+  assign _zz__zz_when_FpUnit_l84_156_4 = (_zz_when_FpUnit_l359_6 ? _zz__zz_when_FpUnit_l84_156_5 : _zz_when_FpUnit_l84_155);
+  assign _zz__zz_when_FpUnit_l84_156_3 = {{1{_zz__zz_when_FpUnit_l84_156_4[54]}}, _zz__zz_when_FpUnit_l84_156_4};
+  assign _zz__zz_when_FpUnit_l84_156_5 = (- _zz_when_FpUnit_l84_155);
   assign _zz__zz_when_FpUnit_l84_158 = (- _zz_when_FpUnit_l84_156);
   assign _zz__zz_flagUF_90 = _zz__zz_flagUF_90_1;
   assign _zz__zz_flagUF_90_1 = {6'd0, _zz_when_FpUnit_l91_7};
@@ -5076,9 +5112,10 @@ module FpUnit (
   assign _zz__zz_flagUF_95_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_95_3);
   assign _zz__zz_flagUF_95_1 = _zz__zz_flagUF_95_2[26:0];
   assign _zz__zz_flagUF_95_3 = _zz_when_FpUnit_l119_7[4:0];
-  assign _zz__zz_when_FpUnit_l150_37 = (_zz_when_FpUnit_l150_36 + _zz__zz_when_FpUnit_l150_37_1);
-  assign _zz__zz_when_FpUnit_l150_37_2 = ((io_rm == 3'b000) ? (_zz_flagUF_96 && ((_zz_flagUF_97 || _zz_flagUF_98) || _zz_when_FpUnit_l150_36[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_when_FpUnit_l84_157) && (_zz__zz_when_FpUnit_l150_37_3 || _zz_flagUF_98)) : ((io_rm == _zz__zz_when_FpUnit_l150_37_4) ? (_zz_when_FpUnit_l84_157 && _zz__zz_when_FpUnit_l150_37_5) : _zz_flagUF_96))));
-  assign _zz__zz_when_FpUnit_l150_37_1 = {23'd0, _zz__zz_when_FpUnit_l150_37_2};
+  assign _zz__zz_when_FpUnit_l150_37_1 = _zz_when_FpUnit_l150_36;
+  assign _zz__zz_when_FpUnit_l150_37 = {1'd0, _zz__zz_when_FpUnit_l150_37_1};
+  assign _zz__zz_when_FpUnit_l150_37_3 = ((io_rm == 3'b000) ? (_zz_flagUF_96 && ((_zz_flagUF_97 || _zz_flagUF_98) || _zz_when_FpUnit_l150_36[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_when_FpUnit_l84_157 && (_zz__zz_when_FpUnit_l150_37_4 || _zz_flagUF_98)) : ((io_rm == _zz__zz_when_FpUnit_l150_37_5) ? (_zz__zz_when_FpUnit_l150_37_6 && _zz__zz_when_FpUnit_l150_37_7) : _zz_flagUF_96))));
+  assign _zz__zz_when_FpUnit_l150_37_2 = {24'd0, _zz__zz_when_FpUnit_l150_37_3};
   assign _zz__zz_res_52 = (_zz_when_FpUnit_l150_37 >>> 1'd1);
   assign _zz__zz_res_52_1 = _zz_when_FpUnit_l150_37[23:0];
   assign _zz__zz_when_FpUnit_l150_39 = (_zz_when_FpUnit_l150_38 ? _zz__zz_when_FpUnit_l150_39_1 : _zz_when_FpUnit_l150_35);
@@ -5108,11 +5145,12 @@ module FpUnit (
   assign _zz__zz_when_FpUnit_l84_162 = {1'd0, _zz__zz_when_FpUnit_l84_162_1};
   assign _zz__zz_when_FpUnit_l84_163_1 = _zz_when_FpUnit_l84_161;
   assign _zz__zz_when_FpUnit_l84_163 = {1'd0, _zz__zz_when_FpUnit_l84_163_1};
-  assign _zz__zz_when_FpUnit_l84_164 = ($signed(_zz__zz_when_FpUnit_l84_164_1) + $signed(_zz__zz_when_FpUnit_l84_164_3));
   assign _zz__zz_when_FpUnit_l84_164_1 = (_zz_when_FpUnit_l359_7 ? _zz__zz_when_FpUnit_l84_164_2 : _zz_when_FpUnit_l84_162);
+  assign _zz__zz_when_FpUnit_l84_164 = {{1{_zz__zz_when_FpUnit_l84_164_1[54]}}, _zz__zz_when_FpUnit_l84_164_1};
   assign _zz__zz_when_FpUnit_l84_164_2 = (- _zz_when_FpUnit_l84_162);
-  assign _zz__zz_when_FpUnit_l84_164_3 = (_zz_when_FpUnit_l359_8 ? _zz__zz_when_FpUnit_l84_164_4 : _zz_when_FpUnit_l84_163);
-  assign _zz__zz_when_FpUnit_l84_164_4 = (- _zz_when_FpUnit_l84_163);
+  assign _zz__zz_when_FpUnit_l84_164_4 = (_zz_when_FpUnit_l359_8 ? _zz__zz_when_FpUnit_l84_164_5 : _zz_when_FpUnit_l84_163);
+  assign _zz__zz_when_FpUnit_l84_164_3 = {{1{_zz__zz_when_FpUnit_l84_164_4[54]}}, _zz__zz_when_FpUnit_l84_164_4};
+  assign _zz__zz_when_FpUnit_l84_164_5 = (- _zz_when_FpUnit_l84_163);
   assign _zz__zz_when_FpUnit_l84_166 = (- _zz_when_FpUnit_l84_164);
   assign _zz__zz_flagUF_104 = _zz__zz_flagUF_104_1;
   assign _zz__zz_flagUF_104_1 = {6'd0, _zz_when_FpUnit_l91_8};
@@ -5131,79 +5169,76 @@ module FpUnit (
   assign _zz__zz_flagUF_109_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagUF_109_3);
   assign _zz__zz_flagUF_109_1 = _zz__zz_flagUF_109_2[26:0];
   assign _zz__zz_flagUF_109_3 = _zz_when_FpUnit_l119_8[4:0];
-  assign _zz__zz_when_FpUnit_l150_42 = (_zz_when_FpUnit_l150_41 + _zz__zz_when_FpUnit_l150_42_1);
-  assign _zz__zz_when_FpUnit_l150_42_2 = ((io_rm == 3'b000) ? (_zz_flagUF_110 && ((_zz_flagUF_111 || _zz_flagUF_112) || _zz_when_FpUnit_l150_41[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_when_FpUnit_l84_165) && (_zz__zz_when_FpUnit_l150_42_3 || _zz_flagUF_112)) : ((io_rm == _zz__zz_when_FpUnit_l150_42_4) ? (_zz_when_FpUnit_l84_165 && _zz__zz_when_FpUnit_l150_42_5) : _zz_flagUF_110))));
-  assign _zz__zz_when_FpUnit_l150_42_1 = {23'd0, _zz__zz_when_FpUnit_l150_42_2};
+  assign _zz__zz_when_FpUnit_l150_42_1 = _zz_when_FpUnit_l150_41;
+  assign _zz__zz_when_FpUnit_l150_42 = {1'd0, _zz__zz_when_FpUnit_l150_42_1};
+  assign _zz__zz_when_FpUnit_l150_42_3 = ((io_rm == 3'b000) ? (_zz_flagUF_110 && ((_zz_flagUF_111 || _zz_flagUF_112) || _zz_when_FpUnit_l150_41[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_when_FpUnit_l84_165 && (_zz__zz_when_FpUnit_l150_42_4 || _zz_flagUF_112)) : ((io_rm == _zz__zz_when_FpUnit_l150_42_5) ? (_zz__zz_when_FpUnit_l150_42_6 && _zz__zz_when_FpUnit_l150_42_7) : _zz_flagUF_110))));
+  assign _zz__zz_when_FpUnit_l150_42_2 = {24'd0, _zz__zz_when_FpUnit_l150_42_3};
   assign _zz__zz_res_57 = (_zz_when_FpUnit_l150_42 >>> 1'd1);
   assign _zz__zz_res_57_1 = _zz_when_FpUnit_l150_42[23:0];
   assign _zz__zz_when_FpUnit_l150_44 = (_zz_when_FpUnit_l150_43 ? _zz__zz_when_FpUnit_l150_44_1 : _zz_when_FpUnit_l150_40);
   assign _zz__zz_when_FpUnit_l150_44_1 = ($signed(_zz_when_FpUnit_l150_40) + $signed(12'h001));
   assign _zz__zz_res_60_1 = _zz_when_FpUnit_l150_44;
   assign _zz__zz_res_60 = _zz__zz_res_60_1[7:0];
-  assign _zz__zz_when_FpUnit_l445 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
-  assign _zz__zz_flagNX_2 = (- _zz_when_FpUnit_l445);
-  assign _zz__zz_when_FpUnit_l470 = (_zz_flagNX >>> _zz_flagNX_2);
+  assign _zz__zz_when_FpUnit_l447 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
+  assign _zz__zz_flagNX_2 = (- _zz_when_FpUnit_l447);
+  assign _zz__zz_when_FpUnit_l474 = (_zz_flagNX >>> _zz_flagNX_2);
   assign _zz__zz_flagNX_1 = (_zz__zz_flagNX_1_1 - 24'h000001);
   assign _zz__zz_flagNX_1_2 = ({31'd0,24'h000001} <<< _zz__zz_flagNX_1_3);
   assign _zz__zz_flagNX_1_1 = _zz__zz_flagNX_1_2[23:0];
   assign _zz__zz_flagNX_1_3 = _zz_flagNX_2[4:0];
-  assign _zz__zz_when_FpUnit_l470_1 = ({63'd0,_zz__zz_when_FpUnit_l470_2} <<< _zz__zz_when_FpUnit_l470_3);
-  assign _zz__zz_when_FpUnit_l470_2 = {10'd0, _zz_flagNX};
-  assign _zz__zz_when_FpUnit_l470_4 = _zz_when_FpUnit_l445;
-  assign _zz__zz_when_FpUnit_l470_3 = _zz__zz_when_FpUnit_l470_4[5:0];
-  assign _zz__zz_when_FpUnit_l470_1_1 = (_zz_when_FpUnit_l470 + _zz__zz_when_FpUnit_l470_1_2);
-  assign _zz__zz_when_FpUnit_l470_1_3 = ((io_rm == 3'b000) ? (_zz_flagNX_1 && _zz_when_FpUnit_l470[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! when_FpUnit_l475) && _zz_flagNX_1) : ((io_rm == 3'b011) ? (when_FpUnit_l475 && _zz_flagNX_1) : _zz_flagNX_1))));
-  assign _zz__zz_when_FpUnit_l470_1_2 = {33'd0, _zz__zz_when_FpUnit_l470_1_3};
-  assign _zz__zz_res_62 = _zz_when_FpUnit_l470_1[31:0];
+  assign _zz__zz_when_FpUnit_l474_1 = ({63'd0,_zz__zz_when_FpUnit_l474_2} <<< _zz__zz_when_FpUnit_l474_3);
+  assign _zz__zz_when_FpUnit_l474_2 = {10'd0, _zz_flagNX};
+  assign _zz__zz_when_FpUnit_l474_4 = _zz_when_FpUnit_l447;
+  assign _zz__zz_when_FpUnit_l474_3 = _zz__zz_when_FpUnit_l474_4[5:0];
+  assign _zz__zz_when_FpUnit_l474_1_2 = ((io_rm == 3'b000) ? (_zz_flagNX_1 && _zz_when_FpUnit_l474[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (when_FpUnit_l481 && _zz_flagNX_1) : ((io_rm == 3'b011) ? ((! when_FpUnit_l481) && _zz_flagNX_1) : _zz_flagNX_1))));
+  assign _zz__zz_when_FpUnit_l474_1_1 = {33'd0, _zz__zz_when_FpUnit_l474_1_2};
+  assign _zz__zz_res_62 = _zz_when_FpUnit_l474_1[31:0];
   assign _zz_res_93 = _zz_res_62;
   assign _zz_res_92 = {{32{_zz_res_93[31]}}, _zz_res_93};
-  assign _zz__zz_when_FpUnit_l445_1 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
-  assign _zz__zz_flagNX_4 = (- _zz_when_FpUnit_l445_1);
-  assign _zz__zz_when_FpUnit_l470_2_1 = (_zz_flagNX >>> _zz_flagNX_4);
+  assign _zz__zz_when_FpUnit_l447_1 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
+  assign _zz__zz_flagNX_4 = (- _zz_when_FpUnit_l447_1);
+  assign _zz__zz_when_FpUnit_l474_2_1 = (_zz_flagNX >>> _zz_flagNX_4);
   assign _zz__zz_flagNX_3 = (_zz__zz_flagNX_3_1 - 24'h000001);
   assign _zz__zz_flagNX_3_2 = ({31'd0,24'h000001} <<< _zz__zz_flagNX_3_3);
   assign _zz__zz_flagNX_3_1 = _zz__zz_flagNX_3_2[23:0];
   assign _zz__zz_flagNX_3_3 = _zz_flagNX_4[4:0];
-  assign _zz__zz_when_FpUnit_l470_2_2 = ({63'd0,_zz__zz_when_FpUnit_l470_2_3} <<< _zz__zz_when_FpUnit_l470_2_4);
-  assign _zz__zz_when_FpUnit_l470_2_3 = {10'd0, _zz_flagNX};
-  assign _zz__zz_when_FpUnit_l470_2_5 = _zz_when_FpUnit_l445_1;
-  assign _zz__zz_when_FpUnit_l470_2_4 = _zz__zz_when_FpUnit_l470_2_5[5:0];
-  assign _zz__zz_when_FpUnit_l470_3_1 = (_zz_when_FpUnit_l470_2 + _zz__zz_when_FpUnit_l470_3_2);
-  assign _zz__zz_when_FpUnit_l470_3_3 = ((io_rm == 3'b000) ? (_zz_flagNX_3 && _zz_when_FpUnit_l470_2[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! when_FpUnit_l475) && _zz_flagNX_3) : ((io_rm == 3'b011) ? (when_FpUnit_l475 && _zz_flagNX_3) : _zz_flagNX_3))));
-  assign _zz__zz_when_FpUnit_l470_3_2 = {33'd0, _zz__zz_when_FpUnit_l470_3_3};
-  assign _zz__zz_res_63 = _zz_when_FpUnit_l470_3[31:0];
+  assign _zz__zz_when_FpUnit_l474_2_2 = ({63'd0,_zz__zz_when_FpUnit_l474_2_3} <<< _zz__zz_when_FpUnit_l474_2_4);
+  assign _zz__zz_when_FpUnit_l474_2_3 = {10'd0, _zz_flagNX};
+  assign _zz__zz_when_FpUnit_l474_2_5 = _zz_when_FpUnit_l447_1;
+  assign _zz__zz_when_FpUnit_l474_2_4 = _zz__zz_when_FpUnit_l474_2_5[5:0];
+  assign _zz__zz_when_FpUnit_l474_3_2 = ((io_rm == 3'b000) ? (_zz_flagNX_3 && _zz_when_FpUnit_l474_2[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (when_FpUnit_l481 && _zz_flagNX_3) : ((io_rm == 3'b011) ? ((! when_FpUnit_l481) && _zz_flagNX_3) : _zz_flagNX_3))));
+  assign _zz__zz_when_FpUnit_l474_3_1 = {33'd0, _zz__zz_when_FpUnit_l474_3_2};
+  assign _zz__zz_res_63 = _zz_when_FpUnit_l474_3[31:0];
   assign _zz_res_94 = {32'd0, _zz_res_63};
-  assign _zz__zz_when_FpUnit_l445_2 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
-  assign _zz__zz_flagNX_6 = (- _zz_when_FpUnit_l445_2);
-  assign _zz__zz_when_FpUnit_l470_4_1 = (_zz_flagNX >>> _zz_flagNX_6);
+  assign _zz__zz_when_FpUnit_l447_2 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
+  assign _zz__zz_flagNX_6 = (- _zz_when_FpUnit_l447_2);
+  assign _zz__zz_when_FpUnit_l474_4_1 = (_zz_flagNX >>> _zz_flagNX_6);
   assign _zz__zz_flagNX_5 = (_zz__zz_flagNX_5_1 - 24'h000001);
   assign _zz__zz_flagNX_5_2 = ({31'd0,24'h000001} <<< _zz__zz_flagNX_5_3);
   assign _zz__zz_flagNX_5_1 = _zz__zz_flagNX_5_2[23:0];
   assign _zz__zz_flagNX_5_3 = _zz_flagNX_6[4:0];
-  assign _zz__zz_when_FpUnit_l470_4_2 = ({127'd0,_zz__zz_when_FpUnit_l470_4_3} <<< _zz__zz_when_FpUnit_l470_4_4);
-  assign _zz__zz_when_FpUnit_l470_4_3 = {42'd0, _zz_flagNX};
-  assign _zz__zz_when_FpUnit_l470_4_5 = _zz_when_FpUnit_l445_2;
-  assign _zz__zz_when_FpUnit_l470_4_4 = _zz__zz_when_FpUnit_l470_4_5[6:0];
-  assign _zz__zz_when_FpUnit_l470_5 = (_zz_when_FpUnit_l470_4 + _zz__zz_when_FpUnit_l470_5_1);
-  assign _zz__zz_when_FpUnit_l470_5_2 = ((io_rm == 3'b000) ? (_zz_flagNX_5 && _zz_when_FpUnit_l470_4[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! when_FpUnit_l475) && _zz_flagNX_5) : ((io_rm == 3'b011) ? (when_FpUnit_l475 && _zz_flagNX_5) : _zz_flagNX_5))));
-  assign _zz__zz_when_FpUnit_l470_5_1 = {65'd0, _zz__zz_when_FpUnit_l470_5_2};
-  assign _zz__zz_res_64 = _zz_when_FpUnit_l470_5[63:0];
+  assign _zz__zz_when_FpUnit_l474_4_2 = ({127'd0,_zz__zz_when_FpUnit_l474_4_3} <<< _zz__zz_when_FpUnit_l474_4_4);
+  assign _zz__zz_when_FpUnit_l474_4_3 = {42'd0, _zz_flagNX};
+  assign _zz__zz_when_FpUnit_l474_4_5 = _zz_when_FpUnit_l447_2;
+  assign _zz__zz_when_FpUnit_l474_4_4 = _zz__zz_when_FpUnit_l474_4_5[6:0];
+  assign _zz__zz_when_FpUnit_l474_5_1 = ((io_rm == 3'b000) ? (_zz_flagNX_5 && _zz_when_FpUnit_l474_4[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (when_FpUnit_l481 && _zz_flagNX_5) : ((io_rm == 3'b011) ? ((! when_FpUnit_l481) && _zz_flagNX_5) : _zz_flagNX_5))));
+  assign _zz__zz_when_FpUnit_l474_5 = {65'd0, _zz__zz_when_FpUnit_l474_5_1};
+  assign _zz__zz_res_64 = _zz_when_FpUnit_l474_5[63:0];
   assign _zz_res_95 = _zz_res_64;
-  assign _zz__zz_when_FpUnit_l445_3 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
-  assign _zz__zz_flagNX_8 = (- _zz_when_FpUnit_l445_3);
-  assign _zz__zz_when_FpUnit_l470_6 = (_zz_flagNX >>> _zz_flagNX_8);
+  assign _zz__zz_when_FpUnit_l447_3 = {{2{_zz_when_FpUnit_l180[9]}}, _zz_when_FpUnit_l180};
+  assign _zz__zz_flagNX_8 = (- _zz_when_FpUnit_l447_3);
+  assign _zz__zz_when_FpUnit_l474_6 = (_zz_flagNX >>> _zz_flagNX_8);
   assign _zz__zz_flagNX_7 = (_zz__zz_flagNX_7_1 - 24'h000001);
   assign _zz__zz_flagNX_7_2 = ({31'd0,24'h000001} <<< _zz__zz_flagNX_7_3);
   assign _zz__zz_flagNX_7_1 = _zz__zz_flagNX_7_2[23:0];
   assign _zz__zz_flagNX_7_3 = _zz_flagNX_8[4:0];
-  assign _zz__zz_when_FpUnit_l470_6_1 = ({127'd0,_zz__zz_when_FpUnit_l470_6_2} <<< _zz__zz_when_FpUnit_l470_6_3);
-  assign _zz__zz_when_FpUnit_l470_6_2 = {42'd0, _zz_flagNX};
-  assign _zz__zz_when_FpUnit_l470_6_4 = _zz_when_FpUnit_l445_3;
-  assign _zz__zz_when_FpUnit_l470_6_3 = _zz__zz_when_FpUnit_l470_6_4[6:0];
-  assign _zz__zz_when_FpUnit_l470_7 = (_zz_when_FpUnit_l470_6 + _zz__zz_when_FpUnit_l470_7_1);
-  assign _zz__zz_when_FpUnit_l470_7_2 = ((io_rm == 3'b000) ? (_zz_flagNX_7 && _zz_when_FpUnit_l470_6[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! when_FpUnit_l475) && _zz_flagNX_7) : ((io_rm == 3'b011) ? (when_FpUnit_l475 && _zz_flagNX_7) : _zz_flagNX_7))));
-  assign _zz__zz_when_FpUnit_l470_7_1 = {65'd0, _zz__zz_when_FpUnit_l470_7_2};
-  assign _zz__zz_res_65 = _zz_when_FpUnit_l470_7[63:0];
+  assign _zz__zz_when_FpUnit_l474_6_1 = ({127'd0,_zz__zz_when_FpUnit_l474_6_2} <<< _zz__zz_when_FpUnit_l474_6_3);
+  assign _zz__zz_when_FpUnit_l474_6_2 = {42'd0, _zz_flagNX};
+  assign _zz__zz_when_FpUnit_l474_6_4 = _zz_when_FpUnit_l447_3;
+  assign _zz__zz_when_FpUnit_l474_6_3 = _zz__zz_when_FpUnit_l474_6_4[6:0];
+  assign _zz__zz_when_FpUnit_l474_7_1 = ((io_rm == 3'b000) ? (_zz_flagNX_7 && _zz_when_FpUnit_l474_6[0]) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (when_FpUnit_l481 && _zz_flagNX_7) : ((io_rm == 3'b011) ? ((! when_FpUnit_l481) && _zz_flagNX_7) : _zz_flagNX_7))));
+  assign _zz__zz_when_FpUnit_l474_7 = {65'd0, _zz__zz_when_FpUnit_l474_7_1};
+  assign _zz__zz_res_65 = _zz_when_FpUnit_l474_7[63:0];
   assign _zz__zz_when_FpUnit_l84_168 = (56'h0 - _zz__zz_when_FpUnit_l84_168_1);
   assign _zz__zz_when_FpUnit_l84_168_1 = {24'd0, _zz_when_FpUnit_l84_167};
   assign _zz__zz_when_FpUnit_l84_168_2 = {24'd0, _zz_when_FpUnit_l84_167};
@@ -5224,9 +5259,10 @@ module FpUnit (
   assign _zz__zz_flagNX_13_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagNX_13_3);
   assign _zz__zz_flagNX_13_1 = _zz__zz_flagNX_13_2[26:0];
   assign _zz__zz_flagNX_13_3 = _zz_when_FpUnit_l119_9[4:0];
-  assign _zz__zz_when_FpUnit_l150_47 = (_zz_when_FpUnit_l150_46 + _zz__zz_when_FpUnit_l150_47_1);
-  assign _zz__zz_when_FpUnit_l150_47_2 = ((io_rm == 3'b000) ? (_zz_flagNX_14 && ((_zz_flagNX_15 || _zz_flagNX_16) || _zz_when_FpUnit_l150_46[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_66) && (_zz__zz_when_FpUnit_l150_47_3 || _zz_flagNX_16)) : ((io_rm == _zz__zz_when_FpUnit_l150_47_4) ? (_zz_res_66 && _zz__zz_when_FpUnit_l150_47_5) : _zz_flagNX_14))));
-  assign _zz__zz_when_FpUnit_l150_47_1 = {23'd0, _zz__zz_when_FpUnit_l150_47_2};
+  assign _zz__zz_when_FpUnit_l150_47_1 = _zz_when_FpUnit_l150_46;
+  assign _zz__zz_when_FpUnit_l150_47 = {1'd0, _zz__zz_when_FpUnit_l150_47_1};
+  assign _zz__zz_when_FpUnit_l150_47_3 = ((io_rm == 3'b000) ? (_zz_flagNX_14 && ((_zz_flagNX_15 || _zz_flagNX_16) || _zz_when_FpUnit_l150_46[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_66 && (_zz__zz_when_FpUnit_l150_47_4 || _zz_flagNX_16)) : ((io_rm == _zz__zz_when_FpUnit_l150_47_5) ? (_zz__zz_when_FpUnit_l150_47_6 && _zz__zz_when_FpUnit_l150_47_7) : _zz_flagNX_14))));
+  assign _zz__zz_when_FpUnit_l150_47_2 = {24'd0, _zz__zz_when_FpUnit_l150_47_3};
   assign _zz__zz_res_67 = (_zz_when_FpUnit_l150_47 >>> 1'd1);
   assign _zz__zz_res_67_1 = _zz_when_FpUnit_l150_47[23:0];
   assign _zz__zz_when_FpUnit_l150_49 = (_zz_when_FpUnit_l150_48 ? _zz__zz_when_FpUnit_l150_49_1 : _zz_when_FpUnit_l150_45);
@@ -5253,9 +5289,10 @@ module FpUnit (
   assign _zz__zz_flagNX_21_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagNX_21_3);
   assign _zz__zz_flagNX_21_1 = _zz__zz_flagNX_21_2[26:0];
   assign _zz__zz_flagNX_21_3 = _zz_when_FpUnit_l119_10[4:0];
-  assign _zz__zz_when_FpUnit_l150_52 = (_zz_when_FpUnit_l150_51 + _zz__zz_when_FpUnit_l150_52_1);
-  assign _zz__zz_when_FpUnit_l150_52_2 = ((io_rm == 3'b000) ? (_zz_flagNX_22 && ((_zz_flagNX_23 || _zz_flagNX_24) || _zz_when_FpUnit_l150_51[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_72) && (_zz__zz_when_FpUnit_l150_52_3 || _zz_flagNX_24)) : ((io_rm == _zz__zz_when_FpUnit_l150_52_4) ? (_zz_res_72 && _zz__zz_when_FpUnit_l150_52_5) : _zz_flagNX_22))));
-  assign _zz__zz_when_FpUnit_l150_52_1 = {23'd0, _zz__zz_when_FpUnit_l150_52_2};
+  assign _zz__zz_when_FpUnit_l150_52_1 = _zz_when_FpUnit_l150_51;
+  assign _zz__zz_when_FpUnit_l150_52 = {1'd0, _zz__zz_when_FpUnit_l150_52_1};
+  assign _zz__zz_when_FpUnit_l150_52_3 = ((io_rm == 3'b000) ? (_zz_flagNX_22 && ((_zz_flagNX_23 || _zz_flagNX_24) || _zz_when_FpUnit_l150_51[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_72 && (_zz__zz_when_FpUnit_l150_52_4 || _zz_flagNX_24)) : ((io_rm == _zz__zz_when_FpUnit_l150_52_5) ? (_zz__zz_when_FpUnit_l150_52_6 && _zz__zz_when_FpUnit_l150_52_7) : _zz_flagNX_22))));
+  assign _zz__zz_when_FpUnit_l150_52_2 = {24'd0, _zz__zz_when_FpUnit_l150_52_3};
   assign _zz__zz_res_73 = (_zz_when_FpUnit_l150_52 >>> 1'd1);
   assign _zz__zz_res_73_1 = _zz_when_FpUnit_l150_52[23:0];
   assign _zz__zz_when_FpUnit_l150_54 = (_zz_when_FpUnit_l150_53 ? _zz__zz_when_FpUnit_l150_54_1 : _zz_when_FpUnit_l150_50);
@@ -5282,9 +5319,10 @@ module FpUnit (
   assign _zz__zz_flagNX_29_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagNX_29_3);
   assign _zz__zz_flagNX_29_1 = _zz__zz_flagNX_29_2[26:0];
   assign _zz__zz_flagNX_29_3 = _zz_when_FpUnit_l119_11[4:0];
-  assign _zz__zz_when_FpUnit_l150_57 = (_zz_when_FpUnit_l150_56 + _zz__zz_when_FpUnit_l150_57_1);
-  assign _zz__zz_when_FpUnit_l150_57_2 = ((io_rm == 3'b000) ? (_zz_flagNX_30 && ((_zz_flagNX_31 || _zz_flagNX_32) || _zz_when_FpUnit_l150_56[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_78) && (_zz__zz_when_FpUnit_l150_57_3 || _zz_flagNX_32)) : ((io_rm == _zz__zz_when_FpUnit_l150_57_4) ? (_zz_res_78 && _zz__zz_when_FpUnit_l150_57_5) : _zz_flagNX_30))));
-  assign _zz__zz_when_FpUnit_l150_57_1 = {23'd0, _zz__zz_when_FpUnit_l150_57_2};
+  assign _zz__zz_when_FpUnit_l150_57_1 = _zz_when_FpUnit_l150_56;
+  assign _zz__zz_when_FpUnit_l150_57 = {1'd0, _zz__zz_when_FpUnit_l150_57_1};
+  assign _zz__zz_when_FpUnit_l150_57_3 = ((io_rm == 3'b000) ? (_zz_flagNX_30 && ((_zz_flagNX_31 || _zz_flagNX_32) || _zz_when_FpUnit_l150_56[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_78 && (_zz__zz_when_FpUnit_l150_57_4 || _zz_flagNX_32)) : ((io_rm == _zz__zz_when_FpUnit_l150_57_5) ? (_zz__zz_when_FpUnit_l150_57_6 && _zz__zz_when_FpUnit_l150_57_7) : _zz_flagNX_30))));
+  assign _zz__zz_when_FpUnit_l150_57_2 = {24'd0, _zz__zz_when_FpUnit_l150_57_3};
   assign _zz__zz_res_79 = (_zz_when_FpUnit_l150_57 >>> 1'd1);
   assign _zz__zz_res_79_1 = _zz_when_FpUnit_l150_57[23:0];
   assign _zz__zz_when_FpUnit_l150_59 = (_zz_when_FpUnit_l150_58 ? _zz__zz_when_FpUnit_l150_59_1 : _zz_when_FpUnit_l150_55);
@@ -5311,55 +5349,69 @@ module FpUnit (
   assign _zz__zz_flagNX_37_2 = ({31'd0,27'h0000001} <<< _zz__zz_flagNX_37_3);
   assign _zz__zz_flagNX_37_1 = _zz__zz_flagNX_37_2[26:0];
   assign _zz__zz_flagNX_37_3 = _zz_when_FpUnit_l119_12[4:0];
-  assign _zz__zz_when_FpUnit_l150_62 = (_zz_when_FpUnit_l150_61 + _zz__zz_when_FpUnit_l150_62_1);
-  assign _zz__zz_when_FpUnit_l150_62_2 = ((io_rm == 3'b000) ? (_zz_flagNX_38 && ((_zz_flagNX_39 || _zz_flagNX_40) || _zz_when_FpUnit_l150_61[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? ((! _zz_res_84) && (_zz__zz_when_FpUnit_l150_62_3 || _zz_flagNX_40)) : ((io_rm == _zz__zz_when_FpUnit_l150_62_4) ? (_zz_res_84 && _zz__zz_when_FpUnit_l150_62_5) : _zz_flagNX_38))));
-  assign _zz__zz_when_FpUnit_l150_62_1 = {23'd0, _zz__zz_when_FpUnit_l150_62_2};
+  assign _zz__zz_when_FpUnit_l150_62_1 = _zz_when_FpUnit_l150_61;
+  assign _zz__zz_when_FpUnit_l150_62 = {1'd0, _zz__zz_when_FpUnit_l150_62_1};
+  assign _zz__zz_when_FpUnit_l150_62_3 = ((io_rm == 3'b000) ? (_zz_flagNX_38 && ((_zz_flagNX_39 || _zz_flagNX_40) || _zz_when_FpUnit_l150_61[0])) : ((io_rm == 3'b001) ? 1'b0 : ((io_rm == 3'b010) ? (_zz_res_84 && (_zz__zz_when_FpUnit_l150_62_4 || _zz_flagNX_40)) : ((io_rm == _zz__zz_when_FpUnit_l150_62_5) ? (_zz__zz_when_FpUnit_l150_62_6 && _zz__zz_when_FpUnit_l150_62_7) : _zz_flagNX_38))));
+  assign _zz__zz_when_FpUnit_l150_62_2 = {24'd0, _zz__zz_when_FpUnit_l150_62_3};
   assign _zz__zz_res_85 = (_zz_when_FpUnit_l150_62 >>> 1'd1);
   assign _zz__zz_res_85_1 = _zz_when_FpUnit_l150_62[23:0];
   assign _zz__zz_when_FpUnit_l150_64 = (_zz_when_FpUnit_l150_63 ? _zz__zz_when_FpUnit_l150_64_1 : _zz_when_FpUnit_l150_60);
   assign _zz__zz_when_FpUnit_l150_64_1 = ($signed(_zz_when_FpUnit_l150_60) + $signed(12'h001));
   assign _zz__zz_res_88_1 = _zz_when_FpUnit_l150_64;
   assign _zz__zz_res_88 = _zz__zz_res_88_1[7:0];
-  assign _zz__zz_when_FpUnit_l150_2_3 = (_zz_flagUF_7 || _zz_flagUF_8);
-  assign _zz__zz_when_FpUnit_l150_2_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_2_5 = ((_zz_flagUF_7 || _zz_flagUF_8) || _zz_flagUF_9);
-  assign _zz__zz_when_FpUnit_l150_7_3 = (_zz_flagUF_18 || _zz_flagUF_19);
-  assign _zz__zz_when_FpUnit_l150_7_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_7_5 = ((_zz_flagUF_18 || _zz_flagUF_19) || _zz_flagUF_20);
-  assign _zz__zz_when_FpUnit_l150_12_3 = (_zz_flagUF_29 || _zz_flagUF_30);
-  assign _zz__zz_when_FpUnit_l150_12_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_12_5 = ((_zz_flagUF_29 || _zz_flagUF_30) || _zz_flagUF_31);
-  assign _zz__zz_when_FpUnit_l150_17_3 = (_zz_flagUF_41 || _zz_flagUF_42);
-  assign _zz__zz_when_FpUnit_l150_17_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_17_5 = ((_zz_flagUF_41 || _zz_flagUF_42) || _zz_flagUF_43);
-  assign _zz__zz_when_FpUnit_l150_22_3 = (_zz_flagUF_54 || _zz_flagUF_55);
-  assign _zz__zz_when_FpUnit_l150_22_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_22_5 = ((_zz_flagUF_54 || _zz_flagUF_55) || _zz_flagUF_56);
-  assign _zz__zz_when_FpUnit_l150_27_3 = (_zz_flagUF_68 || _zz_flagUF_69);
-  assign _zz__zz_when_FpUnit_l150_27_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_27_5 = ((_zz_flagUF_68 || _zz_flagUF_69) || _zz_flagUF_70);
-  assign _zz__zz_when_FpUnit_l150_32_3 = (_zz_flagUF_82 || _zz_flagUF_83);
-  assign _zz__zz_when_FpUnit_l150_32_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_32_5 = ((_zz_flagUF_82 || _zz_flagUF_83) || _zz_flagUF_84);
-  assign _zz__zz_when_FpUnit_l150_37_3 = (_zz_flagUF_96 || _zz_flagUF_97);
-  assign _zz__zz_when_FpUnit_l150_37_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_37_5 = ((_zz_flagUF_96 || _zz_flagUF_97) || _zz_flagUF_98);
-  assign _zz__zz_when_FpUnit_l150_42_3 = (_zz_flagUF_110 || _zz_flagUF_111);
-  assign _zz__zz_when_FpUnit_l150_42_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_42_5 = ((_zz_flagUF_110 || _zz_flagUF_111) || _zz_flagUF_112);
-  assign _zz__zz_when_FpUnit_l150_47_3 = (_zz_flagNX_14 || _zz_flagNX_15);
-  assign _zz__zz_when_FpUnit_l150_47_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_47_5 = ((_zz_flagNX_14 || _zz_flagNX_15) || _zz_flagNX_16);
-  assign _zz__zz_when_FpUnit_l150_52_3 = (_zz_flagNX_22 || _zz_flagNX_23);
-  assign _zz__zz_when_FpUnit_l150_52_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_52_5 = ((_zz_flagNX_22 || _zz_flagNX_23) || _zz_flagNX_24);
-  assign _zz__zz_when_FpUnit_l150_57_3 = (_zz_flagNX_30 || _zz_flagNX_31);
-  assign _zz__zz_when_FpUnit_l150_57_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_57_5 = ((_zz_flagNX_30 || _zz_flagNX_31) || _zz_flagNX_32);
-  assign _zz__zz_when_FpUnit_l150_62_3 = (_zz_flagNX_38 || _zz_flagNX_39);
-  assign _zz__zz_when_FpUnit_l150_62_4 = 3'b011;
-  assign _zz__zz_when_FpUnit_l150_62_5 = ((_zz_flagNX_38 || _zz_flagNX_39) || _zz_flagNX_40);
-  assign when_FpUnit_l475 = io_a[31];
+  assign _zz__zz_when_FpUnit_l150_2_4 = (_zz_flagUF_7 || _zz_flagUF_8);
+  assign _zz__zz_when_FpUnit_l150_2_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_2_6 = (! _zz_res_1);
+  assign _zz__zz_when_FpUnit_l150_2_7 = ((_zz_flagUF_7 || _zz_flagUF_8) || _zz_flagUF_9);
+  assign _zz__zz_when_FpUnit_l150_7_4 = (_zz_flagUF_18 || _zz_flagUF_19);
+  assign _zz__zz_when_FpUnit_l150_7_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_7_6 = (! _zz_res_7);
+  assign _zz__zz_when_FpUnit_l150_7_7 = ((_zz_flagUF_18 || _zz_flagUF_19) || _zz_flagUF_20);
+  assign _zz__zz_when_FpUnit_l150_12_4 = (_zz_flagUF_29 || _zz_flagUF_30);
+  assign _zz__zz_when_FpUnit_l150_12_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_12_6 = (! _zz_res_13);
+  assign _zz__zz_when_FpUnit_l150_12_7 = ((_zz_flagUF_29 || _zz_flagUF_30) || _zz_flagUF_31);
+  assign _zz__zz_when_FpUnit_l150_17_4 = (_zz_flagUF_41 || _zz_flagUF_42);
+  assign _zz__zz_when_FpUnit_l150_17_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_17_6 = (! _zz_res_19);
+  assign _zz__zz_when_FpUnit_l150_17_7 = ((_zz_flagUF_41 || _zz_flagUF_42) || _zz_flagUF_43);
+  assign _zz__zz_when_FpUnit_l150_22_4 = (_zz_flagUF_54 || _zz_flagUF_55);
+  assign _zz__zz_when_FpUnit_l150_22_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_22_6 = (! _zz_res_25);
+  assign _zz__zz_when_FpUnit_l150_22_7 = ((_zz_flagUF_54 || _zz_flagUF_55) || _zz_flagUF_56);
+  assign _zz__zz_when_FpUnit_l150_27_4 = (_zz_flagUF_68 || _zz_flagUF_69);
+  assign _zz__zz_when_FpUnit_l150_27_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_27_6 = (! _zz_when_FpUnit_l84_141);
+  assign _zz__zz_when_FpUnit_l150_27_7 = ((_zz_flagUF_68 || _zz_flagUF_69) || _zz_flagUF_70);
+  assign _zz__zz_when_FpUnit_l150_32_4 = (_zz_flagUF_82 || _zz_flagUF_83);
+  assign _zz__zz_when_FpUnit_l150_32_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_32_6 = (! _zz_when_FpUnit_l84_149);
+  assign _zz__zz_when_FpUnit_l150_32_7 = ((_zz_flagUF_82 || _zz_flagUF_83) || _zz_flagUF_84);
+  assign _zz__zz_when_FpUnit_l150_37_4 = (_zz_flagUF_96 || _zz_flagUF_97);
+  assign _zz__zz_when_FpUnit_l150_37_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_37_6 = (! _zz_when_FpUnit_l84_157);
+  assign _zz__zz_when_FpUnit_l150_37_7 = ((_zz_flagUF_96 || _zz_flagUF_97) || _zz_flagUF_98);
+  assign _zz__zz_when_FpUnit_l150_42_4 = (_zz_flagUF_110 || _zz_flagUF_111);
+  assign _zz__zz_when_FpUnit_l150_42_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_42_6 = (! _zz_when_FpUnit_l84_165);
+  assign _zz__zz_when_FpUnit_l150_42_7 = ((_zz_flagUF_110 || _zz_flagUF_111) || _zz_flagUF_112);
+  assign _zz__zz_when_FpUnit_l150_47_4 = (_zz_flagNX_14 || _zz_flagNX_15);
+  assign _zz__zz_when_FpUnit_l150_47_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_47_6 = (! _zz_res_66);
+  assign _zz__zz_when_FpUnit_l150_47_7 = ((_zz_flagNX_14 || _zz_flagNX_15) || _zz_flagNX_16);
+  assign _zz__zz_when_FpUnit_l150_52_4 = (_zz_flagNX_22 || _zz_flagNX_23);
+  assign _zz__zz_when_FpUnit_l150_52_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_52_6 = (! _zz_res_72);
+  assign _zz__zz_when_FpUnit_l150_52_7 = ((_zz_flagNX_22 || _zz_flagNX_23) || _zz_flagNX_24);
+  assign _zz__zz_when_FpUnit_l150_57_4 = (_zz_flagNX_30 || _zz_flagNX_31);
+  assign _zz__zz_when_FpUnit_l150_57_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_57_6 = (! _zz_res_78);
+  assign _zz__zz_when_FpUnit_l150_57_7 = ((_zz_flagNX_30 || _zz_flagNX_31) || _zz_flagNX_32);
+  assign _zz__zz_when_FpUnit_l150_62_4 = (_zz_flagNX_38 || _zz_flagNX_39);
+  assign _zz__zz_when_FpUnit_l150_62_5 = 3'b011;
+  assign _zz__zz_when_FpUnit_l150_62_6 = (! _zz_res_84);
+  assign _zz__zz_when_FpUnit_l150_62_7 = ((_zz_flagNX_38 || _zz_flagNX_39) || _zz_flagNX_40);
+  assign when_FpUnit_l481 = io_a[31];
   assign _zz_when_FpUnit_l270 = io_a[30 : 23];
   assign _zz_when_FpUnit_l270_1 = io_a[22 : 0];
   assign _zz_when_FpUnit_l270_2 = (_zz_when_FpUnit_l270 == 8'h0);
@@ -5380,8 +5432,8 @@ module FpUnit (
   assign _zz_when_FpUnit_l267_3 = (_zz_when_FpUnit_l267_1 == 23'h0);
   assign when_FpUnit_l267 = (_zz_when_FpUnit_l267_2 && _zz_when_FpUnit_l267_3);
   assign when_FpUnit_l207 = (_zz_when_FpUnit_l207 && _zz_when_FpUnit_l267_3);
-  assign when_FpUnit_l391 = (_zz_when_FpUnit_l207 && (! _zz_when_FpUnit_l267_3));
-  assign _zz_flagNV_1 = (when_FpUnit_l391 && (! _zz_when_FpUnit_l267_1[22]));
+  assign when_FpUnit_l393 = (_zz_when_FpUnit_l207 && (! _zz_when_FpUnit_l267_3));
+  assign _zz_flagNV_1 = (when_FpUnit_l393 && (! _zz_when_FpUnit_l267_1[22]));
   assign _zz_when_FpUnit_l180_1 = (_zz_when_FpUnit_l267_2 ? 10'h382 : _zz__zz_when_FpUnit_l180_1_1);
   assign _zz_when_FpUnit_l84 = (_zz_when_FpUnit_l267_2 ? _zz__zz_when_FpUnit_l84 : {1'b1,_zz_when_FpUnit_l267_1});
   assign _zz_when_FpUnit_l359 = io_c[31];
@@ -5525,18 +5577,20 @@ module FpUnit (
         end
       end
       6'h05 : begin
+        flagNV = (_zz_flagNV || _zz_flagNV_1);
       end
       6'h06 : begin
+        flagNV = (_zz_flagNV || _zz_flagNV_1);
       end
       6'h07, 6'h08, 6'h09 : begin
       end
       6'h0a, 6'h0b, 6'h0c : begin
         case(io_op)
           6'h0b : begin
-            flagNV = (when_FpUnit_l304 || when_FpUnit_l391);
+            flagNV = (when_FpUnit_l304 || when_FpUnit_l393);
           end
           6'h0c : begin
-            flagNV = (when_FpUnit_l304 || when_FpUnit_l391);
+            flagNV = (when_FpUnit_l304 || when_FpUnit_l393);
           end
           default : begin
           end
@@ -5601,22 +5655,22 @@ module FpUnit (
         end
       end
       6'h10 : begin
-        if(when_FpUnit_l470) begin
+        if(when_FpUnit_l474) begin
           flagNV = 1'b1;
         end
       end
       6'h11 : begin
-        if(when_FpUnit_l470_1) begin
+        if(when_FpUnit_l474_1) begin
           flagNV = 1'b1;
         end
       end
       6'h12 : begin
-        if(when_FpUnit_l470_2) begin
+        if(when_FpUnit_l474_2) begin
           flagNV = 1'b1;
         end
       end
       6'h13 : begin
-        if(when_FpUnit_l470_3) begin
+        if(when_FpUnit_l474_3) begin
           flagNV = 1'b1;
         end
       end
@@ -5841,22 +5895,22 @@ module FpUnit (
       6'h13 : begin
       end
       6'h14 : begin
-        if(!when_FpUnit_l492) begin
+        if(!when_FpUnit_l498) begin
           flagOF = when_FpUnit_l150_9;
         end
       end
       6'h15 : begin
-        if(!when_FpUnit_l492_1) begin
+        if(!when_FpUnit_l498_1) begin
           flagOF = when_FpUnit_l150_10;
         end
       end
       6'h16 : begin
-        if(!when_FpUnit_l492_2) begin
+        if(!when_FpUnit_l498_2) begin
           flagOF = when_FpUnit_l150_11;
         end
       end
       6'h17 : begin
-        if(!when_FpUnit_l492_3) begin
+        if(!when_FpUnit_l498_3) begin
           flagOF = when_FpUnit_l150_12;
         end
       end
@@ -6151,42 +6205,42 @@ module FpUnit (
         end
       end
       6'h10 : begin
-        if(!when_FpUnit_l470) begin
+        if(!when_FpUnit_l474) begin
           flagNX = _zz_flagNX_1;
         end
       end
       6'h11 : begin
-        if(!when_FpUnit_l470_1) begin
+        if(!when_FpUnit_l474_1) begin
           flagNX = _zz_flagNX_3;
         end
       end
       6'h12 : begin
-        if(!when_FpUnit_l470_2) begin
+        if(!when_FpUnit_l474_2) begin
           flagNX = _zz_flagNX_5;
         end
       end
       6'h13 : begin
-        if(!when_FpUnit_l470_3) begin
+        if(!when_FpUnit_l474_3) begin
           flagNX = _zz_flagNX_7;
         end
       end
       6'h14 : begin
-        if(!when_FpUnit_l492) begin
+        if(!when_FpUnit_l498) begin
           flagNX = ((_zz_flagNX_14 || _zz_flagNX_15) || _zz_flagNX_16);
         end
       end
       6'h15 : begin
-        if(!when_FpUnit_l492_1) begin
+        if(!when_FpUnit_l498_1) begin
           flagNX = ((_zz_flagNX_22 || _zz_flagNX_23) || _zz_flagNX_24);
         end
       end
       6'h16 : begin
-        if(!when_FpUnit_l492_2) begin
+        if(!when_FpUnit_l498_2) begin
           flagNX = ((_zz_flagNX_30 || _zz_flagNX_31) || _zz_flagNX_32);
         end
       end
       6'h17 : begin
-        if(!when_FpUnit_l492_3) begin
+        if(!when_FpUnit_l498_3) begin
           flagNX = ((_zz_flagNX_38 || _zz_flagNX_39) || _zz_flagNX_40);
         end
       end
@@ -6197,8 +6251,8 @@ module FpUnit (
 
   assign _zz_when_FpUnit_l205_1 = (_zz_when_FpUnit_l205 ^ 1'b0);
   assign _zz_when_FpUnit_l180_2 = ($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1));
-  assign _zz_when_FpUnit_l84_2 = (_zz_when_FpUnit_l180_2 ? _zz_when_FpUnit_l205_1 : when_FpUnit_l475);
-  assign _zz_when_FpUnit_l84_3 = (_zz_when_FpUnit_l180_2 ? when_FpUnit_l475 : _zz_when_FpUnit_l205_1);
+  assign _zz_when_FpUnit_l84_2 = (_zz_when_FpUnit_l180_2 ? _zz_when_FpUnit_l205_1 : when_FpUnit_l481);
+  assign _zz_when_FpUnit_l84_3 = (_zz_when_FpUnit_l180_2 ? when_FpUnit_l481 : _zz_when_FpUnit_l205_1);
   assign _zz_when_FpUnit_l180_3 = (_zz_when_FpUnit_l180_2 ? _zz_when_FpUnit_l180_1 : _zz_when_FpUnit_l180);
   assign _zz_when_FpUnit_l84_4 = _zz__zz_when_FpUnit_l84_4[27:0];
   assign _zz_when_FpUnit_l180_4 = _zz__zz_when_FpUnit_l180_4;
@@ -6393,7 +6447,7 @@ module FpUnit (
   assign _zz_flagUF_8 = _zz_flagUF_5[1];
   assign _zz_flagUF_9 = (_zz_flagUF_5[0] || _zz_flagUF_6);
   assign _zz_when_FpUnit_l150_1 = _zz_flagUF_5[26 : 3];
-  assign _zz_when_FpUnit_l150_2 = {1'd0, _zz__zz_when_FpUnit_l150_2};
+  assign _zz_when_FpUnit_l150_2 = (_zz__zz_when_FpUnit_l150_2 + _zz__zz_when_FpUnit_l150_2_2);
   assign _zz_when_FpUnit_l150_3 = _zz_when_FpUnit_l150_2[24];
   assign _zz_res_2 = (_zz_when_FpUnit_l150_3 ? _zz__zz_res_2 : _zz__zz_res_2_1);
   assign _zz_when_FpUnit_l150_4 = ($signed(_zz__zz_when_FpUnit_l150_4) + $signed(12'h07f));
@@ -6418,13 +6472,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_6 = _zz_res_5;
     if(when_FpUnit_l204) begin
-      _zz_res_6 = 32'h40400000;
+      _zz_res_6 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l205) begin
-        _zz_res_6 = 32'h40400000;
+        _zz_res_6 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l206) begin
-          _zz_res_6 = {when_FpUnit_l475,{8'hff,23'h0}};
+          _zz_res_6 = {when_FpUnit_l481,{8'hff,23'h0}};
         end else begin
           if(when_FpUnit_l207) begin
             _zz_res_6 = {_zz_when_FpUnit_l205_1,{8'hff,23'h0}};
@@ -6438,12 +6492,12 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l204 = (when_FpUnit_l304 || when_FpUnit_l391);
-  assign when_FpUnit_l205 = ((when_FpUnit_l206 && when_FpUnit_l207) && (when_FpUnit_l475 != _zz_when_FpUnit_l205_1));
+  assign when_FpUnit_l204 = (when_FpUnit_l304 || when_FpUnit_l393);
+  assign when_FpUnit_l205 = ((when_FpUnit_l206 && when_FpUnit_l207) && (when_FpUnit_l481 != _zz_when_FpUnit_l205_1));
   assign _zz_when_FpUnit_l205_2 = (_zz_when_FpUnit_l205 ^ 1'b1);
   assign _zz_when_FpUnit_l180_5 = ($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1));
-  assign _zz_when_FpUnit_l84_10 = (_zz_when_FpUnit_l180_5 ? _zz_when_FpUnit_l205_2 : when_FpUnit_l475);
-  assign _zz_when_FpUnit_l84_11 = (_zz_when_FpUnit_l180_5 ? when_FpUnit_l475 : _zz_when_FpUnit_l205_2);
+  assign _zz_when_FpUnit_l84_10 = (_zz_when_FpUnit_l180_5 ? _zz_when_FpUnit_l205_2 : when_FpUnit_l481);
+  assign _zz_when_FpUnit_l84_11 = (_zz_when_FpUnit_l180_5 ? when_FpUnit_l481 : _zz_when_FpUnit_l205_2);
   assign _zz_when_FpUnit_l180_6 = (_zz_when_FpUnit_l180_5 ? _zz_when_FpUnit_l180_1 : _zz_when_FpUnit_l180);
   assign _zz_when_FpUnit_l84_12 = _zz__zz_when_FpUnit_l84_12[27:0];
   assign _zz_when_FpUnit_l180_7 = _zz__zz_when_FpUnit_l180_7;
@@ -6638,7 +6692,7 @@ module FpUnit (
   assign _zz_flagUF_19 = _zz_flagUF_16[1];
   assign _zz_flagUF_20 = (_zz_flagUF_16[0] || _zz_flagUF_17);
   assign _zz_when_FpUnit_l150_6 = _zz_flagUF_16[26 : 3];
-  assign _zz_when_FpUnit_l150_7 = {1'd0, _zz__zz_when_FpUnit_l150_7};
+  assign _zz_when_FpUnit_l150_7 = (_zz__zz_when_FpUnit_l150_7 + _zz__zz_when_FpUnit_l150_7_2);
   assign _zz_when_FpUnit_l150_8 = _zz_when_FpUnit_l150_7[24];
   assign _zz_res_8 = (_zz_when_FpUnit_l150_8 ? _zz__zz_res_8 : _zz__zz_res_8_1);
   assign _zz_when_FpUnit_l150_9 = ($signed(_zz__zz_when_FpUnit_l150_9) + $signed(12'h07f));
@@ -6663,13 +6717,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_12 = _zz_res_11;
     if(when_FpUnit_l204_1) begin
-      _zz_res_12 = 32'h40400000;
+      _zz_res_12 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l205_1) begin
-        _zz_res_12 = 32'h40400000;
+        _zz_res_12 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l206) begin
-          _zz_res_12 = {when_FpUnit_l475,{8'hff,23'h0}};
+          _zz_res_12 = {when_FpUnit_l481,{8'hff,23'h0}};
         end else begin
           if(when_FpUnit_l207) begin
             _zz_res_12 = {_zz_when_FpUnit_l205_2,{8'hff,23'h0}};
@@ -6683,9 +6737,9 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l204_1 = (when_FpUnit_l304 || when_FpUnit_l391);
-  assign when_FpUnit_l205_1 = ((when_FpUnit_l206 && when_FpUnit_l207) && (when_FpUnit_l475 != _zz_when_FpUnit_l205_2));
-  assign _zz_res_13 = (when_FpUnit_l475 ^ _zz_when_FpUnit_l205);
+  assign when_FpUnit_l204_1 = (when_FpUnit_l304 || when_FpUnit_l393);
+  assign when_FpUnit_l205_1 = ((when_FpUnit_l206 && when_FpUnit_l207) && (when_FpUnit_l481 != _zz_when_FpUnit_l205_2));
+  assign _zz_res_13 = (when_FpUnit_l481 ^ _zz_when_FpUnit_l205);
   assign _zz_when_FpUnit_l84_18 = (_zz_flagNX * _zz_when_FpUnit_l84);
   always @(*) begin
     _zz_when_FpUnit_l91_2 = 6'h0;
@@ -6943,7 +6997,7 @@ module FpUnit (
   assign _zz_flagUF_30 = _zz_flagUF_27[1];
   assign _zz_flagUF_31 = (_zz_flagUF_27[0] || _zz_flagUF_28);
   assign _zz_when_FpUnit_l150_11 = _zz_flagUF_27[26 : 3];
-  assign _zz_when_FpUnit_l150_12 = {1'd0, _zz__zz_when_FpUnit_l150_12};
+  assign _zz_when_FpUnit_l150_12 = (_zz__zz_when_FpUnit_l150_12 + _zz__zz_when_FpUnit_l150_12_2);
   assign _zz_when_FpUnit_l150_13 = _zz_when_FpUnit_l150_12[24];
   assign _zz_res_14 = (_zz_when_FpUnit_l150_13 ? _zz__zz_res_14 : _zz__zz_res_14_1);
   assign _zz_when_FpUnit_l150_14 = ($signed(_zz__zz_when_FpUnit_l150_14) + $signed(12'h07f));
@@ -6968,10 +7022,10 @@ module FpUnit (
   always @(*) begin
     _zz_res_18 = _zz_res_17;
     if(when_FpUnit_l234) begin
-      _zz_res_18 = 32'h40400000;
+      _zz_res_18 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l235) begin
-        _zz_res_18 = 32'h40400000;
+        _zz_res_18 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l236) begin
           _zz_res_18 = {_zz_res_13,{8'hff,23'h0}};
@@ -6984,11 +7038,11 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l234 = (when_FpUnit_l304 || when_FpUnit_l391);
+  assign when_FpUnit_l234 = (when_FpUnit_l304 || when_FpUnit_l393);
   assign when_FpUnit_l235 = ((when_FpUnit_l206 && when_FpUnit_l267) || (when_FpUnit_l270 && when_FpUnit_l207));
   assign when_FpUnit_l236 = (when_FpUnit_l206 || when_FpUnit_l207);
   assign when_FpUnit_l237 = (when_FpUnit_l270 || when_FpUnit_l267);
-  assign _zz_res_19 = (when_FpUnit_l475 ^ _zz_when_FpUnit_l205);
+  assign _zz_res_19 = (when_FpUnit_l481 ^ _zz_when_FpUnit_l205);
   assign _zz_when_FpUnit_l84_19 = ({27'd0,_zz__zz_when_FpUnit_l84_19} <<< 5'd27);
   assign _zz_when_FpUnit_l84_20 = _zz__zz_when_FpUnit_l84_20[28:0];
   always @(*) begin
@@ -7172,7 +7226,7 @@ module FpUnit (
   assign _zz_flagUF_42 = _zz_flagUF_39[1];
   assign _zz_flagUF_43 = (_zz_flagUF_39[0] || _zz_flagUF_40);
   assign _zz_when_FpUnit_l150_16 = _zz_flagUF_39[26 : 3];
-  assign _zz_when_FpUnit_l150_17 = {1'd0, _zz__zz_when_FpUnit_l150_17};
+  assign _zz_when_FpUnit_l150_17 = (_zz__zz_when_FpUnit_l150_17 + _zz__zz_when_FpUnit_l150_17_2);
   assign _zz_when_FpUnit_l150_18 = _zz_when_FpUnit_l150_17[24];
   assign _zz_res_20 = (_zz_when_FpUnit_l150_18 ? _zz__zz_res_20 : _zz__zz_res_20_1);
   assign _zz_when_FpUnit_l150_19 = ($signed(_zz__zz_when_FpUnit_l150_19) + $signed(12'h07f));
@@ -7197,10 +7251,10 @@ module FpUnit (
   always @(*) begin
     _zz_res_24 = _zz_res_23;
     if(when_FpUnit_l261) begin
-      _zz_res_24 = 32'h40400000;
+      _zz_res_24 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l262) begin
-        _zz_res_24 = 32'h40400000;
+        _zz_res_24 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l206) begin
           _zz_res_24 = {_zz_res_19,{8'hff,23'h0}};
@@ -7221,7 +7275,7 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l261 = (when_FpUnit_l304 || when_FpUnit_l391);
+  assign when_FpUnit_l261 = (when_FpUnit_l304 || when_FpUnit_l393);
   assign when_FpUnit_l262 = ((when_FpUnit_l270 && when_FpUnit_l267) || (when_FpUnit_l206 && when_FpUnit_l207));
   assign _zz_flagUF_45 = _zz_when_FpUnit_l180[0];
   assign _zz_when_FpUnit_l84_21 = _zz__zz_when_FpUnit_l84_21[55:0];
@@ -7524,7 +7578,7 @@ module FpUnit (
   assign _zz_flagUF_55 = _zz_flagUF_52[1];
   assign _zz_flagUF_56 = (_zz_flagUF_52[0] || _zz_flagUF_53);
   assign _zz_when_FpUnit_l150_21 = _zz_flagUF_52[26 : 3];
-  assign _zz_when_FpUnit_l150_22 = {1'd0, _zz__zz_when_FpUnit_l150_22};
+  assign _zz_when_FpUnit_l150_22 = (_zz__zz_when_FpUnit_l150_22 + _zz__zz_when_FpUnit_l150_22_2);
   assign _zz_when_FpUnit_l150_23 = _zz_when_FpUnit_l150_22[24];
   assign _zz_res_26 = (_zz_when_FpUnit_l150_23 ? _zz__zz_res_26 : _zz__zz_res_26_1);
   assign _zz_when_FpUnit_l150_24 = ($signed(_zz__zz_when_FpUnit_l150_24) + $signed(12'h07f));
@@ -7549,42 +7603,42 @@ module FpUnit (
   always @(*) begin
     _zz_res_30 = _zz_res_29;
     if(when_FpUnit_l304) begin
-      _zz_res_30 = 32'h40400000;
+      _zz_res_30 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l305) begin
-        _zz_res_30 = 32'h40400000;
+        _zz_res_30 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l206) begin
           _zz_res_30 = {1'b0,{8'hff,23'h0}};
         end else begin
           if(when_FpUnit_l270) begin
-            _zz_res_30 = {when_FpUnit_l475,{8'h0,23'h0}};
+            _zz_res_30 = {when_FpUnit_l481,{8'h0,23'h0}};
           end
         end
       end
     end
   end
 
-  assign when_FpUnit_l305 = (when_FpUnit_l475 && (! when_FpUnit_l270));
-  assign when_FpUnit_l394 = 1'b0;
-  assign when_FpUnit_l392 = (when_FpUnit_l270 && when_FpUnit_l267);
+  assign when_FpUnit_l305 = (when_FpUnit_l481 && (! when_FpUnit_l270));
+  assign when_FpUnit_l396 = 1'b0;
+  assign when_FpUnit_l394 = (when_FpUnit_l270 && when_FpUnit_l267);
   assign _zz_res_31 = (($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1)) || (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX < _zz_when_FpUnit_l84)));
-  assign _zz_res_32 = ((when_FpUnit_l475 == _zz_when_FpUnit_l205) ? (when_FpUnit_l475 ? ((! _zz_res_31) && (! (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX == _zz_when_FpUnit_l84)))) : _zz_res_31) : when_FpUnit_l475);
+  assign _zz_res_32 = ((when_FpUnit_l481 == _zz_when_FpUnit_l205) ? (when_FpUnit_l481 ? ((! _zz_res_31) && (! (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX == _zz_when_FpUnit_l84)))) : _zz_res_31) : when_FpUnit_l481);
   always @(*) begin
     _zz_res_33 = io_a[31 : 0];
-    if(when_FpUnit_l389) begin
-      _zz_res_33 = 32'h40400000;
+    if(when_FpUnit_l391) begin
+      _zz_res_33 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l304) begin
         _zz_res_33 = io_b[31 : 0];
       end else begin
-        if(when_FpUnit_l391) begin
+        if(when_FpUnit_l393) begin
           _zz_res_33 = io_a[31 : 0];
         end else begin
-          if(when_FpUnit_l392) begin
-            _zz_res_33 = {(when_FpUnit_l394 ? 1'b0 : 1'b1),{8'h0,23'h0}};
+          if(when_FpUnit_l394) begin
+            _zz_res_33 = {(when_FpUnit_l396 ? 1'b0 : 1'b1),{8'h0,23'h0}};
           end else begin
-            if(when_FpUnit_l394) begin
+            if(when_FpUnit_l396) begin
               _zz_res_33 = (_zz_res_32 ? io_b[31 : 0] : io_a[31 : 0]);
             end else begin
               _zz_res_33 = (_zz_res_32 ? io_a[31 : 0] : io_b[31 : 0]);
@@ -7595,26 +7649,26 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l389 = (when_FpUnit_l304 && when_FpUnit_l391);
-  assign when_FpUnit_l394_1 = 1'b1;
-  assign when_FpUnit_l392_1 = (when_FpUnit_l270 && when_FpUnit_l267);
+  assign when_FpUnit_l391 = (when_FpUnit_l304 && when_FpUnit_l393);
+  assign when_FpUnit_l396_1 = 1'b1;
+  assign when_FpUnit_l394_1 = (when_FpUnit_l270 && when_FpUnit_l267);
   assign _zz_res_34 = (($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1)) || (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX < _zz_when_FpUnit_l84)));
-  assign _zz_res_35 = ((when_FpUnit_l475 == _zz_when_FpUnit_l205) ? (when_FpUnit_l475 ? ((! _zz_res_34) && (! (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX == _zz_when_FpUnit_l84)))) : _zz_res_34) : when_FpUnit_l475);
+  assign _zz_res_35 = ((when_FpUnit_l481 == _zz_when_FpUnit_l205) ? (when_FpUnit_l481 ? ((! _zz_res_34) && (! (($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1)) && (_zz_flagNX == _zz_when_FpUnit_l84)))) : _zz_res_34) : when_FpUnit_l481);
   always @(*) begin
     _zz_res_36 = io_a[31 : 0];
-    if(when_FpUnit_l389_1) begin
-      _zz_res_36 = 32'h40400000;
+    if(when_FpUnit_l391_1) begin
+      _zz_res_36 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l304) begin
         _zz_res_36 = io_b[31 : 0];
       end else begin
-        if(when_FpUnit_l391) begin
+        if(when_FpUnit_l393) begin
           _zz_res_36 = io_a[31 : 0];
         end else begin
-          if(when_FpUnit_l392_1) begin
-            _zz_res_36 = {(when_FpUnit_l394_1 ? 1'b0 : 1'b1),{8'h0,23'h0}};
+          if(when_FpUnit_l394_1) begin
+            _zz_res_36 = {(when_FpUnit_l396_1 ? 1'b0 : 1'b1),{8'h0,23'h0}};
           end else begin
-            if(when_FpUnit_l394_1) begin
+            if(when_FpUnit_l396_1) begin
               _zz_res_36 = (_zz_res_35 ? io_b[31 : 0] : io_a[31 : 0]);
             end else begin
               _zz_res_36 = (_zz_res_35 ? io_a[31 : 0] : io_b[31 : 0]);
@@ -7625,7 +7679,7 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l389_1 = (when_FpUnit_l304 && when_FpUnit_l391);
+  assign when_FpUnit_l391_1 = (when_FpUnit_l304 && when_FpUnit_l393);
   always @(*) begin
     _zz_res_37 = io_a[31 : 0];
     case(io_op)
@@ -7643,8 +7697,8 @@ module FpUnit (
     endcase
   end
 
-  assign _zz_res_38 = (((! when_FpUnit_l304) && (! when_FpUnit_l391)) && ((when_FpUnit_l270 && when_FpUnit_l267) || (((when_FpUnit_l475 == _zz_when_FpUnit_l205) && ($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1))) && (_zz_flagNX == _zz_when_FpUnit_l84))));
-  assign _zz_res_39 = ((((! when_FpUnit_l304) && (! when_FpUnit_l391)) && (! (when_FpUnit_l270 && when_FpUnit_l267))) && ((when_FpUnit_l475 != _zz_when_FpUnit_l205) ? when_FpUnit_l475 : (when_FpUnit_l475 ? ($signed(_zz_when_FpUnit_l180_1) < $signed(_zz_when_FpUnit_l180)) : ($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1)))));
+  assign _zz_res_38 = (((! when_FpUnit_l304) && (! when_FpUnit_l393)) && ((when_FpUnit_l270 && when_FpUnit_l267) || (((when_FpUnit_l481 == _zz_when_FpUnit_l205) && ($signed(_zz_when_FpUnit_l180) == $signed(_zz_when_FpUnit_l180_1))) && (_zz_flagNX == _zz_when_FpUnit_l84))));
+  assign _zz_res_39 = ((((! when_FpUnit_l304) && (! when_FpUnit_l393)) && (! (when_FpUnit_l270 && when_FpUnit_l267))) && ((when_FpUnit_l481 != _zz_when_FpUnit_l205) ? when_FpUnit_l481 : (when_FpUnit_l481 ? ($signed(_zz_when_FpUnit_l180_1) < $signed(_zz_when_FpUnit_l180)) : ($signed(_zz_when_FpUnit_l180) < $signed(_zz_when_FpUnit_l180_1)))));
   always @(*) begin
     _zz_res_40 = 32'h0;
     case(io_op)
@@ -7664,19 +7718,19 @@ module FpUnit (
 
   always @(*) begin
     _zz_res_41 = 10'h0;
-    _zz_res_41[0] = (when_FpUnit_l475 && when_FpUnit_l206);
-    _zz_res_41[1] = (((when_FpUnit_l475 && (! when_FpUnit_l206)) && (! when_FpUnit_l304)) && (! when_FpUnit_l270));
-    _zz_res_41[2] = (when_FpUnit_l475 && _zz_res);
-    _zz_res_41[3] = (when_FpUnit_l475 && when_FpUnit_l270);
-    _zz_res_41[4] = ((! when_FpUnit_l475) && when_FpUnit_l270);
-    _zz_res_41[5] = ((! when_FpUnit_l475) && _zz_res);
-    _zz_res_41[6] = ((((! when_FpUnit_l475) && (! when_FpUnit_l206)) && (! when_FpUnit_l304)) && (! when_FpUnit_l270));
-    _zz_res_41[7] = ((! when_FpUnit_l475) && when_FpUnit_l206);
+    _zz_res_41[0] = (when_FpUnit_l481 && when_FpUnit_l206);
+    _zz_res_41[1] = ((((when_FpUnit_l481 && (! when_FpUnit_l206)) && (! when_FpUnit_l304)) && (! when_FpUnit_l270)) && (! _zz_res));
+    _zz_res_41[2] = (when_FpUnit_l481 && _zz_res);
+    _zz_res_41[3] = (when_FpUnit_l481 && when_FpUnit_l270);
+    _zz_res_41[4] = ((! when_FpUnit_l481) && when_FpUnit_l270);
+    _zz_res_41[5] = ((! when_FpUnit_l481) && _zz_res);
+    _zz_res_41[6] = (((((! when_FpUnit_l481) && (! when_FpUnit_l206)) && (! when_FpUnit_l304)) && (! when_FpUnit_l270)) && (! _zz_res));
+    _zz_res_41[7] = ((! when_FpUnit_l481) && when_FpUnit_l206);
     _zz_res_41[8] = _zz_flagNV;
     _zz_res_41[9] = (when_FpUnit_l304 && (! _zz_flagNV));
   end
 
-  assign _zz_when_FpUnit_l359_1 = ((when_FpUnit_l475 ^ _zz_when_FpUnit_l205) ^ 1'b0);
+  assign _zz_when_FpUnit_l359_1 = ((when_FpUnit_l481 ^ _zz_when_FpUnit_l205) ^ 1'b0);
   assign _zz_when_FpUnit_l359_2 = (_zz_when_FpUnit_l359 ^ 1'b0);
   assign _zz_when_FpUnit_l84_135 = (_zz_flagNX * _zz_when_FpUnit_l84);
   assign _zz_when_FpUnit_l329_2 = ($signed(_zz__zz_when_FpUnit_l329_2) - $signed(12'h02e));
@@ -7740,7 +7794,7 @@ module FpUnit (
   assign when_FpUnit_l330_1 = (12'h036 <= _zz_when_FpUnit_l330_1);
   assign _zz_when_FpUnit_l84_138 = _zz__zz_when_FpUnit_l84_138;
   assign _zz_when_FpUnit_l84_139 = _zz__zz_when_FpUnit_l84_139;
-  assign _zz_when_FpUnit_l84_140 = {{1{_zz__zz_when_FpUnit_l84_140[54]}}, _zz__zz_when_FpUnit_l84_140};
+  assign _zz_when_FpUnit_l84_140 = ($signed(_zz__zz_when_FpUnit_l84_140) + $signed(_zz__zz_when_FpUnit_l84_140_3));
   assign _zz_when_FpUnit_l84_141 = _zz_when_FpUnit_l84_140[55];
   assign _zz_when_FpUnit_l84_142 = (_zz_when_FpUnit_l84_141 ? _zz__zz_when_FpUnit_l84_142 : _zz_when_FpUnit_l84_140);
   always @(*) begin
@@ -8032,7 +8086,7 @@ module FpUnit (
   assign _zz_flagUF_69 = _zz_flagUF_66[1];
   assign _zz_flagUF_70 = (_zz_flagUF_66[0] || _zz_flagUF_67);
   assign _zz_when_FpUnit_l150_26 = _zz_flagUF_66[26 : 3];
-  assign _zz_when_FpUnit_l150_27 = {1'd0, _zz__zz_when_FpUnit_l150_27};
+  assign _zz_when_FpUnit_l150_27 = (_zz__zz_when_FpUnit_l150_27 + _zz__zz_when_FpUnit_l150_27_2);
   assign _zz_when_FpUnit_l150_28 = _zz_when_FpUnit_l150_27[24];
   assign _zz_res_42 = (_zz_when_FpUnit_l150_28 ? _zz__zz_res_42 : _zz__zz_res_42_1);
   assign _zz_when_FpUnit_l150_29 = ($signed(_zz__zz_when_FpUnit_l150_29) + $signed(12'h07f));
@@ -8057,13 +8111,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_46 = _zz_res_45;
     if(when_FpUnit_l357) begin
-      _zz_res_46 = 32'h40400000;
+      _zz_res_46 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l358) begin
-        _zz_res_46 = 32'h40400000;
+        _zz_res_46 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l359) begin
-          _zz_res_46 = 32'h40400000;
+          _zz_res_46 = 32'h7fc00000;
         end else begin
           if(when_FpUnit_l360) begin
             _zz_res_46 = {_zz_when_FpUnit_l359_1,{8'hff,23'h0}};
@@ -8077,11 +8131,11 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l357 = ((when_FpUnit_l304 || when_FpUnit_l391) || _zz_when_FpUnit_l357);
+  assign when_FpUnit_l357 = ((when_FpUnit_l304 || when_FpUnit_l393) || _zz_when_FpUnit_l357);
   assign when_FpUnit_l358 = ((when_FpUnit_l206 && when_FpUnit_l267) || (when_FpUnit_l270 && when_FpUnit_l207));
   assign when_FpUnit_l359 = (((when_FpUnit_l206 || when_FpUnit_l207) && when_FpUnit_l361) && (_zz_when_FpUnit_l359_1 != _zz_when_FpUnit_l359_2));
   assign when_FpUnit_l360 = (when_FpUnit_l206 || when_FpUnit_l207);
-  assign _zz_when_FpUnit_l359_3 = ((when_FpUnit_l475 ^ _zz_when_FpUnit_l205) ^ 1'b0);
+  assign _zz_when_FpUnit_l359_3 = ((when_FpUnit_l481 ^ _zz_when_FpUnit_l205) ^ 1'b0);
   assign _zz_when_FpUnit_l359_4 = (_zz_when_FpUnit_l359 ^ 1'b1);
   assign _zz_when_FpUnit_l84_143 = (_zz_flagNX * _zz_when_FpUnit_l84);
   assign _zz_when_FpUnit_l329_7 = ($signed(_zz__zz_when_FpUnit_l329_7) - $signed(12'h02e));
@@ -8145,7 +8199,7 @@ module FpUnit (
   assign when_FpUnit_l330_3 = (12'h036 <= _zz_when_FpUnit_l330_3);
   assign _zz_when_FpUnit_l84_146 = _zz__zz_when_FpUnit_l84_146;
   assign _zz_when_FpUnit_l84_147 = _zz__zz_when_FpUnit_l84_147;
-  assign _zz_when_FpUnit_l84_148 = {{1{_zz__zz_when_FpUnit_l84_148[54]}}, _zz__zz_when_FpUnit_l84_148};
+  assign _zz_when_FpUnit_l84_148 = ($signed(_zz__zz_when_FpUnit_l84_148) + $signed(_zz__zz_when_FpUnit_l84_148_3));
   assign _zz_when_FpUnit_l84_149 = _zz_when_FpUnit_l84_148[55];
   assign _zz_when_FpUnit_l84_150 = (_zz_when_FpUnit_l84_149 ? _zz__zz_when_FpUnit_l84_150 : _zz_when_FpUnit_l84_148);
   always @(*) begin
@@ -8437,7 +8491,7 @@ module FpUnit (
   assign _zz_flagUF_83 = _zz_flagUF_80[1];
   assign _zz_flagUF_84 = (_zz_flagUF_80[0] || _zz_flagUF_81);
   assign _zz_when_FpUnit_l150_31 = _zz_flagUF_80[26 : 3];
-  assign _zz_when_FpUnit_l150_32 = {1'd0, _zz__zz_when_FpUnit_l150_32};
+  assign _zz_when_FpUnit_l150_32 = (_zz__zz_when_FpUnit_l150_32 + _zz__zz_when_FpUnit_l150_32_2);
   assign _zz_when_FpUnit_l150_33 = _zz_when_FpUnit_l150_32[24];
   assign _zz_res_47 = (_zz_when_FpUnit_l150_33 ? _zz__zz_res_47 : _zz__zz_res_47_1);
   assign _zz_when_FpUnit_l150_34 = ($signed(_zz__zz_when_FpUnit_l150_34) + $signed(12'h07f));
@@ -8462,13 +8516,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_51 = _zz_res_50;
     if(when_FpUnit_l357_1) begin
-      _zz_res_51 = 32'h40400000;
+      _zz_res_51 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l358_1) begin
-        _zz_res_51 = 32'h40400000;
+        _zz_res_51 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l359_1) begin
-          _zz_res_51 = 32'h40400000;
+          _zz_res_51 = 32'h7fc00000;
         end else begin
           if(when_FpUnit_l360_1) begin
             _zz_res_51 = {_zz_when_FpUnit_l359_3,{8'hff,23'h0}};
@@ -8482,11 +8536,11 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l357_1 = ((when_FpUnit_l304 || when_FpUnit_l391) || _zz_when_FpUnit_l357);
+  assign when_FpUnit_l357_1 = ((when_FpUnit_l304 || when_FpUnit_l393) || _zz_when_FpUnit_l357);
   assign when_FpUnit_l358_1 = ((when_FpUnit_l206 && when_FpUnit_l267) || (when_FpUnit_l270 && when_FpUnit_l207));
   assign when_FpUnit_l359_1 = (((when_FpUnit_l206 || when_FpUnit_l207) && when_FpUnit_l361) && (_zz_when_FpUnit_l359_3 != _zz_when_FpUnit_l359_4));
   assign when_FpUnit_l360_1 = (when_FpUnit_l206 || when_FpUnit_l207);
-  assign _zz_when_FpUnit_l359_5 = ((when_FpUnit_l475 ^ _zz_when_FpUnit_l205) ^ 1'b1);
+  assign _zz_when_FpUnit_l359_5 = ((when_FpUnit_l481 ^ _zz_when_FpUnit_l205) ^ 1'b1);
   assign _zz_when_FpUnit_l359_6 = (_zz_when_FpUnit_l359 ^ 1'b0);
   assign _zz_when_FpUnit_l84_151 = (_zz_flagNX * _zz_when_FpUnit_l84);
   assign _zz_when_FpUnit_l329_12 = ($signed(_zz__zz_when_FpUnit_l329_12) - $signed(12'h02e));
@@ -8550,7 +8604,7 @@ module FpUnit (
   assign when_FpUnit_l330_5 = (12'h036 <= _zz_when_FpUnit_l330_5);
   assign _zz_when_FpUnit_l84_154 = _zz__zz_when_FpUnit_l84_154;
   assign _zz_when_FpUnit_l84_155 = _zz__zz_when_FpUnit_l84_155;
-  assign _zz_when_FpUnit_l84_156 = {{1{_zz__zz_when_FpUnit_l84_156[54]}}, _zz__zz_when_FpUnit_l84_156};
+  assign _zz_when_FpUnit_l84_156 = ($signed(_zz__zz_when_FpUnit_l84_156) + $signed(_zz__zz_when_FpUnit_l84_156_3));
   assign _zz_when_FpUnit_l84_157 = _zz_when_FpUnit_l84_156[55];
   assign _zz_when_FpUnit_l84_158 = (_zz_when_FpUnit_l84_157 ? _zz__zz_when_FpUnit_l84_158 : _zz_when_FpUnit_l84_156);
   always @(*) begin
@@ -8842,7 +8896,7 @@ module FpUnit (
   assign _zz_flagUF_97 = _zz_flagUF_94[1];
   assign _zz_flagUF_98 = (_zz_flagUF_94[0] || _zz_flagUF_95);
   assign _zz_when_FpUnit_l150_36 = _zz_flagUF_94[26 : 3];
-  assign _zz_when_FpUnit_l150_37 = {1'd0, _zz__zz_when_FpUnit_l150_37};
+  assign _zz_when_FpUnit_l150_37 = (_zz__zz_when_FpUnit_l150_37 + _zz__zz_when_FpUnit_l150_37_2);
   assign _zz_when_FpUnit_l150_38 = _zz_when_FpUnit_l150_37[24];
   assign _zz_res_52 = (_zz_when_FpUnit_l150_38 ? _zz__zz_res_52 : _zz__zz_res_52_1);
   assign _zz_when_FpUnit_l150_39 = ($signed(_zz__zz_when_FpUnit_l150_39) + $signed(12'h07f));
@@ -8867,13 +8921,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_56 = _zz_res_55;
     if(when_FpUnit_l357_2) begin
-      _zz_res_56 = 32'h40400000;
+      _zz_res_56 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l358_2) begin
-        _zz_res_56 = 32'h40400000;
+        _zz_res_56 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l359_2) begin
-          _zz_res_56 = 32'h40400000;
+          _zz_res_56 = 32'h7fc00000;
         end else begin
           if(when_FpUnit_l360_2) begin
             _zz_res_56 = {_zz_when_FpUnit_l359_5,{8'hff,23'h0}};
@@ -8887,11 +8941,11 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l357_2 = ((when_FpUnit_l304 || when_FpUnit_l391) || _zz_when_FpUnit_l357);
+  assign when_FpUnit_l357_2 = ((when_FpUnit_l304 || when_FpUnit_l393) || _zz_when_FpUnit_l357);
   assign when_FpUnit_l358_2 = ((when_FpUnit_l206 && when_FpUnit_l267) || (when_FpUnit_l270 && when_FpUnit_l207));
   assign when_FpUnit_l359_2 = (((when_FpUnit_l206 || when_FpUnit_l207) && when_FpUnit_l361) && (_zz_when_FpUnit_l359_5 != _zz_when_FpUnit_l359_6));
   assign when_FpUnit_l360_2 = (when_FpUnit_l206 || when_FpUnit_l207);
-  assign _zz_when_FpUnit_l359_7 = ((when_FpUnit_l475 ^ _zz_when_FpUnit_l205) ^ 1'b1);
+  assign _zz_when_FpUnit_l359_7 = ((when_FpUnit_l481 ^ _zz_when_FpUnit_l205) ^ 1'b1);
   assign _zz_when_FpUnit_l359_8 = (_zz_when_FpUnit_l359 ^ 1'b1);
   assign _zz_when_FpUnit_l84_159 = (_zz_flagNX * _zz_when_FpUnit_l84);
   assign _zz_when_FpUnit_l329_17 = ($signed(_zz__zz_when_FpUnit_l329_17) - $signed(12'h02e));
@@ -8955,7 +9009,7 @@ module FpUnit (
   assign when_FpUnit_l330_7 = (12'h036 <= _zz_when_FpUnit_l330_7);
   assign _zz_when_FpUnit_l84_162 = _zz__zz_when_FpUnit_l84_162;
   assign _zz_when_FpUnit_l84_163 = _zz__zz_when_FpUnit_l84_163;
-  assign _zz_when_FpUnit_l84_164 = {{1{_zz__zz_when_FpUnit_l84_164[54]}}, _zz__zz_when_FpUnit_l84_164};
+  assign _zz_when_FpUnit_l84_164 = ($signed(_zz__zz_when_FpUnit_l84_164) + $signed(_zz__zz_when_FpUnit_l84_164_3));
   assign _zz_when_FpUnit_l84_165 = _zz_when_FpUnit_l84_164[55];
   assign _zz_when_FpUnit_l84_166 = (_zz_when_FpUnit_l84_165 ? _zz__zz_when_FpUnit_l84_166 : _zz_when_FpUnit_l84_164);
   always @(*) begin
@@ -9247,7 +9301,7 @@ module FpUnit (
   assign _zz_flagUF_111 = _zz_flagUF_108[1];
   assign _zz_flagUF_112 = (_zz_flagUF_108[0] || _zz_flagUF_109);
   assign _zz_when_FpUnit_l150_41 = _zz_flagUF_108[26 : 3];
-  assign _zz_when_FpUnit_l150_42 = {1'd0, _zz__zz_when_FpUnit_l150_42};
+  assign _zz_when_FpUnit_l150_42 = (_zz__zz_when_FpUnit_l150_42 + _zz__zz_when_FpUnit_l150_42_2);
   assign _zz_when_FpUnit_l150_43 = _zz_when_FpUnit_l150_42[24];
   assign _zz_res_57 = (_zz_when_FpUnit_l150_43 ? _zz__zz_res_57 : _zz__zz_res_57_1);
   assign _zz_when_FpUnit_l150_44 = ($signed(_zz__zz_when_FpUnit_l150_44) + $signed(12'h07f));
@@ -9272,13 +9326,13 @@ module FpUnit (
   always @(*) begin
     _zz_res_61 = _zz_res_60;
     if(when_FpUnit_l357_3) begin
-      _zz_res_61 = 32'h40400000;
+      _zz_res_61 = 32'h7fc00000;
     end else begin
       if(when_FpUnit_l358_3) begin
-        _zz_res_61 = 32'h40400000;
+        _zz_res_61 = 32'h7fc00000;
       end else begin
         if(when_FpUnit_l359_3) begin
-          _zz_res_61 = 32'h40400000;
+          _zz_res_61 = 32'h7fc00000;
         end else begin
           if(when_FpUnit_l360_3) begin
             _zz_res_61 = {_zz_when_FpUnit_l359_7,{8'hff,23'h0}};
@@ -9292,36 +9346,36 @@ module FpUnit (
     end
   end
 
-  assign when_FpUnit_l357_3 = ((when_FpUnit_l304 || when_FpUnit_l391) || _zz_when_FpUnit_l357);
+  assign when_FpUnit_l357_3 = ((when_FpUnit_l304 || when_FpUnit_l393) || _zz_when_FpUnit_l357);
   assign when_FpUnit_l358_3 = ((when_FpUnit_l206 && when_FpUnit_l267) || (when_FpUnit_l270 && when_FpUnit_l207));
   assign when_FpUnit_l359_3 = (((when_FpUnit_l206 || when_FpUnit_l207) && when_FpUnit_l361) && (_zz_when_FpUnit_l359_7 != _zz_when_FpUnit_l359_8));
   assign when_FpUnit_l360_3 = (when_FpUnit_l206 || when_FpUnit_l207);
-  assign _zz_when_FpUnit_l445 = ($signed(_zz__zz_when_FpUnit_l445) - $signed(12'h017));
-  assign when_FpUnit_l445 = ($signed(12'h022) <= $signed(_zz_when_FpUnit_l445));
+  assign _zz_when_FpUnit_l447 = ($signed(_zz__zz_when_FpUnit_l447) - $signed(12'h017));
+  assign when_FpUnit_l447 = ($signed(12'h022) <= $signed(_zz_when_FpUnit_l447));
   always @(*) begin
-    if(when_FpUnit_l445) begin
-      _zz_when_FpUnit_l470 = 34'h1ffffffff;
+    if(when_FpUnit_l447) begin
+      _zz_when_FpUnit_l474 = 34'h1ffffffff;
     end else begin
-      if(when_FpUnit_l448) begin
-        _zz_when_FpUnit_l470 = 34'h0;
+      if(when_FpUnit_l450) begin
+        _zz_when_FpUnit_l474 = 34'h0;
       end else begin
-        if(when_FpUnit_l451) begin
-          _zz_when_FpUnit_l470 = {10'd0, _zz__zz_when_FpUnit_l470};
+        if(when_FpUnit_l453) begin
+          _zz_when_FpUnit_l474 = {10'd0, _zz__zz_when_FpUnit_l474};
         end else begin
-          _zz_when_FpUnit_l470 = _zz__zz_when_FpUnit_l470_1[33:0];
+          _zz_when_FpUnit_l474 = _zz__zz_when_FpUnit_l474_1[33:0];
         end
       end
     end
   end
 
   always @(*) begin
-    if(when_FpUnit_l445) begin
+    if(when_FpUnit_l447) begin
       _zz_flagNX_1 = 1'b1;
     end else begin
-      if(when_FpUnit_l448) begin
+      if(when_FpUnit_l450) begin
         _zz_flagNX_1 = (_zz_flagNX != 24'h0);
       end else begin
-        if(when_FpUnit_l451) begin
+        if(when_FpUnit_l453) begin
           _zz_flagNX_1 = ((_zz_flagNX & _zz__zz_flagNX_1) != 24'h0);
         end else begin
           _zz_flagNX_1 = 1'b0;
@@ -9331,52 +9385,52 @@ module FpUnit (
   end
 
   assign _zz_flagNX_2 = _zz__zz_flagNX_2;
-  assign when_FpUnit_l448 = ($signed(_zz_when_FpUnit_l445) <= $signed(12'hfe8));
-  assign when_FpUnit_l451 = ($signed(_zz_when_FpUnit_l445) < $signed(12'h0));
-  assign _zz_when_FpUnit_l470_1 = _zz__zz_when_FpUnit_l470_1_1[32:0];
-  assign when_FpUnit_l470 = ((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (33'h080000000 < _zz_when_FpUnit_l470_1)));
+  assign when_FpUnit_l450 = ($signed(_zz_when_FpUnit_l447) <= $signed(12'hfe8));
+  assign when_FpUnit_l453 = ($signed(_zz_when_FpUnit_l447) < $signed(12'h0));
+  assign _zz_when_FpUnit_l474_1 = (_zz_when_FpUnit_l474 + _zz__zz_when_FpUnit_l474_1_1);
+  assign when_FpUnit_l474 = (((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (34'h080000000 < _zz_when_FpUnit_l474_1))) || 1'b0);
   always @(*) begin
-    if(when_FpUnit_l470) begin
+    if(when_FpUnit_l474) begin
       _zz_res_62 = 32'h7fffffff;
-      if(when_FpUnit_l473) begin
+      if(when_FpUnit_l479) begin
         _zz_res_62 = 32'h80000000;
       end
     end else begin
-      if(when_FpUnit_l475) begin
+      if(when_FpUnit_l481) begin
         _zz_res_62 = (32'h0 - _zz__zz_res_62);
       end else begin
-        _zz_res_62 = _zz_when_FpUnit_l470_1[31:0];
+        _zz_res_62 = _zz_when_FpUnit_l474_1[31:0];
       end
     end
   end
 
-  assign when_FpUnit_l473 = (when_FpUnit_l475 && (! when_FpUnit_l304));
-  assign _zz_when_FpUnit_l445_1 = ($signed(_zz__zz_when_FpUnit_l445_1) - $signed(12'h017));
-  assign when_FpUnit_l445_1 = ($signed(12'h022) <= $signed(_zz_when_FpUnit_l445_1));
+  assign when_FpUnit_l479 = (when_FpUnit_l481 && (! when_FpUnit_l304));
+  assign _zz_when_FpUnit_l447_1 = ($signed(_zz__zz_when_FpUnit_l447_1) - $signed(12'h017));
+  assign when_FpUnit_l447_1 = ($signed(12'h022) <= $signed(_zz_when_FpUnit_l447_1));
   always @(*) begin
-    if(when_FpUnit_l445_1) begin
-      _zz_when_FpUnit_l470_2 = 34'h1ffffffff;
+    if(when_FpUnit_l447_1) begin
+      _zz_when_FpUnit_l474_2 = 34'h1ffffffff;
     end else begin
-      if(when_FpUnit_l448_1) begin
-        _zz_when_FpUnit_l470_2 = 34'h0;
+      if(when_FpUnit_l450_1) begin
+        _zz_when_FpUnit_l474_2 = 34'h0;
       end else begin
-        if(when_FpUnit_l451_1) begin
-          _zz_when_FpUnit_l470_2 = {10'd0, _zz__zz_when_FpUnit_l470_2_1};
+        if(when_FpUnit_l453_1) begin
+          _zz_when_FpUnit_l474_2 = {10'd0, _zz__zz_when_FpUnit_l474_2_1};
         end else begin
-          _zz_when_FpUnit_l470_2 = _zz__zz_when_FpUnit_l470_2_2[33:0];
+          _zz_when_FpUnit_l474_2 = _zz__zz_when_FpUnit_l474_2_2[33:0];
         end
       end
     end
   end
 
   always @(*) begin
-    if(when_FpUnit_l445_1) begin
+    if(when_FpUnit_l447_1) begin
       _zz_flagNX_3 = 1'b1;
     end else begin
-      if(when_FpUnit_l448_1) begin
+      if(when_FpUnit_l450_1) begin
         _zz_flagNX_3 = (_zz_flagNX != 24'h0);
       end else begin
-        if(when_FpUnit_l451_1) begin
+        if(when_FpUnit_l453_1) begin
           _zz_flagNX_3 = ((_zz_flagNX & _zz__zz_flagNX_3) != 24'h0);
         end else begin
           _zz_flagNX_3 = 1'b0;
@@ -9386,52 +9440,52 @@ module FpUnit (
   end
 
   assign _zz_flagNX_4 = _zz__zz_flagNX_4;
-  assign when_FpUnit_l448_1 = ($signed(_zz_when_FpUnit_l445_1) <= $signed(12'hfe8));
-  assign when_FpUnit_l451_1 = ($signed(_zz_when_FpUnit_l445_1) < $signed(12'h0));
-  assign _zz_when_FpUnit_l470_3 = _zz__zz_when_FpUnit_l470_3_1[32:0];
-  assign when_FpUnit_l470_1 = ((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (33'h0ffffffff < _zz_when_FpUnit_l470_3)));
+  assign when_FpUnit_l450_1 = ($signed(_zz_when_FpUnit_l447_1) <= $signed(12'hfe8));
+  assign when_FpUnit_l453_1 = ($signed(_zz_when_FpUnit_l447_1) < $signed(12'h0));
+  assign _zz_when_FpUnit_l474_3 = (_zz_when_FpUnit_l474_2 + _zz__zz_when_FpUnit_l474_3_1);
+  assign when_FpUnit_l474_1 = (((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (34'h0ffffffff < _zz_when_FpUnit_l474_3))) || ((when_FpUnit_l481 && (! when_FpUnit_l270)) && (! when_FpUnit_l304)));
   always @(*) begin
-    if(when_FpUnit_l470_1) begin
+    if(when_FpUnit_l474_1) begin
       _zz_res_63 = 32'hffffffff;
-      if(when_FpUnit_l473_1) begin
-        _zz_res_63 = 32'h80000000;
+      if(when_FpUnit_l479_1) begin
+        _zz_res_63 = 32'h0;
       end
     end else begin
-      if(when_FpUnit_l475) begin
+      if(when_FpUnit_l481) begin
         _zz_res_63 = (32'h0 - _zz__zz_res_63);
       end else begin
-        _zz_res_63 = _zz_when_FpUnit_l470_3[31:0];
+        _zz_res_63 = _zz_when_FpUnit_l474_3[31:0];
       end
     end
   end
 
-  assign when_FpUnit_l473_1 = (when_FpUnit_l475 && (! when_FpUnit_l304));
-  assign _zz_when_FpUnit_l445_2 = ($signed(_zz__zz_when_FpUnit_l445_2) - $signed(12'h017));
-  assign when_FpUnit_l445_2 = ($signed(12'h042) <= $signed(_zz_when_FpUnit_l445_2));
+  assign when_FpUnit_l479_1 = (when_FpUnit_l481 && (! when_FpUnit_l304));
+  assign _zz_when_FpUnit_l447_2 = ($signed(_zz__zz_when_FpUnit_l447_2) - $signed(12'h017));
+  assign when_FpUnit_l447_2 = ($signed(12'h042) <= $signed(_zz_when_FpUnit_l447_2));
   always @(*) begin
-    if(when_FpUnit_l445_2) begin
-      _zz_when_FpUnit_l470_4 = 66'h1ffffffffffffffff;
+    if(when_FpUnit_l447_2) begin
+      _zz_when_FpUnit_l474_4 = 66'h1ffffffffffffffff;
     end else begin
-      if(when_FpUnit_l448_2) begin
-        _zz_when_FpUnit_l470_4 = 66'h0;
+      if(when_FpUnit_l450_2) begin
+        _zz_when_FpUnit_l474_4 = 66'h0;
       end else begin
-        if(when_FpUnit_l451_2) begin
-          _zz_when_FpUnit_l470_4 = {42'd0, _zz__zz_when_FpUnit_l470_4_1};
+        if(when_FpUnit_l453_2) begin
+          _zz_when_FpUnit_l474_4 = {42'd0, _zz__zz_when_FpUnit_l474_4_1};
         end else begin
-          _zz_when_FpUnit_l470_4 = _zz__zz_when_FpUnit_l470_4_2[65:0];
+          _zz_when_FpUnit_l474_4 = _zz__zz_when_FpUnit_l474_4_2[65:0];
         end
       end
     end
   end
 
   always @(*) begin
-    if(when_FpUnit_l445_2) begin
+    if(when_FpUnit_l447_2) begin
       _zz_flagNX_5 = 1'b1;
     end else begin
-      if(when_FpUnit_l448_2) begin
+      if(when_FpUnit_l450_2) begin
         _zz_flagNX_5 = (_zz_flagNX != 24'h0);
       end else begin
-        if(when_FpUnit_l451_2) begin
+        if(when_FpUnit_l453_2) begin
           _zz_flagNX_5 = ((_zz_flagNX & _zz__zz_flagNX_5) != 24'h0);
         end else begin
           _zz_flagNX_5 = 1'b0;
@@ -9441,52 +9495,52 @@ module FpUnit (
   end
 
   assign _zz_flagNX_6 = _zz__zz_flagNX_6;
-  assign when_FpUnit_l448_2 = ($signed(_zz_when_FpUnit_l445_2) <= $signed(12'hfe8));
-  assign when_FpUnit_l451_2 = ($signed(_zz_when_FpUnit_l445_2) < $signed(12'h0));
-  assign _zz_when_FpUnit_l470_5 = _zz__zz_when_FpUnit_l470_5[64:0];
-  assign when_FpUnit_l470_2 = ((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (65'h08000000000000000 < _zz_when_FpUnit_l470_5)));
+  assign when_FpUnit_l450_2 = ($signed(_zz_when_FpUnit_l447_2) <= $signed(12'hfe8));
+  assign when_FpUnit_l453_2 = ($signed(_zz_when_FpUnit_l447_2) < $signed(12'h0));
+  assign _zz_when_FpUnit_l474_5 = (_zz_when_FpUnit_l474_4 + _zz__zz_when_FpUnit_l474_5);
+  assign when_FpUnit_l474_2 = (((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (66'h08000000000000000 < _zz_when_FpUnit_l474_5))) || 1'b0);
   always @(*) begin
-    if(when_FpUnit_l470_2) begin
+    if(when_FpUnit_l474_2) begin
       _zz_res_64 = 64'h7fffffffffffffff;
-      if(when_FpUnit_l473_2) begin
+      if(when_FpUnit_l479_2) begin
         _zz_res_64 = 64'h8000000000000000;
       end
     end else begin
-      if(when_FpUnit_l475) begin
+      if(when_FpUnit_l481) begin
         _zz_res_64 = (64'h0 - _zz__zz_res_64);
       end else begin
-        _zz_res_64 = _zz_when_FpUnit_l470_5[63:0];
+        _zz_res_64 = _zz_when_FpUnit_l474_5[63:0];
       end
     end
   end
 
-  assign when_FpUnit_l473_2 = (when_FpUnit_l475 && (! when_FpUnit_l304));
-  assign _zz_when_FpUnit_l445_3 = ($signed(_zz__zz_when_FpUnit_l445_3) - $signed(12'h017));
-  assign when_FpUnit_l445_3 = ($signed(12'h042) <= $signed(_zz_when_FpUnit_l445_3));
+  assign when_FpUnit_l479_2 = (when_FpUnit_l481 && (! when_FpUnit_l304));
+  assign _zz_when_FpUnit_l447_3 = ($signed(_zz__zz_when_FpUnit_l447_3) - $signed(12'h017));
+  assign when_FpUnit_l447_3 = ($signed(12'h042) <= $signed(_zz_when_FpUnit_l447_3));
   always @(*) begin
-    if(when_FpUnit_l445_3) begin
-      _zz_when_FpUnit_l470_6 = 66'h1ffffffffffffffff;
+    if(when_FpUnit_l447_3) begin
+      _zz_when_FpUnit_l474_6 = 66'h1ffffffffffffffff;
     end else begin
-      if(when_FpUnit_l448_3) begin
-        _zz_when_FpUnit_l470_6 = 66'h0;
+      if(when_FpUnit_l450_3) begin
+        _zz_when_FpUnit_l474_6 = 66'h0;
       end else begin
-        if(when_FpUnit_l451_3) begin
-          _zz_when_FpUnit_l470_6 = {42'd0, _zz__zz_when_FpUnit_l470_6};
+        if(when_FpUnit_l453_3) begin
+          _zz_when_FpUnit_l474_6 = {42'd0, _zz__zz_when_FpUnit_l474_6};
         end else begin
-          _zz_when_FpUnit_l470_6 = _zz__zz_when_FpUnit_l470_6_1[65:0];
+          _zz_when_FpUnit_l474_6 = _zz__zz_when_FpUnit_l474_6_1[65:0];
         end
       end
     end
   end
 
   always @(*) begin
-    if(when_FpUnit_l445_3) begin
+    if(when_FpUnit_l447_3) begin
       _zz_flagNX_7 = 1'b1;
     end else begin
-      if(when_FpUnit_l448_3) begin
+      if(when_FpUnit_l450_3) begin
         _zz_flagNX_7 = (_zz_flagNX != 24'h0);
       end else begin
-        if(when_FpUnit_l451_3) begin
+        if(when_FpUnit_l453_3) begin
           _zz_flagNX_7 = ((_zz_flagNX & _zz__zz_flagNX_7) != 24'h0);
         end else begin
           _zz_flagNX_7 = 1'b0;
@@ -9496,26 +9550,26 @@ module FpUnit (
   end
 
   assign _zz_flagNX_8 = _zz__zz_flagNX_8;
-  assign when_FpUnit_l448_3 = ($signed(_zz_when_FpUnit_l445_3) <= $signed(12'hfe8));
-  assign when_FpUnit_l451_3 = ($signed(_zz_when_FpUnit_l445_3) < $signed(12'h0));
-  assign _zz_when_FpUnit_l470_7 = _zz__zz_when_FpUnit_l470_7[64:0];
-  assign when_FpUnit_l470_3 = ((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (65'h0ffffffffffffffff < _zz_when_FpUnit_l470_7)));
+  assign when_FpUnit_l450_3 = ($signed(_zz_when_FpUnit_l447_3) <= $signed(12'hfe8));
+  assign when_FpUnit_l453_3 = ($signed(_zz_when_FpUnit_l447_3) < $signed(12'h0));
+  assign _zz_when_FpUnit_l474_7 = (_zz_when_FpUnit_l474_6 + _zz__zz_when_FpUnit_l474_7);
+  assign when_FpUnit_l474_3 = (((when_FpUnit_l304 || when_FpUnit_l206) || (((! when_FpUnit_l304) && (! when_FpUnit_l206)) && (66'h0ffffffffffffffff < _zz_when_FpUnit_l474_7))) || ((when_FpUnit_l481 && (! when_FpUnit_l270)) && (! when_FpUnit_l304)));
   always @(*) begin
-    if(when_FpUnit_l470_3) begin
+    if(when_FpUnit_l474_3) begin
       _zz_res_65 = 64'hffffffffffffffff;
-      if(when_FpUnit_l473_3) begin
-        _zz_res_65 = 64'h8000000000000000;
+      if(when_FpUnit_l479_3) begin
+        _zz_res_65 = 64'h0;
       end
     end else begin
-      if(when_FpUnit_l475) begin
+      if(when_FpUnit_l481) begin
         _zz_res_65 = (64'h0 - _zz__zz_res_65);
       end else begin
-        _zz_res_65 = _zz_when_FpUnit_l470_7[63:0];
+        _zz_res_65 = _zz_when_FpUnit_l474_7[63:0];
       end
     end
   end
 
-  assign when_FpUnit_l473_3 = (when_FpUnit_l475 && (! when_FpUnit_l304));
+  assign when_FpUnit_l479_3 = (when_FpUnit_l481 && (! when_FpUnit_l304));
   assign _zz_res_66 = io_a[31];
   assign _zz_when_FpUnit_l84_167 = io_a[31 : 0];
   assign _zz_when_FpUnit_l84_168 = (_zz_res_66 ? _zz__zz_when_FpUnit_l84_168 : _zz__zz_when_FpUnit_l84_168_2);
@@ -9807,7 +9861,7 @@ module FpUnit (
   assign _zz_flagNX_15 = _zz_flagNX_12[1];
   assign _zz_flagNX_16 = (_zz_flagNX_12[0] || _zz_flagNX_13);
   assign _zz_when_FpUnit_l150_46 = _zz_flagNX_12[26 : 3];
-  assign _zz_when_FpUnit_l150_47 = {1'd0, _zz__zz_when_FpUnit_l150_47};
+  assign _zz_when_FpUnit_l150_47 = (_zz__zz_when_FpUnit_l150_47 + _zz__zz_when_FpUnit_l150_47_2);
   assign _zz_when_FpUnit_l150_48 = _zz_when_FpUnit_l150_47[24];
   assign _zz_res_67 = (_zz_when_FpUnit_l150_48 ? _zz__zz_res_67 : _zz__zz_res_67_1);
   assign _zz_when_FpUnit_l150_49 = ($signed(_zz__zz_when_FpUnit_l150_49) + $signed(12'h07f));
@@ -9830,12 +9884,12 @@ module FpUnit (
   assign when_FpUnit_l154_9 = ($signed(_zz_when_FpUnit_l150_49) < $signed(12'h001));
   always @(*) begin
     _zz_res_71 = _zz_res_70;
-    if(when_FpUnit_l492) begin
+    if(when_FpUnit_l498) begin
       _zz_res_71 = {_zz_res_66,{8'h0,23'h0}};
     end
   end
 
-  assign when_FpUnit_l492 = (_zz_when_FpUnit_l84_168 == 56'h0);
+  assign when_FpUnit_l498 = (_zz_when_FpUnit_l84_168 == 56'h0);
   assign _zz_res_72 = 1'b0;
   assign _zz_when_FpUnit_l84_169 = io_a[31 : 0];
   assign _zz_when_FpUnit_l84_170 = (_zz_res_72 ? _zz__zz_when_FpUnit_l84_170 : _zz__zz_when_FpUnit_l84_170_2);
@@ -10127,7 +10181,7 @@ module FpUnit (
   assign _zz_flagNX_23 = _zz_flagNX_20[1];
   assign _zz_flagNX_24 = (_zz_flagNX_20[0] || _zz_flagNX_21);
   assign _zz_when_FpUnit_l150_51 = _zz_flagNX_20[26 : 3];
-  assign _zz_when_FpUnit_l150_52 = {1'd0, _zz__zz_when_FpUnit_l150_52};
+  assign _zz_when_FpUnit_l150_52 = (_zz__zz_when_FpUnit_l150_52 + _zz__zz_when_FpUnit_l150_52_2);
   assign _zz_when_FpUnit_l150_53 = _zz_when_FpUnit_l150_52[24];
   assign _zz_res_73 = (_zz_when_FpUnit_l150_53 ? _zz__zz_res_73 : _zz__zz_res_73_1);
   assign _zz_when_FpUnit_l150_54 = ($signed(_zz__zz_when_FpUnit_l150_54) + $signed(12'h07f));
@@ -10150,12 +10204,12 @@ module FpUnit (
   assign when_FpUnit_l154_10 = ($signed(_zz_when_FpUnit_l150_54) < $signed(12'h001));
   always @(*) begin
     _zz_res_77 = _zz_res_76;
-    if(when_FpUnit_l492_1) begin
+    if(when_FpUnit_l498_1) begin
       _zz_res_77 = {_zz_res_72,{8'h0,23'h0}};
     end
   end
 
-  assign when_FpUnit_l492_1 = (_zz_when_FpUnit_l84_170 == 56'h0);
+  assign when_FpUnit_l498_1 = (_zz_when_FpUnit_l84_170 == 56'h0);
   assign _zz_res_78 = io_a[63];
   assign _zz_when_FpUnit_l84_171 = io_a[63 : 0];
   assign _zz_when_FpUnit_l84_172 = (_zz_res_78 ? _zz__zz_when_FpUnit_l84_172 : _zz__zz_when_FpUnit_l84_172_2);
@@ -10575,7 +10629,7 @@ module FpUnit (
   assign _zz_flagNX_31 = _zz_flagNX_28[1];
   assign _zz_flagNX_32 = (_zz_flagNX_28[0] || _zz_flagNX_29);
   assign _zz_when_FpUnit_l150_56 = _zz_flagNX_28[26 : 3];
-  assign _zz_when_FpUnit_l150_57 = {1'd0, _zz__zz_when_FpUnit_l150_57};
+  assign _zz_when_FpUnit_l150_57 = (_zz__zz_when_FpUnit_l150_57 + _zz__zz_when_FpUnit_l150_57_2);
   assign _zz_when_FpUnit_l150_58 = _zz_when_FpUnit_l150_57[24];
   assign _zz_res_79 = (_zz_when_FpUnit_l150_58 ? _zz__zz_res_79 : _zz__zz_res_79_1);
   assign _zz_when_FpUnit_l150_59 = ($signed(_zz__zz_when_FpUnit_l150_59) + $signed(12'h07f));
@@ -10598,12 +10652,12 @@ module FpUnit (
   assign when_FpUnit_l154_11 = ($signed(_zz_when_FpUnit_l150_59) < $signed(12'h001));
   always @(*) begin
     _zz_res_83 = _zz_res_82;
-    if(when_FpUnit_l492_2) begin
+    if(when_FpUnit_l498_2) begin
       _zz_res_83 = {_zz_res_78,{8'h0,23'h0}};
     end
   end
 
-  assign when_FpUnit_l492_2 = (_zz_when_FpUnit_l84_172 == 88'h0);
+  assign when_FpUnit_l498_2 = (_zz_when_FpUnit_l84_172 == 88'h0);
   assign _zz_res_84 = 1'b0;
   assign _zz_when_FpUnit_l84_173 = io_a[63 : 0];
   assign _zz_when_FpUnit_l84_174 = (_zz_res_84 ? _zz__zz_when_FpUnit_l84_174 : _zz__zz_when_FpUnit_l84_174_2);
@@ -11023,7 +11077,7 @@ module FpUnit (
   assign _zz_flagNX_39 = _zz_flagNX_36[1];
   assign _zz_flagNX_40 = (_zz_flagNX_36[0] || _zz_flagNX_37);
   assign _zz_when_FpUnit_l150_61 = _zz_flagNX_36[26 : 3];
-  assign _zz_when_FpUnit_l150_62 = {1'd0, _zz__zz_when_FpUnit_l150_62};
+  assign _zz_when_FpUnit_l150_62 = (_zz__zz_when_FpUnit_l150_62 + _zz__zz_when_FpUnit_l150_62_2);
   assign _zz_when_FpUnit_l150_63 = _zz_when_FpUnit_l150_62[24];
   assign _zz_res_85 = (_zz_when_FpUnit_l150_63 ? _zz__zz_res_85 : _zz__zz_res_85_1);
   assign _zz_when_FpUnit_l150_64 = ($signed(_zz__zz_when_FpUnit_l150_64) + $signed(12'h07f));
@@ -11046,12 +11100,12 @@ module FpUnit (
   assign when_FpUnit_l154_12 = ($signed(_zz_when_FpUnit_l150_64) < $signed(12'h001));
   always @(*) begin
     _zz_res_89 = _zz_res_88;
-    if(when_FpUnit_l492_3) begin
+    if(when_FpUnit_l498_3) begin
       _zz_res_89 = {_zz_res_84,{8'h0,23'h0}};
     end
   end
 
-  assign when_FpUnit_l492_3 = (_zz_when_FpUnit_l84_174 == 88'h0);
+  assign when_FpUnit_l498_3 = (_zz_when_FpUnit_l84_174 == 88'h0);
   assign io_result = res;
   assign io_flags = {flagNV,{flagDZ,{flagOF,{flagUF,flagNX}}}};
 

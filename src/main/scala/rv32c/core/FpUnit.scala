@@ -23,7 +23,7 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
   val emin = 1 - bias
   val emax = bias
   val expMax = (1 << expw) - 1
-  val canonNaN = ((BigInt(1) << (flen - 1)) >> 1) | (BigInt(1) << (sigw - 1)) // +qNaN
+  val canonNaN = (((BigInt(1) << expw) - 1) << sigw) | (BigInt(1) << (sigw - 1)) // +qNaN
 
   val io = new Bundle {
     val op = in UInt (6 bits)
@@ -132,10 +132,10 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     val lsb = trunc(0)
     val inc = Mux(rm === U(0, 3 bits), g && (r || s || lsb),
               Mux(rm === U(1, 3 bits), False,
-              Mux(rm === U(2, 3 bits), !sign && (g || r || s),
-              Mux(rm === U(3, 3 bits), sign && (g || r || s),
+              Mux(rm === U(2, 3 bits), sign && (g || r || s),
+              Mux(rm === U(3, 3 bits), !sign && (g || r || s),
                   g))))
-    val sum = (trunc.asUInt + inc.asUInt).resize(P + 1)
+    val sum = trunc.asUInt.resize(P + 1) + inc.asUInt.resize(P + 1)
     val carry = sum(P)
     val sig = Mux(carry, (sum >> 1).resize(P), sum.resize(P))
     val eFinal = Mux(carry, eLead + 1, eLead)
@@ -339,8 +339,8 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     // Signed combination at width FW+1.
     val pMagS = pMag.resize(FW + 1).asSInt
     val cMagS = cMag.resize(FW + 1).asSInt
-    val pSigned = Mux(pSign, -pMagS, pMagS)
-    val cSigned = Mux(cSign, -cMagS, cMagS)
+    val pSigned = Mux(pSign, -pMagS, pMagS).resize(FW + 2)
+    val cSigned = Mux(cSign, -cMagS, cMagS).resize(FW + 2)
     val total = (pSigned + cSigned).resize(FW + 2)
     val totalSign = total(total.getWidth - 1)
     val totalMag = Mux(totalSign, (-total).asUInt, total.asUInt)
@@ -376,6 +376,8 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
   }
 
   def doMinMax(isMax: Bool): Bits = {
+    // Signaling NaNs raise NV even though the result is the other operand.
+    flagNV := ua.isSNaN || ub.isSNaN
     // Ordering used for min/max: -Inf < ... < -0 < +0 < ... < +Inf.
     val aNaN = ua.isNaN
     val bNaN = ub.isNaN
@@ -421,12 +423,12 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     val r = Bits(10 bits)
     r := 0
     r(0) := ua.sign && ua.isInf
-    r(1) := ua.sign && !ua.isInf && !ua.isNaN && !ua.isZero // negative normal
+    r(1) := ua.sign && !ua.isInf && !ua.isNaN && !ua.isZero && !ua.isSubnormal // negative normal
     r(2) := ua.sign && ua.isSubnormal
     r(3) := ua.sign && ua.isZero
     r(4) := !ua.sign && ua.isZero
     r(5) := !ua.sign && ua.isSubnormal
-    r(6) := !ua.sign && !ua.isInf && !ua.isNaN && !ua.isZero // positive normal
+    r(6) := !ua.sign && !ua.isInf && !ua.isNaN && !ua.isZero && !ua.isSubnormal // positive normal
     r(7) := !ua.sign && ua.isInf
     r(8) := ua.isSNaN
     r(9) := ua.isNaN && !ua.isSNaN
@@ -458,19 +460,23 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     }
     val inc = Mux(rm === U(0, 3 bits), (fracNonzero && intMag(0)),
               Mux(rm === U(1, 3 bits), False,
-              Mux(rm === U(2, 3 bits), (!src.sign && fracNonzero),
-              Mux(rm === U(3, 3 bits), (src.sign && fracNonzero),
+              Mux(rm === U(2, 3 bits), (src.sign && fracNonzero),
+              Mux(rm === U(3, 3 bits), (!src.sign && fracNonzero),
                   fracNonzero))))
-    val magR = (intMag + inc.asUInt).resize(w + 1)
+    val magR = intMag.resize(w + 2) + inc.asUInt.resize(w + 2)
     val maxMag = if (signed) (BigInt(1) << (w - 1)) else (BigInt(1) << w) - 1
-    val overflow = !src.isNaN && !src.isInf && (magR > U(maxMag, w + 1 bits))
+    val overflow = !src.isNaN && !src.isInf && (magR > U(maxMag, w + 2 bits))
+    // A negative input to an unsigned conversion is invalid (result 0, NV).
+    val negToUnsigned: Bool = if (!signed) (src.sign && !src.isZero && !src.isNaN) else False
     val bits = Bits(64 bits)
-    val invalid = src.isNaN || src.isInf || overflow
+    val invalid = src.isNaN || src.isInf || overflow || negToUnsigned
     val out = UInt(w bits)
     when(invalid) {
       flagNV := True
       out := (if (signed) U((BigInt(1) << (w - 1)) - 1, w bits) else U((BigInt(1) << w) - 1, w bits))
-      when(src.sign && !src.isNaN) { out := U(BigInt(1) << (w - 1), w bits) } // -Inf/-overflow -> INT_MIN
+      // -Inf / negative overflow saturates to the most-negative value; an
+      // unsigned negative input saturates to zero.
+      when(src.sign && !src.isNaN) { out := (if (signed) U(BigInt(1) << (w - 1), w bits) else U(0, w bits)) }
     } .otherwise {
       when(src.sign) { out := (U(0, w bits) - magR.resize(w)) } otherwise { out := magR.resize(w) }
       flagNX := fracNonzero
