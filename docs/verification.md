@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 53 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 55 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -39,7 +39,9 @@ graph LR
 | RV32F misaligned FLW traps | `FLW` 地址未按宽度对齐 | `mcause==4`、`mepc` 指向故障指令 |
 | RV32F misaligned FSW traps | `FSW` 地址未按宽度对齐 | `mcause==6`、`mepc` 指向故障指令 |
 | FpUnit standalone sanity (F) | 直接驱动参数化 `FpUnit(8,23)` 的 ADD/SUB/MUL/DIV/SQRT | 3+4=0x40E00000、4-3=1.0、3*4=0x41400000、4/3=0x3FAAAAAB、sqrt(4)=0x40000000、1+1=2.0、1+2=3.0、1*1=1.0 |
-| FpUnit spec battery (F) | 5 种舍入模式（含 ties-to-even/away 与 RDN/RUP）、DIV/SQRT 边界、min/max（NaN/±0/sNaN NV）、FSGNJ 系列、FCMP、FCLASS 全 10 类、FMA 四变体、整数↔浮点转换（含负值→无符号 NV、饱和、NX/carry） | 逐项结果与 NV/DZ/OF/UF/NX 标志位 |
+| FpUnit spec battery (F) | 5 种舍入模式（含 ties-to-even/away 与 RDN/RUP）、DIV/SQRT 边界、min/max（NaN/±0/sNaN NV）、FSGNJ 系列、FCMP、FCLASS 全 10 类、FMA 四变体、整数↔浮点转换（含负值→无符号 NV、饱和、NX/carry）、次正规结果（min normal×0.5、min normal×min subnormal） | 逐项结果与 NV/DZ/OF/UF/NX 标志位 |
+| FpUnit spec battery (D) | 直接驱动 `FpUnit(11,52)`：FADD/FSUB/FMUL/FDIV/FSQRT、`FCVT.S.D`/`FCVT.D.S` 格式桥、OF/UF/NX 边界 | 3.0=`0x4008000000000000`、4/3=`0x3FF5555555555555`(NX)、sqrt(2)=`0x3FF6A09E667F3BCD`(NX)、`fcvt.d.s(3.0)=0x4008000000000000`、`fcvt.s.d(sNaN)=0x7FF8000000000000`(NV)、`1e300→0x7F800000`(OF+NX)、`2^-150→0`(UF+NX) |
+| RV64D arithmetic, conversions, NaN-boxing | `FLD/FSD`、`fadd.d/fmul.d/fdiv.d`、`fcvt.s.d`/`fcvt.d.s`、`flt.d`、`fmadd.d`、`fclass.d` 全链路与单精度结果 NaN-boxing | x4=`0x401C000000000000`(7.0)、x5=1.0、x6=12.0、x7=`0x3FF5555555555555`(4/3)、x8=`0x40400000`(fcvt.s.d)、x9=3.0(fcvt.d.s)、x10==1、x11=15.0(fmadd.d)、x12==0x40(fclass.d)、x14=`0xFFFFFFFF40400000`(NaN-boxed) |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 

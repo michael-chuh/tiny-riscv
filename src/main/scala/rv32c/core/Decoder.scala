@@ -616,7 +616,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
               }
             }
           }
-          default { d.illegal := True; d.valid := False } // incl. FCVT.S.D / FCVT.D.S
+          is(B"010000") { // FCVT.S.D / FCVT.D.S (format conversion, D only)
+            // fmt (instr[25]) is the source format: 0 = D source (FCVT.S.D,
+            // result single), 1 = S source (FCVT.D.S, result double).
+            if (withDouble) {
+              d.fpWrite := True
+              when(instr(25)) { d.fpOp := FpOp.CVT_D_S } otherwise { d.fpOp := FpOp.CVT_S_D }
+            } else { d.illegal := True; d.valid := False }
+          }
+          default { d.illegal := True; d.valid := False }
         }
       } else {
         d.illegal := True

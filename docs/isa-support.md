@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO）、**RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码），以及 **RV32F / RV64F** 单精度浮点扩展（FLW/FSW、算术/比较/分类/转换/FMA，5 种舍入与 fflags）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持），F 扩展由 `RvExtension.SingleFloat` 使能（D 由 `DoubleFloat` 使能，仅 RV64）；默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`，浮点核配置为 `rv32f` / `rv64f` / `rv64d`。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO）、**RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码），以及 **RV32F / RV64F** 单精度与 **RV64D** 双精度浮点扩展（FLW/FSW/FLD/FSD、算术/比较/分类/转换/FMA/格式转换，5 种舍入与 fflags）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持），F 扩展由 `RvExtension.SingleFloat` 使能，D 扩展由 `RvExtension.DoubleFloat` 使能（蕴含 F，仅 RV64）；默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`，浮点核配置为 `rv32f` / `rv64f` / `rv64d`。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -144,9 +144,9 @@ A 扩展的 `funct5` 位于 `instr[31:27]`；`funct3=010` 为 `.W`（32 位）�
 >
 > 对齐：A 访问地址未按访问宽度自然对齐时触发地址非对齐异常——LR 为 cause 4（load address misaligned），SC/AMO 为 cause 6（store/AMO address misaligned），`mtval` 记录故障地址，且在产生任何内存副作用之前陷阱。非本宽度的 `funct3`、未知 `funct5`、以及 A 关闭时出现 opcode `0101111` 均触发 cause 2。
 
-### 浮点指令（RV32F / RV64F，仅当 `RvExtension.SingleFloat` 使能）
+### 浮点指令（RV32F / RV64F / RV64D，单精度由 `RvExtension.SingleFloat` 使能，双精度由 `RvExtension.DoubleFloat` 使能）
 
-F 扩展使用独立的 32 位浮点寄存器堆（`f0`–`f31`，无硬连线零寄存器）。指令按 `.S`（单精度，fmt=00）编码；D 扩展（fmt=01，仅 RV64）复用同一参数化 FPU（FLEN=64）。FP 指令通路仅在 `isa.hasFpu` 时生成，且要求 `mstatus.FS != Off`，否则触发 illegal（cause 2）。
+FP 扩展使用独立的浮点寄存器堆（`f0`–`f31`，无硬连线零寄存器），FLEN 由配置推导：仅 F 时为 32，含 D 时为 64。指令按 fmt 域区分单精度（fmt=00，`.S`）与双精度（fmt=01，`.D`，仅 RV64）。D 核同时实例化 `FpUnit(8,23)`（binary32）与 `FpUnit(11,52)`（binary64）两个运算单元，按指令 fmt 路由，避免在宽格式中二次舍入；`FCVT.S.D` / `FCVT.D.S` 由 binary64 单元执行。FP 指令通路仅在 `isa.hasFpu` 时生成，且要求 `mstatus.FS != Off`，否则触发 illegal（cause 2）。
 
 **访存（opcode 0000111 / 0100111）**
 
@@ -175,8 +175,10 @@ F 扩展使用独立的 32 位浮点寄存器堆（`f0`–`f31`，无硬连线�
 | FMV.W.X | 111100 (funct3=000) | 整数→FP 搬运 |
 | FCVT.W.* / WU / L / LU | 110000 | FP→整数转换（源格式由 fmt 域选择；`WU` 与 RV64 专属 `L/LU` 由 rs2 域选择） |
 | FCVT.S.W / WU / L / LU | 110100 | 整数→FP 转换（目标格式由 fmt 域选择；RV64 专属 `L/LU` 由 rs2 域选择） |
+| FCVT.S.D | 010000 (fmt=00) | 双精度→单精度（精确舍入到单精度） |
+| FCVT.D.S | 010000 (fmt=01) | 单精度→双精度（精确宽化；sNaN 置 NV，结果取规范 NaN） |
 
-> 双精度与单精度之间的转换（`FCVT.S.D` / `FCVT.D.S`）尚未实现，当前置 illegal（cause 2）。
+> `FCVT.S.D` / `FCVT.D.S`（funct6 `010000`）仅在 `RvExtension.DoubleFloat` 使能时合法，否则触发 cause 2。`FCVT.D.S` 的输入按 NaN-boxing 规则解码：FLEN=64 时高 32 位非全 1 的单精度源视为非 boxed 并取规范 NaN。
 
 **融合乘加（opcode 1000011/1000111/1001011/1001111）**
 
@@ -187,7 +189,7 @@ F 扩展使用独立的 32 位浮点寄存器堆（`f0`–`f31`，无硬连线�
 | FNMSUB.S / .D | 1001011 | `-(a*b) + c` |
 | FNMADD.S / .D | 1001111 | `-(a*b) - c` |
 
-> **运算单元**：`FpUnit(expw, sigw)` 参数化——单精度为 `(8, 23)`，双精度为 `(11, 52)`；工作精度 `P = sigw + 1`，内部保留 `P+3` 位（含保护/舍入/粘滞位）统一 `roundPack`。支持 5 种舍入模式（RNE/RTZ/RDN/RUP/RMM）：动态模式取自 `frm`，静态模式来自指令 `rm`（`rm=111` 时使用 `frm`）。运算在 EX 段组合完成，置 `fpStall` 冻结 1 拍（复用统一 `freezeAll`），结果仅经 WB 旁路。
+> **运算单元**：`FpUnit(expw, sigw)` 参数化——单精度为 `(8, 23)`，双精度为 `(11, 52)`；工作精度 `P = sigw + 1`，内部保留 `P+3` 位（含保护/舍入/粘滞位），统一经 `roundPack` / `roundPackTo(target)` 完成任意目标格式的单次舍入（收窄时低位折入 sticky）。支持 5 种舍入模式（RNE/RTZ/RDN/RUP/RMM）：动态模式取自 `frm`，静态模式来自指令 `rm`（`rm=111` 时使用 `frm`）。运算在 EX 段组合完成，置 `fpStall` 冻结 1 拍（复用统一 `freezeAll`），结果仅经 WB 旁路。D 核的格式转换（`FCVT.S.D` / `FCVT.D.S`）在 binary64 单元上执行。
 >
 > **CSR 与状态**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 仅在 FPU 使能时实现；提交任意 FP 算术指令会累积 NV/DZ/OF/UF/NX 异常标志到 `fflags`，并将 `mstatus.FS` 置 Dirty(11)。`frm` 为 WARL，仅接受 0–4。`mstatus.FS` 为 WARL（`FS=Off` 时 FP 指令与 FP CSR 访问均非法）。
 
@@ -269,5 +271,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 ## 后续扩展计划
 
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
-- **F/D**：RV32F / RV64F 已实现；D 双精度（RV64，FLEN=64，含 FCVT.S.D/FCVT.D.S）在 FPU 参数化通路上实现，测试与 RTL 生成待补
+- **F/D**：RV32F / RV64F 单精度（FLEN=32）与 RV64D 双精度（FLEN=64，含 `FCVT.S.D`/`FCVT.D.S` 与 NaN-boxing）均已实现并有定向测试与 RTL 生成
 - **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）

@@ -88,7 +88,7 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 生成七个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）与 `rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+`RiscvCoreGen` 生成八个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）与 `rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
 
 ### 启用 RV32C 压缩扩展（RV32IMC）
 
@@ -122,7 +122,15 @@ val config = CoreConfig.rv32f        // isa = IsaConfig.rv32f, FLEN=32
 val config64 = CoreConfig.rv64f      // isa = IsaConfig.rv64f, FLEN=32
 ```
 
-浮点通路仅在 `isa.hasFpu` 时生成：独立的浮点寄存器堆、FLW/FSW 访存、EX 段参数化 IEEE-754 运算单元（`FpUnit(expw, sigw)`，F 为 `(8, 23)`）。FPU 为组合逻辑 + 单冻结周期，复用与乘除器相同的统一 `freezeAll` 机制，FP 结果只有 WB 级转发。启用 F 后 `fcsr`/`fflags`/`frm` CSR 生效，`mstatus.FS` 按指令提交置 Dirty；FS=Off 时 FP 指令与 fcsr 访问触发 illegal（cause 2）。D（`CoreConfig.rv64d`，FLEN=64）在 RV64 下复用同一参数化 FPU，RV32 配置 D 会在 `IsaConfig` 构造时被 require 拒绝。
+浮点通路仅在 `isa.hasFpu` 时生成：独立的浮点寄存器堆、FLW/FSW 访存、EX 段参数化 IEEE-754 运算单元（`FpUnit(expw, sigw)`，F 为 `(8, 23)`）。FPU 为组合逻辑 + 单冻结周期，复用与乘除器相同的统一 `freezeAll` 机制，FP 结果只有 WB 级转发。启用 F 后 `fcsr`/`fflags`/`frm` CSR 生效，`mstatus.FS` 按指令提交置 Dirty；FS=Off 时 FP 指令与 fcsr 访问触发 illegal（cause 2）。
+
+### 启用 RV64D 双精度浮点扩展
+
+```scala
+val config = CoreConfig.rv64d        // isa = IsaConfig.rv64d, FLEN=64，蕴含 F
+```
+
+D 核同时实例化 `FpUnit(8, 23)`（binary32）与 `FpUnit(11, 52)`（binary64）两个运算单元，按指令 fmt 路由：`.S` 指令走 32 位单元、`.D` 指令走 64 位单元，避免把单精度操作数宽化后再舍入造成的双重舍入。`FCVT.S.D` / `FCVT.D.S` 在 64 位单元上执行（`roundPackTo` 支持任意目标格式）。FLEN=64 下启用 NaN-boxing：单精度写回结果高 32 位置 1，非 boxed 的单精度输入按规范 NaN（`0x7FC00000`）处理。D 蕴含 F，且仅在 `xlen = 64` 时合法，RV32 配置 D 会在 `IsaConfig` 构造时被 require 拒绝。
 
 ### 切换到 RV64IM（M/U 栈）
 

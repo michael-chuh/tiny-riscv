@@ -333,13 +333,14 @@ class RiscvCore(config: CoreConfig) extends Component {
   val flen = config.flen
   val fpRegFile = if (withFloat) Some(new FpRegisterFile(flen)) else None
 
-  // ===== Floating-point unit (F/D) =====
-  // Parameterized by the configured FP format: binary32 for F, binary64 for D.
-  // The unit is combinational; the pipeline freezes for one cycle while an FP
-  // instruction sits in EX so its result can be latched like an ALU result.
-  val fpUnit = if (withFloat)
-    Some(new FpUnit(if (withDouble) 11 else 8, if (withDouble) 52 else 23))
-  else None
+  // ===== Floating-point units (F/D) =====
+  // A D-capable core instantiates both a binary32 and a binary64 unit and routes
+  // each instruction by its format. Widening single-precision work into the
+  // binary64 datapath would introduce double-rounding, so the two formats keep
+  // independent, bit-exact units; only the FCVT.S.D/FCVT.D.S bridge runs on the
+  // binary64 unit. Both units are combinational and share the one-cycle freeze.
+  val fpUnit32 = if (withFloat) Some(new FpUnit(8, 23)) else None
+  val fpUnit64 = if (withDouble) Some(new FpUnit(11, 52)) else None
 
   // ===== CSR file =====
   val csrFile = new CsrFile(xlen, config.hartId, config.isa)
@@ -708,16 +709,53 @@ class RiscvCore(config: CoreConfig) extends Component {
   val fpuResult = Bits(64 bits)
   val fpuFlags = Bits(5 bits)
   if (withFloat) {
-    val fpu = fpUnit.get
-    fpu.io.op := idEx.fpOp
-    fpu.io.rm := fpRmEx
-    // The integer operand is passed in its low bits; doIntToFp reads the sign
-    // from bit (w-1) of the value, which matches the extended register value.
-    fpu.io.a := Mux(isFpFromInt, forwardRs1.resize(64), fpFwdRs1.resize(64))
-    fpu.io.b := fpFwdRs2.resize(64)
-    fpu.io.c := fpFwdRs3.resize(64)
-    fpuResult := fpu.io.result
-    fpuFlags := fpu.io.flags
+    val sUnit = fpUnit32.get
+    // FCVT.S.D/FCVT.D.S cross formats: the source of FCVT.S.D is double, the
+    // source of FCVT.D.S is single, so their source format is fixed rather than
+    // taken from fpFmt. Both run on the binary64 unit, which owns the bridge.
+    val isCvtDSrc = idEx.fpOp === FpOp.CVT_D_S
+    val isCvtSDst = idEx.fpOp === FpOp.CVT_S_D
+    val isFmtCvt = isCvtDSrc || isCvtSDst
+    val srcAIsDouble = Mux(isCvtDSrc, False, Mux(isCvtSDst, True, idEx.fpFmt))
+    // On a D core a single-precision operand whose upper half is not all ones is
+    // a non-NaN-boxed value and is read as the canonical NaN (RISC-V 11.2). The
+    // box decision is taken from the raw sources, never from the driven nets, to
+    // avoid a combinational loop.
+    val aSrc = Mux(isFpFromInt, forwardRs1.resize(64), fpFwdRs1.resize(64))
+    val bSrc = fpFwdRs2.resize(64)
+    val cSrc = fpFwdRs3.resize(64)
+    val aBoxed = Bits(64 bits)
+    aBoxed := aSrc
+    val bBoxed = Bits(64 bits)
+    bBoxed := bSrc
+    val cBoxed = Bits(64 bits)
+    cBoxed := cSrc
+    if (flen == 64) {
+      when(!isFpFromInt && !srcAIsDouble && !aSrc(63 downto 32).andR) {
+        aBoxed(31 downto 0) := B(0x7FC00000L, 32 bits)
+      }
+      when(!idEx.fpFmt && !bSrc(63 downto 32).andR) { bBoxed(31 downto 0) := B(0x7FC00000L, 32 bits) }
+      when(!idEx.fpFmt && !cSrc(63 downto 32).andR) { cBoxed(31 downto 0) := B(0x7FC00000L, 32 bits) }
+    }
+    sUnit.io.op := idEx.fpOp
+    sUnit.io.rm := fpRmEx
+    sUnit.io.a := aBoxed
+    sUnit.io.b := bBoxed
+    sUnit.io.c := cBoxed
+    if (withDouble) {
+      val dUnit = fpUnit64.get
+      dUnit.io.op := idEx.fpOp
+      dUnit.io.rm := fpRmEx
+      dUnit.io.a := aBoxed
+      dUnit.io.b := bBoxed
+      dUnit.io.c := cBoxed
+      val useD = idEx.fpFmt || isFmtCvt
+      fpuResult := Mux(useD, dUnit.io.result, sUnit.io.result)
+      fpuFlags := Mux(useD, dUnit.io.flags, sUnit.io.flags)
+    } else {
+      fpuResult := sUnit.io.result
+      fpuFlags := sUnit.io.flags
+    }
   } else {
     fpuResult := B(0, 64 bits)
     fpuFlags := B(0, 5 bits)
@@ -733,8 +771,18 @@ class RiscvCore(config: CoreConfig) extends Component {
     fpToIntResult := Mux(isFpMvX,
       fpuResult(31 downto 0).asSInt.resize(xlen).asBits, fpuResult.resize(xlen))
   }
-  // FP -> FP result lands in the low FLEN bits (NaN-boxed later when FLEN=64).
-  val fpToFpResult = fpuResult.resize(xlen)
+  // FP -> FP result. On a D core any single-precision result is NaN-boxed: the
+  // upper 32 bits are forced to all ones (RISC-V 11.2). A double result already
+  // occupies all FLEN bits.
+  val fpToFpResult = Bits(xlen bits)
+  val fpResultIsSingle = isFpCompute && !idEx.fpIntRd && !idEx.fpFmt
+  if (flen == 64) {
+    fpToFpResult := Mux(fpResultIsSingle,
+      Cat(B((BigInt(1) << 32) - 1, 32 bits), fpuResult(31 downto 0)).resize(xlen),
+      fpuResult.resize(xlen))
+  } else {
+    fpToFpResult := fpuResult.resize(xlen)
+  }
   val exAluResultFp = Bits(xlen bits)
   exAluResultFp := Mux(isFpCompute, Mux(idEx.fpIntRd, fpToIntResult, fpToFpResult), exAluResult)
 

@@ -1133,6 +1133,10 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(ev(3, 0x3F800000L, 0x00000000L) == (0x7F800000L, 0x08), "1/0 = +inf, DZ")
         assert(ev(3, 0x00000000L, 0x00000000L) == (0x7FC00000L, 0x10), "0/0 = qNaN, NV")
 
+        // subnormal result / underflow to zero (exercises the tiny-result packing)
+        assert(ev(2, 0x00800000L, 0x3F000000L) == (0x00400000L, 0), "min normal * 0.5 = subnormal")
+        assert(ev(2, 0x00800000L, 0x00000001L) == (0x00000000L, 0x03), "min normal * min subnormal = 0, UF+NX")
+
         // sqrt
         assert(ev(4, 0x40800000L) == (0x40000000L, 0), "sqrt(4) = 2")
         assert(ev(4, 0x40000000L) == (0x3FB504F3L, 0x01), "sqrt(2) = RNE, NX")
@@ -1196,6 +1200,108 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(ev(18, 0x40400000L) == (3L, 0), "cvt.l.s 3.0 = 3")
 
         println("PASS: FpUnit spec battery")
+      }
+  }
+
+  // ---- FpUnit spec battery (D): double arithmetic + F<->D format bridge ----
+  test("FpUnit spec battery (D)") {
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new rv32c.core.FpUnit(11, 52))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        def ev(op: Int, a: BigInt, b: BigInt = 0, c: BigInt = 0, rm: Int = 0): (BigInt, Int) = {
+          def u64(v: BigInt): BigInt = v & ((BigInt(1) << 64) - 1)
+          dut.io.op #= op
+          dut.io.a #= u64(a)
+          dut.io.b #= u64(b)
+          dut.io.c #= u64(c)
+          dut.io.rm #= rm
+          dut.clockDomain.waitSampling(2)
+          (dut.io.result.toBigInt & ((BigInt(1) << 64) - 1), dut.io.flags.toBigInt.toInt)
+        }
+        def d(hex: String): BigInt = BigInt(hex, 16)
+
+        assert(ev(0, d("4008000000000000"), d("4010000000000000")) == (d("401C000000000000"), 0), "3+4=7 (D)")
+        assert(ev(1, d("4010000000000000"), d("4008000000000000")) == (d("3FF0000000000000"), 0), "4-3=1 (D)")
+        assert(ev(2, d("4008000000000000"), d("4010000000000000")) == (d("4028000000000000"), 0), "3*4=12 (D)")
+        assert(ev(3, d("3FF0000000000000"), d("4008000000000000")) == (d("3FD5555555555555"), 0x01), "1/3 (D) NX")
+        assert(ev(4, d("4000000000000000")) == (d("3FF6A09E667F3BCD"), 0x01), "sqrt(2) (D) NX")
+        assert(ev(24, d("4000000000000000"), d("4008000000000000"), d("4010000000000000")) ==
+          (d("4024000000000000"), 0), "2*3+4=10 (D FMA)")
+
+        // integer <-> double conversions reuse the same op codes with fmt=1
+        assert(ev(16, d("4004000000000000")) == (BigInt(2), 0x01), "cvt.w.d 2.5 = 2, NX")
+        assert(ev(20, 3L) == (d("4008000000000000"), 0), "cvt.d.w 3 = 3.0")
+
+        // format bridge: CVT_D_S = 29 (S->D), CVT_S_D = 28 (D->S)
+        assert(ev(29, 0x40400000L) == (d("4008000000000000"), 0), "fcvt.d.s 3.0f = 3.0")
+        assert(ev(28, d("4008000000000000")) == (BigInt(0x40400000L), 0), "fcvt.s.d 3.0 = 3.0f")
+        assert(ev(28, d("3FD5555555555555")) == (BigInt(0x3EAAAAABL), 0x01), "fcvt.s.d 1/3 RNE NX")
+        assert(ev(29, 0x00000001L) == (d("36A0000000000000"), 0), "fcvt.d.s min subnormal")
+        assert(ev(29, 0x7F800001L) == (d("7FF8000000000000"), 0x10), "fcvt.d.s sNaN -> qNaN, NV")
+        assert(ev(29, 0x7F800000L) == (d("7FF0000000000000"), 0), "fcvt.d.s +inf")
+        assert(ev(28, d("7FF0000000000000")) == (BigInt(0x7F800000L), 0), "fcvt.s.d +inf")
+        assert(ev(28, d("7E37E43C8800759C")) == (BigInt(0x7F800000L), 0x05), "fcvt.s.d 1e300 -> inf, OF+NX")
+        assert(ev(28, d("3690000000000000")) == (BigInt(0), 0x03), "fcvt.s.d 2^-150 -> 0, UF+NX")
+        assert(ev(28, d("8000000000000000")) == (BigInt(0x80000000L), 0), "fcvt.s.d -0 = -0")
+
+        println("PASS: FpUnit spec battery (D)")
+      }
+  }
+
+  // ---- RV64D integration: double arithmetic, conversions, NaN-boxing ----
+  val rv64dProgram: Seq[Long] = fsEnable ++ Seq[Long](
+    encI(3, 0, 0, 1, 0x13),                    // addi x1, x0, 3
+    encI(4, 0, 0, 2, 0x13),                    // addi x2, x0, 4
+    encOpFp(0x34, 1, 0, 1, 0, 1),              // fcvt.d.w f1, x1 -> 3.0
+    encOpFp(0x34, 1, 0, 2, 0, 2),              // fcvt.d.w f2, x2 -> 4.0
+    encOpFp(0x00, 1, 2, 1, 0, 3),              // fadd.d f3, f1, f2 -> 7.0
+    encOpFp(0x38, 1, 0, 3, 0, 4),              // fmv.x.d x4, f3
+    encOpFp(0x02, 1, 1, 2, 0, 4),              // fsub.d f4, f2, f1 -> 1.0
+    encOpFp(0x38, 1, 0, 4, 0, 5),              // fmv.x.d x5, f4
+    encOpFp(0x04, 1, 2, 1, 0, 5),              // fmul.d f5, f1, f2 -> 12.0
+    encOpFp(0x38, 1, 0, 5, 0, 6),              // fmv.x.d x6, f5
+    encOpFp(0x06, 1, 1, 2, 0, 6),              // fdiv.d f6, f2, f1 -> 4/3
+    encOpFp(0x38, 1, 0, 6, 0, 7),              // fmv.x.d x7, f6
+    encOpFp(0x10, 0, 1, 1, 0, 8),              // fcvt.s.d f8, f1 -> 3.0f
+    encOpFp(0x38, 0, 0, 8, 0, 8),              // fmv.x.w x8, f8 -> 0x40400000
+    encOpFp(0x10, 1, 0, 8, 0, 9),              // fcvt.d.s f9, f8 -> 3.0
+    encOpFp(0x38, 1, 0, 9, 0, 9),              // fmv.x.d x9, f9
+    encOpFp(0x28, 1, 2, 1, 1, 10),             // flt.d x10, f1, f2 -> 1
+    encFma(0x43, 1, 2, 1, 0, 10, 1),           // fmadd.d f10, f1, f2, f1 -> 15.0
+    encOpFp(0x38, 1, 0, 10, 0, 11),            // fmv.x.d x11, f10
+    encOpFp(0x38, 1, 0, 1, 1, 12),             // fclass.d x12, f1 -> 0x40
+    encOpFp(0x34, 0, 0, 1, 0, 13),             // fcvt.s.w f13, x1 -> 3.0f (boxed on D)
+    encOpFp(0x38, 1, 0, 13, 0, 14)             // fmv.x.d x14, f13 -> 0xFFFFFFFF40400000
+  )
+
+  test("RV64D arithmetic, conversions, NaN-boxing") {
+    val cfg = CoreConfig.rv64d
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64dProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64dProgram.length - 1)
+        val cycles = runUntil(dut, 900, lastPc, 14, BigInt("FFFFFFFF40400000", 16))
+        assert(cycles < 900, "RV64D program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def d(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(d(4) == BigInt("401C000000000000", 16), "fadd.d 3+4 = 7.0")
+        assert(d(5) == BigInt("3FF0000000000000", 16), "fsub.d 4-3 = 1.0")
+        assert(d(6) == BigInt("4028000000000000", 16), "fmul.d 3*4 = 12.0")
+        assert(d(7) == BigInt("3FF5555555555555", 16), "fdiv.d 4/3")
+        assert(d(8) == BigInt("40400000", 16), "fcvt.s.d 3.0 -> 3.0f")
+        assert(d(9) == BigInt("4008000000000000", 16), "fcvt.d.s 3.0f -> 3.0")
+        assert(d(10) == 1, "flt.d 3 < 4")
+        assert(d(11) == BigInt("402E000000000000", 16), "fmadd.d 3*4+3 = 15.0")
+        assert(d(12) == 0x40, "fclass.d 3.0 = positive normal")
+        assert(d(14) == BigInt("FFFFFFFF40400000", 16), "single result NaN-boxed in a D core")
+        println(s"PASS: RV64D program finished in $cycles cycles")
       }
   }
 }

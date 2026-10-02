@@ -69,9 +69,13 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
   val flagUF = Bool(); flagUF := False
   val flagNX = Bool(); flagNX := False
 
-  def packInf(sign: Bool): Bits = Cat(sign, B(expMax, expw bits), B(0, sigw bits)).asBits
-  def packZero(sign: Bool): Bits = Cat(sign, B(0, expw bits), B(0, sigw bits)).asBits
-  def packFinite(sign: Bool, ef: UInt, frac: Bits): Bits = Cat(sign, ef, frac).asBits
+  def packInfT(sign: Bool, e2: Int, s2: Int): Bits = Cat(sign, B((1 << e2) - 1, e2 bits), B(0, s2 bits)).asBits
+  def packZeroT(sign: Bool, e2: Int, s2: Int): Bits = Cat(sign, B(0, e2 bits), B(0, s2 bits)).asBits
+  def packFiniteT(sign: Bool, ef: UInt, frac: Bits, e2: Int, s2: Int): Bits = Cat(sign, ef, frac).asBits
+
+  def packInf(sign: Bool): Bits = packInfT(sign, expw, sigw)
+  def packZero(sign: Bool): Bits = packZeroT(sign, expw, sigw)
+  def packFinite(sign: Bool, ef: UInt, frac: Bits): Bits = packFiniteT(sign, ef, frac, expw, sigw)
 
   /** Normalize a magnitude so its highest set bit lands at bit P+2. `e0` is the
     * exponent weight of the magnitude's LSB (value = mag * 2^e0). Returns the
@@ -104,57 +108,91 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
   /** Round the normalized mantissa at exponent `eLead` and pack to `flen` bits.
     * Returns (bits, inexact, overflow, underflow). */
   case class Rounded(bits: Bits, inexact: Bool, of: Bool, uf: Bool)
-  def roundPack(sign: Bool, n: Norm, rm: UInt): Rounded = {
-    // Subnormal correction: if the leading exponent is below emin we must lose
+  def roundPack(sign: Bool, n: Norm, rm: UInt): Rounded = roundPackTo(sign, n, rm, expw, sigw)
+
+  /** Round-and-pack to an arbitrary `(tExpw, tSigw)` target format. The source
+    * `n` is normalized for this unit's precision; when narrowing, the discarded
+    * low bits are folded into sticky so a single final rounding stays exact. */
+  def roundPackTo(sign: Bool, n: Norm, rm: UInt, tExpw: Int, tSigw: Int): Rounded = {
+    val tP = tSigw + 1
+    val tWM = tP + 3
+    val tBias = (1 << (tExpw - 1)) - 1
+    val tEmin = 1 - tBias
+    val tExpMax = (1 << tExpw) - 1
+    val tFlen = 1 + tExpw + tSigw
+    // Re-align the source mantissa (leading bit at P+2) so its leading bit lands
+    // at tP+2; narrowing discards low bits into sticky.
+    val diff = P - tP
+    val wideW = scala.math.max(WM, tWM) + scala.math.abs(diff) + 2
+    val srcM = n.mant.resize(wideW).asUInt
+    val mantA = UInt(wideW bits)
+    val stickyDrop = Bool()
+    if (diff >= 0) {
+      mantA := (srcM >> diff).resize(wideW)
+      val mask = if (diff == 0) U(0, wideW bits) else ((U(1, wideW bits) << diff).resize(wideW) - 1)
+      stickyDrop := (srcM & mask).orR
+    } else {
+      mantA := (srcM << (-diff)).resize(wideW)
+      stickyDrop := False
+    }
+    val stickyIn = n.sticky || stickyDrop
+    // Subnormal correction: if the leading exponent is below tEmin we must lose
     // precision so the LSB weight matches the subnormal encoding.
-    val tiny = n.eLead + S(bias, expw + 4 bits) < S(1, expw + 4 bits)
-    val shS = S(emin, expw + 4 bits) - n.eLead
-    val sh = Mux(tiny, shS, S(0, expw + 4 bits))
+    val tiny = n.eLead + S(tBias, tExpw + 4 bits) < S(1, tExpw + 4 bits)
+    val shS = S(tEmin, tExpw + 4 bits) - n.eLead
+    val sh = Mux(tiny, shS, S(0, tExpw + 4 bits))
     val shU = sh.asUInt
-    val mantS = Bits(WM bits)
+    val mantS = Bits(tWM bits)
     val stickyS = Bool()
     when(sh <= 0) {
-      mantS := n.mant
-      stickyS := n.sticky
-    } elsewhen (shU >= U(WM)) {
+      mantS := mantA.resize(tWM).asBits
+      stickyS := stickyIn
+    } elsewhen (shU >= U(tWM)) {
       mantS := 0
-      stickyS := n.mant.orR || n.sticky
+      stickyS := mantA.orR || stickyIn
     } otherwise {
-      mantS := (n.mant.asUInt >> shU).resize(WM).asBits
-      stickyS := ((n.mant.asUInt & ((U(1, WM bits) << shU.resize(log2Up(WM))).resize(WM) - 1)).orR) || n.sticky
+      mantS := (mantA >> shU.resize(log2Up(wideW))).resize(tWM).asBits
+      stickyS := ((mantA & ((U(1, wideW bits) << shU.resize(log2Up(wideW))).resize(wideW) - 1)).orR) || stickyIn
     }
-    val eLead = Mux(tiny, S(emin, expw + 4 bits), n.eLead)
+    val eLead = Mux(tiny, S(tEmin, tExpw + 4 bits), n.eLead)
 
     val g = mantS(2)
     val r = mantS(1)
     val s = mantS(0) || stickyS
-    val trunc = mantS(P + 2 downto 3) // P bits
+    val trunc = mantS(tP + 2 downto 3) // tP bits
     val lsb = trunc(0)
     val inc = Mux(rm === U(0, 3 bits), g && (r || s || lsb),
               Mux(rm === U(1, 3 bits), False,
               Mux(rm === U(2, 3 bits), sign && (g || r || s),
               Mux(rm === U(3, 3 bits), !sign && (g || r || s),
                   g))))
-    val sum = trunc.asUInt.resize(P + 1) + inc.asUInt.resize(P + 1)
-    val carry = sum(P)
-    val sig = Mux(carry, (sum >> 1).resize(P), sum.resize(P))
+    val sum = trunc.asUInt.resize(tP + 1) + inc.asUInt.resize(tP + 1)
+    val carry = sum(tP)
+    val sig = Mux(carry, (sum >> 1).resize(tP), sum.resize(tP))
     val eFinal = Mux(carry, eLead + 1, eLead)
-    val biased = eFinal + S(bias, expw + 4 bits)
+    val biased = eFinal + S(tBias, tExpw + 4 bits)
     val inexact = g || r || s
-    val of = biased >= S(expMax, expw + 4 bits)
+    val of = biased >= S(tExpMax, tExpw + 4 bits)
     val uf = tiny && inexact
-    val inf = packInf(sign)
-    val maxFin = packFinite(sign, U(expMax - 1, expw bits), B((BigInt(1) << sigw) - 1, sigw bits))
-    val bits = Bits(flen bits)
-    bits := B(0, flen bits)
+    val inf = packInfT(sign, tExpw, tSigw)
+    val maxFin = packFiniteT(sign, U(tExpMax - 1, tExpw bits), B((BigInt(1) << tSigw) - 1, tSigw bits), tExpw, tSigw)
+    val bits = Bits(tFlen bits)
+    bits := B(0, tFlen bits)
+    // For a tiny result the leading bit can land below the implicit position
+    // (subnormal) or be rounded away entirely (zero); a normal result has the
+    // leading bit at tP-1 with biased exponent eFinal + tBias.
+    val isZeroResult = tiny && (sig === 0)
+    val isSubnormalResult = tiny && (sig =/= 0) && !sig(tP - 1)
     when(of) {
       bits := Mux(rm === U(1, 3 bits), maxFin,
         Mux(rm === U(2, 3 bits), Mux(sign, inf, maxFin),
           Mux(rm === U(3, 3 bits), Mux(sign, maxFin, inf), inf)))
-    } elsewhen (biased < 1) {
-      bits := packFinite(sign, U(0, expw bits), sig(sigw - 1 downto 0).asBits)
+    } elsewhen (isZeroResult) {
+      bits := packZeroT(sign, tExpw, tSigw)
+    } elsewhen (isSubnormalResult) {
+      bits := packFiniteT(sign, U(0, tExpw bits), sig(tSigw - 1 downto 0).asBits, tExpw, tSigw)
     } otherwise {
-      bits := packFinite(sign, biased.asUInt.resize(expw), sig(sigw - 1 downto 0).asBits)
+      bits := packFiniteT(sign, biased.asUInt.resize(tExpw), sig(tSigw - 1 downto 0).asBits, tExpw, tSigw)
     }
     Rounded(bits, inexact, of, uf)
   }
@@ -500,6 +538,47 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     bits
   }
 
+  // ===== FORMAT CONVERSION (bridge ops, exercised by the binary64 unit) =====
+  // Single -> double is an exact widening: the source has fewer significand bits
+  // than the target, so the shared normalize/roundPack path never rounds. Only
+  // a signaling NaN raises NV.
+  def doS2D(rm: UInt): Bits = {
+    val s = io.a(31)
+    val e = io.a(30 downto 23)
+    val f = io.a(22 downto 0)
+    val isZero = (e === 0) && (f === 0)
+    val isInf = (e === 0xff) && (f === 0)
+    val isNaN = (e === 0xff) && (f =/= 0)
+    val isSNaN = isNaN && !f(22)
+    val sub = (e === 0) && (f =/= 0)
+    val sigS = Mux(sub, f.resize(P).asUInt, Cat(True, f).asUInt.resize(P))
+    // Subnormal weight is 2^-149; a normal single has weight 2^(e-150).
+    val e0 = Mux(sub, S(-149, expw + 4 bits),
+      e.asUInt.resize(expw + 4).asSInt - S(150, expw + 4 bits))
+    val r = roundPack(s, normalize(sigS, e0), rm)
+    val bits = Bits(flen bits)
+    bits := r.bits
+    when(isNaN) { bits := B(canonNaN, flen bits); flagNV := isSNaN }
+    .elsewhen(isInf) { bits := packInf(s) }
+    .elsewhen(isZero) { bits := packZero(s) }
+    bits
+  }
+
+  // Double -> single rounds to binary32; overflow/underflow follow the generic
+  // roundPack target rules. NaN inputs collapse to the canonical single NaN.
+  def doD2S(rm: UInt): Bits = {
+    val canonNaN32 = (((BigInt(1) << 8) - 1) << 23) | (BigInt(1) << 22)
+    val n = normalize(ua.sig, ua.e - S(P - 1, expw + 4 bits))
+    val r = roundPackTo(ua.sign, n, rm, 8, 23)
+    val bits = Bits(32 bits)
+    bits := r.bits
+    when(ua.isNaN) { bits := B(canonNaN32, 32 bits); flagNV := ua.isSNaN }
+    .elsewhen(ua.isInf) { bits := packInfT(ua.sign, 8, 23) }
+    .elsewhen(ua.isZero) { bits := packZeroT(ua.sign, 8, 23) }
+    .otherwise { flagNX := r.inexact; flagOF := r.of; flagUF := r.uf }
+    bits
+  }
+
   // ===== dispatch =====
   switch(io.op) {
     is(FpOp.ADD) { res := doAddSub(False, io.rm).resize(64) }
@@ -526,6 +605,8 @@ class FpUnit(expw: Int, sigw: Int) extends Component {
     is(FpOp.CVT_S_WU) { res := doIntToFp(32, signed = false, io.rm).resize(64) }
     is(FpOp.CVT_S_L) { res := doIntToFp(64, signed = true, io.rm).resize(64) }
     is(FpOp.CVT_S_LU) { res := doIntToFp(64, signed = false, io.rm).resize(64) }
+    is(FpOp.CVT_S_D) { res := doD2S(io.rm).resize(64) }
+    is(FpOp.CVT_D_S) { res := doS2D(io.rm).resize(64) }
     default { res := io.a }
   }
 
