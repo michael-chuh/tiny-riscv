@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 55 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 67 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -42,6 +42,12 @@ graph LR
 | FpUnit spec battery (F) | 5 种舍入模式（含 ties-to-even/away 与 RDN/RUP）、DIV/SQRT 边界、min/max（NaN/±0/sNaN NV）、FSGNJ 系列、FCMP、FCLASS 全 10 类、FMA 四变体、整数↔浮点转换（含负值→无符号 NV、饱和、NX/carry）、次正规结果（min normal×0.5、min normal×min subnormal） | 逐项结果与 NV/DZ/OF/UF/NX 标志位 |
 | FpUnit spec battery (D) | 直接驱动 `FpUnit(11,52)`：FADD/FSUB/FMUL/FDIV/FSQRT、`FCVT.S.D`/`FCVT.D.S` 格式桥、OF/UF/NX 边界 | 3.0=`0x4008000000000000`、4/3=`0x3FF5555555555555`(NX)、sqrt(2)=`0x3FF6A09E667F3BCD`(NX)、`fcvt.d.s(3.0)=0x4008000000000000`、`fcvt.s.d(sNaN)=0x7FF8000000000000`(NV)、`1e300→0x7F800000`(OF+NX)、`2^-150→0`(UF+NX) |
 | RV64D arithmetic, conversions, NaN-boxing | `FLD/FSD`、`fadd.d/fmul.d/fdiv.d`、`fcvt.s.d`/`fcvt.d.s`、`flt.d`、`fmadd.d`、`fclass.d` 全链路与单精度结果 NaN-boxing | x4=`0x401C000000000000`(7.0)、x5=1.0、x6=12.0、x7=`0x3FF5555555555555`(4/3)、x8=`0x40400000`(fcvt.s.d)、x9=3.0(fcvt.d.s)、x10==1、x11=15.0(fmadd.d)、x12==0x40(fclass.d)、x14=`0xFFFFFFFF40400000`(NaN-boxed) |
+| RV32B (Zbb) bit manipulation | `andn/orn/xnor`、`min/minu/max/maxu`、`clz/ctz/cpop`（含 `clz 0`/`ctz 0`/`cpop 0` 边界）、`sext.b/sext.h/zext.h`、`orc.b/rev8`、`rol/ror/rori` | x4==12、x5==0xFFFFFFFF、x7==3、x8==15、x9==0xFFFFFFFF、x11==28、x14==32、x15==32、x16==0、x21==0xFFFFFF80、x25==0xFF、x26==0x0F000000、x27==0x78 |
+| RV64B (Zbb) bit manipulation and W forms | 64 位计数/字节操作、`clzw/cpopw`、`rolw/rorw`、`zext.h`、6 位 shamt 的 `rori` 与 `roriw` | x5==60、x6==0、x8==`0x0F00000000000000`、x12==28、x16==`0xFFFFFFFF80000000`、x18==0xFFFF、x19==`0xE000000000000001`、x20==`0x1E0000000`、x21==`0xFFFFFFFF80000000` |
+| RV32B (Zbs) single-bit operations | `bset/bclr/binv/bext` 寄存器与立即数形式、位索引回绕、`bexti` 0/1 | x3==8、x5==0xFFFFFFF7、x7==1、x9==0、x11==0xFFFFFFFE、x12==0x80000000、x15==1、x16==0、x19==8（索引 35 回绕到 bit3） |
+| RV64B (Zbs) single-bit operations with 6-bit indices | 6 位位索引（`funct7` 低位携带 shamt[5]）与全宽结果 | x3==x4==`0x10000000000`(bit40)、x5==`0xFFFFFEFFFFFFFFFF`、x8==`0x8000000000000000`(bit63)、x10==`0x100000000`(bit32)、x11==`0xFFFFFFFFFFFFFFDF`（索引 69 回绕到 bit5） |
+| RV32B (Zba) address generation | `sh1add/sh2add/sh3add`（交换操作数） | x3==13、x4==23、x5==43、x6==11 |
+| RV64B (Zba) word forms zero-extend rs1 | `add.uw`（rs1 bit31=1 零扩展）、`slli.uw`（6 位 shamt）、`sh*add.uw`、64 位 `sh1add` | x7==`0x80000003`、x8==`0x800000000`、x9==`0x100000003`、x10==`0x200000003`、x11==`0x400000003`、x13==`0x200000003` |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -49,7 +55,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 28 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 34 项。
 
 ## 运行方式
 

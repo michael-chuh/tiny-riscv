@@ -27,12 +27,14 @@ graph LR
 - 立即数按 I / S / B / U / J 五种格式生成并符号扩展到位宽；RV32C / RV64C 使能时，16 位压缩指令在译码级展开为等价的标准操作（与 32 位路径写入同一组控制域），非法/保留压缩编码置 `illegal`（cause 2）
 - **RV32A / RV64A（`isa.hasAtomic`）**：opcode `0101111` 按 `funct5[31:27]` 展开 LR/SC/AMO 控制域（`atomic/isLr/isSc/amoOp`），有效地址为 `rs1`；`funct3` 决定 `.W`/`.D`，非本宽度的 `funct3`、未知 `funct5` 或 A 关闭时置 `illegal`（cause 2）
 - **RV32F / RV64F / RV64D（`isa.hasFpu`）**：opcode `0000111`/`0100111` 译为 FLW/FSW（FLD/FSD 仅 D），opcode `1010011` 按 `funct6`/`funct3` 展开 FADD/FSUB/FMUL/FDIV/FSQRT/FSGNJ/FMIN/FMAX/FCMP/FCLASS/FMV/FCVT 控制域（`fpWrite/fpOp/fpRm/fpFmt`），其中 funct6 `010000` 展开 `FCVT.S.D`/`FCVT.D.S`（仅 D），opcode `1000011/1000111/1001011/1001111` 展开四种 FMA；无 D 的 F 核上 fmt=01（D）编码置 `illegal`。FP CSR 的合法性在 EX 结合 `mstatus.FS` 判定
+- **Zba / Zbb / Zbs（`isa.hasZbb/hasZbs/hasZba`）**：在 OP / OP-IMM / OP-32 / OP-IMM-32 的基础译码之后追加覆盖（SpinalHDL 末次连接语义），分别展开基础位操作、单比特操作与地址生成控制域；覆盖默认非法的 OP-32 编码时复位 `valid`/`illegal`，未使能的 `Zb*` 编码保持 cause 2
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
 
 - 旁路单元根据 EX/MEM 与 MEM/WB 的结果优先选择操作数；未被旁路覆盖的操作数在 EX 段**组合读寄存器堆**取得（读地址即本指令 rs1/rs2），因此总能观察到已提交的架构值
 - ALU 完成算术/逻辑/移位/比较运算；乘法在 ALU 内组合完成（RV32M）
+- **位操作执行（`isa.hasZbb/hasZbs/hasZba`）**：全部 `Zb*` 指令在 ALU 内组合完成，复用现有结果通路，无新增停顿状态；Zbb 的计数（`clz/ctz/cpop`）与旋转、Zbs 的单比特掩码（`bset/bclr/binv/bext`，位索引取操作数低位）、Zba 的 `(rs1<<k)+rs2` 均在单周期内算出，RV64 W 形式只取低 32 位并符号扩展
 - **分支与跳转在 EX 阶段提前判定**，条件跳转直接消耗转发后的操作数，避免等到 MEM 阶段，将错误预测代价从 3 拍降到 2 拍
 - JALR 目标 = `rs1 + imm` 并强制按 2 字节对齐（清 LSB）
 - 异常（`ecall/ebreak/非法指令/mret 违例`）在 EX 段判定并提交 trap（见「CSR 与异常/中断通路」）
@@ -186,10 +188,11 @@ FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻�
 | RV32M 除法 | EX 段恢复除法器 + 整条流水线冻结 | 面积/时序友好；`IsaConfig` 不含 `MulDiv` 时不实例化 |
 | RV32A / RV64A 原子 | MEM 段「读→改→写」状态机 + 流水线冻结；LR/SC 预约集 | 单核下无需总线锁即可保证原子性；`IsaConfig` 不含 `Atomic` 时整体剪除 |
 | RV32F / RV64F / RV64D 浮点 | EX 段参数化组合 FPU + 单冻结周期；独立浮点寄存器堆；FP 结果仅 WB 转发；D 核实例化 binary32 + binary64 两个单元并按 fmt 路由 | 复用统一 `freezeAll` 与停滞框架；`expw/sigw` 参数化 + `roundPackTo` 支持格式转换；双单元避免双重舍入；F 关闭时 FPU/FP 寄存器堆整体剪除 |
+| Zba / Zbb / Zbs 位操作 | EX 段组合 ALU 结果选择，复用现有结果通路与转发网络 | 无新增流水线状态或停顿；未使能的 `Zb*` 分支在 elaboration 期被剪除 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）与 RV64F/RV64D 浮点（参数化 FPU）已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs 位操作（W 形式按 `xlen` 展开）已实现；S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合

@@ -1,6 +1,6 @@
 # rv32c — 可配置的 32 位 RISC-V CPU
 
-rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，采用经典五级流水线微架构，完整实现 RV32I / RV64I 基础整数指令集，并内置可配置的 **RV32M/RV64M** 乘除扩展、**RV32A/RV64A** 原子扩展、**RV32C/RV64C** 压缩扩展、**RV32F/RV64F** 单精度浮点扩展与 **RV64D** 双精度浮点扩展。
+rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，采用经典五级流水线微架构，完整实现 RV32I / RV64I 基础整数指令集，并内置可配置的 **RV32M/RV64M** 乘除扩展、**RV32A/RV64A** 原子扩展、**RV32C/RV64C** 压缩扩展、**RV32F/RV64F** 单精度浮点扩展、**RV64D** 双精度浮点扩展以及 **Zba/Zbb/Zbs** 位操作扩展。
 
 项目设计目标：
 
@@ -17,6 +17,7 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 - RV32C / RV64C 压缩扩展：32 位指令总线内按 `pc[1]` 半字取指与拼接，RV64 专属编码（`C.LD/C.SD/C.ADDIW/C.*W` 等）按 `xlen` 展开
 - RV32F / RV64F 单精度浮点扩展：独立浮点寄存器堆、FLW/FSW 访存、参数化 IEEE-754 运算单元（FADD/FSUB/FMUL/FDIV/FSQRT/FMA/FCMP/FCLASS/FMIN/FMAX/FSGNJ 与整数↔浮点转换），5 种舍入模式（RNE/RTZ/RDN/RUP/RMM）与 fflags 异常标志；EX 段组合运算 + 单周期冻结，复用统一 `freezeAll`
 - RV64D 双精度浮点扩展：FLEN=64 浮点寄存器堆、FLD/FSD 访存，D 核同时实例化 binary32 与 binary64 两个 FPU 并按指令 fmt 路由（避免双重舍入），支持 `FCVT.S.D`/`FCVT.D.S` 格式转换与 FLEN=64 下的 NaN-boxing
+- Zba/Zbb/Zbs 位操作扩展：Zbb 提供 `andn/orn/xnor`、`clz/ctz/cpop`、`min/minu/max/maxu`、`rol/ror/rori`、`sext.b/sext.h/zext.h`、`orc.b/rev8` 及 RV64 W 形式（`clzw/ctzw/cpopw/rolw/rorw/roriw`）；Zbs 提供 `bset/bclr/binv/bext` 寄存器与立即数形式（RV32 5 位 / RV64 6 位位索引）；Zba 提供 `sh1add/sh2add/sh3add` 与 RV64 `add.uw/slli.uw/sh*add.uw`，全部在 EX 段组合执行并复用现有 ALU 结果通路
 - 数据冒险全旁路（EX/MEM → EX、MEM/WB → EX）
 - load-use 冒险：硬件停顿 1 拍
 - 分支在 EX 阶段判定，跳过 2 条错误取指指令
@@ -29,8 +30,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 
 - RV32I 定向测试通过：数据冒险旁路、load-use 停顿、分支跳过、访存读写均验证正确
 - RV32M 定向测试通过：乘法（高位/有符号×无符号/无符号）、有符号与无符号除法/余数、负数运算、除零、MIN/-1 溢出回绕、除法结果旁路均验证正确
-- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D 定向测试通过，`sbt test` 共 55 项
-- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D），异步复位、标准 Verilog
+- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D / Zbb / Zbs / Zba 定向测试通过，`sbt test` 共 67 项
+- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D）、`rtl/RiscvCoreB.v`（RV32IM+Zbb）、`rtl/RiscvCore64B.v`（RV64IM+Zbb）、`rtl/RiscvCoreBS.v`（RV32IM+Zbs）、`rtl/RiscvCore64BS.v`（RV64IM+Zbs）、`rtl/RiscvCoreBA.v`（RV32IM+Zba）与 `rtl/RiscvCore64BA.v`（RV64IM+Zba），异步复位、标准 Verilog
 
 ## 快速开始
 
@@ -80,6 +81,7 @@ rtl/                        # 生成的 Verilog（可选）
 - [x] RV64I 支持（`xlen = 64` 参数切换，RV32C/RV64C 共用压缩取指通路）
 - [x] RV32F / RV64F 单精度浮点扩展（FLW/FSW + FPU，`RvExtension.SingleFloat` 配置）
 - [x] RV64D 双精度浮点扩展（FLEN=64，FLD/FSD + 双 FPU + 格式转换与 NaN-boxing，`RvExtension.DoubleFloat` 配置）
+- [x] Zba/Zbb/Zbs 位操作扩展（`RvExtension.Zba/Zbb/Zbs` 配置，RV32/RV64 位宽均支持）
 - [ ] 分支预测器（BHT/gshare 插件化）
 - [ ] I/D 缓存、AXI4 总线桥
 - [ ] 多核（`numCores` 参数 + 互联总线）
