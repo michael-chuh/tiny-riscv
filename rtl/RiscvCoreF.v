@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCoreF
-// Git hash  : 4990c93d01e1c6923ab7c71337b2508d5b519f72
+// Git hash  : dda96e8bb617745ad134cb98e49f237c8e23ddf6
 
 `timescale 1ns/1ps
 
@@ -57,34 +57,68 @@ module RiscvCoreF (
   input  wire          clk,
   input  wire          reset
 );
-  localparam AluOp_ADD = 5'd0;
-  localparam AluOp_SUB = 5'd1;
-  localparam AluOp_SLL_1 = 5'd2;
-  localparam AluOp_SLT = 5'd3;
-  localparam AluOp_SLTU = 5'd4;
-  localparam AluOp_XOR_1 = 5'd5;
-  localparam AluOp_SRL_1 = 5'd6;
-  localparam AluOp_SRA_1 = 5'd7;
-  localparam AluOp_OR_1 = 5'd8;
-  localparam AluOp_AND_1 = 5'd9;
-  localparam AluOp_ADDW = 5'd10;
-  localparam AluOp_SUBW = 5'd11;
-  localparam AluOp_SLLW = 5'd12;
-  localparam AluOp_SRLW = 5'd13;
-  localparam AluOp_SRAW = 5'd14;
-  localparam AluOp_MUL = 5'd15;
-  localparam AluOp_MULH = 5'd16;
-  localparam AluOp_MULHSU = 5'd17;
-  localparam AluOp_MULHU = 5'd18;
-  localparam AluOp_DIV = 5'd19;
-  localparam AluOp_DIVU = 5'd20;
-  localparam AluOp_REM_1 = 5'd21;
-  localparam AluOp_REMU = 5'd22;
-  localparam AluOp_MULW = 5'd23;
-  localparam AluOp_DIVW = 5'd24;
-  localparam AluOp_DIVUW = 5'd25;
-  localparam AluOp_REMW = 5'd26;
-  localparam AluOp_REMUW = 5'd27;
+  localparam AluOp_ADD = 6'd0;
+  localparam AluOp_SUB = 6'd1;
+  localparam AluOp_SLL_1 = 6'd2;
+  localparam AluOp_SLT = 6'd3;
+  localparam AluOp_SLTU = 6'd4;
+  localparam AluOp_XOR_1 = 6'd5;
+  localparam AluOp_SRL_1 = 6'd6;
+  localparam AluOp_SRA_1 = 6'd7;
+  localparam AluOp_OR_1 = 6'd8;
+  localparam AluOp_AND_1 = 6'd9;
+  localparam AluOp_ADDW = 6'd10;
+  localparam AluOp_SUBW = 6'd11;
+  localparam AluOp_SLLW = 6'd12;
+  localparam AluOp_SRLW = 6'd13;
+  localparam AluOp_SRAW = 6'd14;
+  localparam AluOp_MUL = 6'd15;
+  localparam AluOp_MULH = 6'd16;
+  localparam AluOp_MULHSU = 6'd17;
+  localparam AluOp_MULHU = 6'd18;
+  localparam AluOp_DIV = 6'd19;
+  localparam AluOp_DIVU = 6'd20;
+  localparam AluOp_REM_1 = 6'd21;
+  localparam AluOp_REMU = 6'd22;
+  localparam AluOp_MULW = 6'd23;
+  localparam AluOp_DIVW = 6'd24;
+  localparam AluOp_DIVUW = 6'd25;
+  localparam AluOp_REMW = 6'd26;
+  localparam AluOp_REMUW = 6'd27;
+  localparam AluOp_ANDN = 6'd28;
+  localparam AluOp_ORN = 6'd29;
+  localparam AluOp_XNOR_1 = 6'd30;
+  localparam AluOp_CLZ = 6'd31;
+  localparam AluOp_CTZ = 6'd32;
+  localparam AluOp_CPOP = 6'd33;
+  localparam AluOp_SEXTB = 6'd34;
+  localparam AluOp_SEXTH = 6'd35;
+  localparam AluOp_ZEXTH = 6'd36;
+  localparam AluOp_ORCB = 6'd37;
+  localparam AluOp_REV8 = 6'd38;
+  localparam AluOp_ROL_1 = 6'd39;
+  localparam AluOp_ROR_1 = 6'd40;
+  localparam AluOp_MIN = 6'd41;
+  localparam AluOp_MINU = 6'd42;
+  localparam AluOp_MAX = 6'd43;
+  localparam AluOp_MAXU = 6'd44;
+  localparam AluOp_BSET = 6'd45;
+  localparam AluOp_BCLR = 6'd46;
+  localparam AluOp_BINV = 6'd47;
+  localparam AluOp_BEXT = 6'd48;
+  localparam AluOp_SH1ADD = 6'd49;
+  localparam AluOp_SH2ADD = 6'd50;
+  localparam AluOp_SH3ADD = 6'd51;
+  localparam AluOp_ADDUW = 6'd52;
+  localparam AluOp_SH1ADDUW = 6'd53;
+  localparam AluOp_SH2ADDUW = 6'd54;
+  localparam AluOp_SH3ADDUW = 6'd55;
+  localparam AluOp_SLLIUW = 6'd56;
+  localparam AluOp_CLZW = 6'd57;
+  localparam AluOp_CTZW = 6'd58;
+  localparam AluOp_CPOPW = 6'd59;
+  localparam AluOp_ROLW = 6'd60;
+  localparam AluOp_RORW = 6'd61;
   localparam BranchOp_NONE = 3'd0;
   localparam BranchOp_BEQ = 3'd1;
   localparam BranchOp_BNE = 3'd2;
@@ -120,7 +154,7 @@ module RiscvCoreF (
   wire                decoder_1_io_output_branch;
   wire                decoder_1_io_output_jump;
   wire                decoder_1_io_output_jalr;
-  wire       [4:0]    decoder_1_io_output_aluOp;
+  wire       [5:0]    decoder_1_io_output_aluOp;
   wire       [2:0]    decoder_1_io_output_branchType;
   wire       [1:0]    decoder_1_io_output_aluASrc;
   wire                decoder_1_io_output_memRead;
@@ -242,8 +276,8 @@ module RiscvCoreF (
   wire       [31:0]   _zz_branchCond_2;
   wire       [31:0]   _zz_branchCond_3;
   wire       [31:0]   _zz_ctrlTarget;
-  wire       [4:0]    _zz_divInEx;
-  wire       [4:0]    _zz_divInEx_1;
+  wire       [5:0]    _zz_divInEx;
+  wire       [5:0]    _zz_divInEx_1;
   wire                _zz_csrImplemented;
   wire                _zz_csrImplemented_1;
   wire       [11:0]   _zz_csrImplemented_2;
@@ -302,7 +336,7 @@ module RiscvCoreF (
   reg                 idEx_branch;
   reg                 idEx_jump;
   reg                 idEx_jalr;
-  reg        [4:0]    idEx_aluOp;
+  reg        [5:0]    idEx_aluOp;
   reg        [2:0]    idEx_branchType;
   reg        [1:0]    idEx_aluASrc;
   reg                 idEx_memRead;
@@ -479,7 +513,7 @@ module RiscvCoreF (
   wire       [31:0]   fpLoadData;
   wire                when_RiscvCore_l1131;
   `ifndef SYNTHESIS
-  reg [47:0] idEx_aluOp_string;
+  reg [63:0] idEx_aluOp_string;
   reg [31:0] idEx_branchType_string;
   reg [39:0] idEx_csrOp_string;
   reg [55:0] idEx_sysOp_string;
@@ -540,7 +574,7 @@ module RiscvCoreF (
     .io_output_branch     (decoder_1_io_output_branch         ), //o
     .io_output_jump       (decoder_1_io_output_jump           ), //o
     .io_output_jalr       (decoder_1_io_output_jalr           ), //o
-    .io_output_aluOp      (decoder_1_io_output_aluOp[4:0]     ), //o
+    .io_output_aluOp      (decoder_1_io_output_aluOp[5:0]     ), //o
     .io_output_branchType (decoder_1_io_output_branchType[2:0]), //o
     .io_output_aluASrc    (decoder_1_io_output_aluASrc[1:0]   ), //o
     .io_output_memRead    (decoder_1_io_output_memRead        ), //o
@@ -701,41 +735,75 @@ module RiscvCoreF (
   Alu alu_1 (
     .io_a      (aluA[31:0]           ), //i
     .io_b      (aluB[31:0]           ), //i
-    .io_op     (idEx_aluOp[4:0]      ), //i
+    .io_op     (idEx_aluOp[5:0]      ), //i
     .io_result (alu_1_io_result[31:0])  //o
   );
   `ifndef SYNTHESIS
   always @(*) begin
     case(idEx_aluOp)
-      AluOp_ADD : idEx_aluOp_string = "ADD   ";
-      AluOp_SUB : idEx_aluOp_string = "SUB   ";
-      AluOp_SLL_1 : idEx_aluOp_string = "SLL_1 ";
-      AluOp_SLT : idEx_aluOp_string = "SLT   ";
-      AluOp_SLTU : idEx_aluOp_string = "SLTU  ";
-      AluOp_XOR_1 : idEx_aluOp_string = "XOR_1 ";
-      AluOp_SRL_1 : idEx_aluOp_string = "SRL_1 ";
-      AluOp_SRA_1 : idEx_aluOp_string = "SRA_1 ";
-      AluOp_OR_1 : idEx_aluOp_string = "OR_1  ";
-      AluOp_AND_1 : idEx_aluOp_string = "AND_1 ";
-      AluOp_ADDW : idEx_aluOp_string = "ADDW  ";
-      AluOp_SUBW : idEx_aluOp_string = "SUBW  ";
-      AluOp_SLLW : idEx_aluOp_string = "SLLW  ";
-      AluOp_SRLW : idEx_aluOp_string = "SRLW  ";
-      AluOp_SRAW : idEx_aluOp_string = "SRAW  ";
-      AluOp_MUL : idEx_aluOp_string = "MUL   ";
-      AluOp_MULH : idEx_aluOp_string = "MULH  ";
-      AluOp_MULHSU : idEx_aluOp_string = "MULHSU";
-      AluOp_MULHU : idEx_aluOp_string = "MULHU ";
-      AluOp_DIV : idEx_aluOp_string = "DIV   ";
-      AluOp_DIVU : idEx_aluOp_string = "DIVU  ";
-      AluOp_REM_1 : idEx_aluOp_string = "REM_1 ";
-      AluOp_REMU : idEx_aluOp_string = "REMU  ";
-      AluOp_MULW : idEx_aluOp_string = "MULW  ";
-      AluOp_DIVW : idEx_aluOp_string = "DIVW  ";
-      AluOp_DIVUW : idEx_aluOp_string = "DIVUW ";
-      AluOp_REMW : idEx_aluOp_string = "REMW  ";
-      AluOp_REMUW : idEx_aluOp_string = "REMUW ";
-      default : idEx_aluOp_string = "??????";
+      AluOp_ADD : idEx_aluOp_string = "ADD     ";
+      AluOp_SUB : idEx_aluOp_string = "SUB     ";
+      AluOp_SLL_1 : idEx_aluOp_string = "SLL_1   ";
+      AluOp_SLT : idEx_aluOp_string = "SLT     ";
+      AluOp_SLTU : idEx_aluOp_string = "SLTU    ";
+      AluOp_XOR_1 : idEx_aluOp_string = "XOR_1   ";
+      AluOp_SRL_1 : idEx_aluOp_string = "SRL_1   ";
+      AluOp_SRA_1 : idEx_aluOp_string = "SRA_1   ";
+      AluOp_OR_1 : idEx_aluOp_string = "OR_1    ";
+      AluOp_AND_1 : idEx_aluOp_string = "AND_1   ";
+      AluOp_ADDW : idEx_aluOp_string = "ADDW    ";
+      AluOp_SUBW : idEx_aluOp_string = "SUBW    ";
+      AluOp_SLLW : idEx_aluOp_string = "SLLW    ";
+      AluOp_SRLW : idEx_aluOp_string = "SRLW    ";
+      AluOp_SRAW : idEx_aluOp_string = "SRAW    ";
+      AluOp_MUL : idEx_aluOp_string = "MUL     ";
+      AluOp_MULH : idEx_aluOp_string = "MULH    ";
+      AluOp_MULHSU : idEx_aluOp_string = "MULHSU  ";
+      AluOp_MULHU : idEx_aluOp_string = "MULHU   ";
+      AluOp_DIV : idEx_aluOp_string = "DIV     ";
+      AluOp_DIVU : idEx_aluOp_string = "DIVU    ";
+      AluOp_REM_1 : idEx_aluOp_string = "REM_1   ";
+      AluOp_REMU : idEx_aluOp_string = "REMU    ";
+      AluOp_MULW : idEx_aluOp_string = "MULW    ";
+      AluOp_DIVW : idEx_aluOp_string = "DIVW    ";
+      AluOp_DIVUW : idEx_aluOp_string = "DIVUW   ";
+      AluOp_REMW : idEx_aluOp_string = "REMW    ";
+      AluOp_REMUW : idEx_aluOp_string = "REMUW   ";
+      AluOp_ANDN : idEx_aluOp_string = "ANDN    ";
+      AluOp_ORN : idEx_aluOp_string = "ORN     ";
+      AluOp_XNOR_1 : idEx_aluOp_string = "XNOR_1  ";
+      AluOp_CLZ : idEx_aluOp_string = "CLZ     ";
+      AluOp_CTZ : idEx_aluOp_string = "CTZ     ";
+      AluOp_CPOP : idEx_aluOp_string = "CPOP    ";
+      AluOp_SEXTB : idEx_aluOp_string = "SEXTB   ";
+      AluOp_SEXTH : idEx_aluOp_string = "SEXTH   ";
+      AluOp_ZEXTH : idEx_aluOp_string = "ZEXTH   ";
+      AluOp_ORCB : idEx_aluOp_string = "ORCB    ";
+      AluOp_REV8 : idEx_aluOp_string = "REV8    ";
+      AluOp_ROL_1 : idEx_aluOp_string = "ROL_1   ";
+      AluOp_ROR_1 : idEx_aluOp_string = "ROR_1   ";
+      AluOp_MIN : idEx_aluOp_string = "MIN     ";
+      AluOp_MINU : idEx_aluOp_string = "MINU    ";
+      AluOp_MAX : idEx_aluOp_string = "MAX     ";
+      AluOp_MAXU : idEx_aluOp_string = "MAXU    ";
+      AluOp_BSET : idEx_aluOp_string = "BSET    ";
+      AluOp_BCLR : idEx_aluOp_string = "BCLR    ";
+      AluOp_BINV : idEx_aluOp_string = "BINV    ";
+      AluOp_BEXT : idEx_aluOp_string = "BEXT    ";
+      AluOp_SH1ADD : idEx_aluOp_string = "SH1ADD  ";
+      AluOp_SH2ADD : idEx_aluOp_string = "SH2ADD  ";
+      AluOp_SH3ADD : idEx_aluOp_string = "SH3ADD  ";
+      AluOp_ADDUW : idEx_aluOp_string = "ADDUW   ";
+      AluOp_SH1ADDUW : idEx_aluOp_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : idEx_aluOp_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : idEx_aluOp_string = "SH3ADDUW";
+      AluOp_SLLIUW : idEx_aluOp_string = "SLLIUW  ";
+      AluOp_CLZW : idEx_aluOp_string = "CLZW    ";
+      AluOp_CTZW : idEx_aluOp_string = "CTZW    ";
+      AluOp_CPOPW : idEx_aluOp_string = "CPOPW   ";
+      AluOp_ROLW : idEx_aluOp_string = "ROLW    ";
+      AluOp_RORW : idEx_aluOp_string = "RORW    ";
+      default : idEx_aluOp_string = "????????";
     endcase
   end
   always @(*) begin
@@ -1414,59 +1482,477 @@ endmodule
 module Alu (
   input  wire [31:0]   io_a,
   input  wire [31:0]   io_b,
-  input  wire [4:0]    io_op,
+  input  wire [5:0]    io_op,
   output wire [31:0]   io_result
 );
-  localparam AluOp_ADD = 5'd0;
-  localparam AluOp_SUB = 5'd1;
-  localparam AluOp_SLL_1 = 5'd2;
-  localparam AluOp_SLT = 5'd3;
-  localparam AluOp_SLTU = 5'd4;
-  localparam AluOp_XOR_1 = 5'd5;
-  localparam AluOp_SRL_1 = 5'd6;
-  localparam AluOp_SRA_1 = 5'd7;
-  localparam AluOp_OR_1 = 5'd8;
-  localparam AluOp_AND_1 = 5'd9;
-  localparam AluOp_ADDW = 5'd10;
-  localparam AluOp_SUBW = 5'd11;
-  localparam AluOp_SLLW = 5'd12;
-  localparam AluOp_SRLW = 5'd13;
-  localparam AluOp_SRAW = 5'd14;
-  localparam AluOp_MUL = 5'd15;
-  localparam AluOp_MULH = 5'd16;
-  localparam AluOp_MULHSU = 5'd17;
-  localparam AluOp_MULHU = 5'd18;
-  localparam AluOp_DIV = 5'd19;
-  localparam AluOp_DIVU = 5'd20;
-  localparam AluOp_REM_1 = 5'd21;
-  localparam AluOp_REMU = 5'd22;
-  localparam AluOp_MULW = 5'd23;
-  localparam AluOp_DIVW = 5'd24;
-  localparam AluOp_DIVUW = 5'd25;
-  localparam AluOp_REMW = 5'd26;
-  localparam AluOp_REMUW = 5'd27;
+  localparam AluOp_ADD = 6'd0;
+  localparam AluOp_SUB = 6'd1;
+  localparam AluOp_SLL_1 = 6'd2;
+  localparam AluOp_SLT = 6'd3;
+  localparam AluOp_SLTU = 6'd4;
+  localparam AluOp_XOR_1 = 6'd5;
+  localparam AluOp_SRL_1 = 6'd6;
+  localparam AluOp_SRA_1 = 6'd7;
+  localparam AluOp_OR_1 = 6'd8;
+  localparam AluOp_AND_1 = 6'd9;
+  localparam AluOp_ADDW = 6'd10;
+  localparam AluOp_SUBW = 6'd11;
+  localparam AluOp_SLLW = 6'd12;
+  localparam AluOp_SRLW = 6'd13;
+  localparam AluOp_SRAW = 6'd14;
+  localparam AluOp_MUL = 6'd15;
+  localparam AluOp_MULH = 6'd16;
+  localparam AluOp_MULHSU = 6'd17;
+  localparam AluOp_MULHU = 6'd18;
+  localparam AluOp_DIV = 6'd19;
+  localparam AluOp_DIVU = 6'd20;
+  localparam AluOp_REM_1 = 6'd21;
+  localparam AluOp_REMU = 6'd22;
+  localparam AluOp_MULW = 6'd23;
+  localparam AluOp_DIVW = 6'd24;
+  localparam AluOp_DIVUW = 6'd25;
+  localparam AluOp_REMW = 6'd26;
+  localparam AluOp_REMUW = 6'd27;
+  localparam AluOp_ANDN = 6'd28;
+  localparam AluOp_ORN = 6'd29;
+  localparam AluOp_XNOR_1 = 6'd30;
+  localparam AluOp_CLZ = 6'd31;
+  localparam AluOp_CTZ = 6'd32;
+  localparam AluOp_CPOP = 6'd33;
+  localparam AluOp_SEXTB = 6'd34;
+  localparam AluOp_SEXTH = 6'd35;
+  localparam AluOp_ZEXTH = 6'd36;
+  localparam AluOp_ORCB = 6'd37;
+  localparam AluOp_REV8 = 6'd38;
+  localparam AluOp_ROL_1 = 6'd39;
+  localparam AluOp_ROR_1 = 6'd40;
+  localparam AluOp_MIN = 6'd41;
+  localparam AluOp_MINU = 6'd42;
+  localparam AluOp_MAX = 6'd43;
+  localparam AluOp_MAXU = 6'd44;
+  localparam AluOp_BSET = 6'd45;
+  localparam AluOp_BCLR = 6'd46;
+  localparam AluOp_BINV = 6'd47;
+  localparam AluOp_BEXT = 6'd48;
+  localparam AluOp_SH1ADD = 6'd49;
+  localparam AluOp_SH2ADD = 6'd50;
+  localparam AluOp_SH3ADD = 6'd51;
+  localparam AluOp_ADDUW = 6'd52;
+  localparam AluOp_SH1ADDUW = 6'd53;
+  localparam AluOp_SH2ADDUW = 6'd54;
+  localparam AluOp_SH3ADDUW = 6'd55;
+  localparam AluOp_SLLIUW = 6'd56;
+  localparam AluOp_CLZW = 6'd57;
+  localparam AluOp_CTZW = 6'd58;
+  localparam AluOp_CPOPW = 6'd59;
+  localparam AluOp_ROLW = 6'd60;
+  localparam AluOp_RORW = 6'd61;
 
+  wire       [62:0]   _zz_bitOneHot;
   wire       [32:0]   _zz_bUE;
   wire       [63:0]   _zz_mulLow;
   wire       [63:0]   _zz_mulHighS;
   wire       [65:0]   _zz_mulHighSu;
   wire       [63:0]   _zz_mulHighU;
-  wire       [31:0]   _zz_result;
-  wire       [31:0]   _zz_result_1;
-  wire       [31:0]   _zz_result_2;
-  wire       [62:0]   _zz_result_3;
-  wire       [31:0]   _zz_result_4;
-  wire       [31:0]   _zz_result_5;
-  wire       [31:0]   _zz_result_6;
-  wire       [31:0]   _zz_result_7;
-  wire       [31:0]   _zz_result_8;
-  wire       [31:0]   _zz_result_9;
-  wire       [62:0]   _zz_result_10;
-  wire       [31:0]   _zz_result_11;
-  wire       [31:0]   _zz_result_12;
-  wire       [31:0]   _zz_result_13;
-  wire       [31:0]   _zz_result_14;
-  wire       [63:0]   _zz_result_15;
+  wire       [31:0]   _zz_result_131;
+  wire       [31:0]   _zz_result_132;
+  wire       [31:0]   _zz_result_133;
+  wire       [62:0]   _zz_result_134;
+  wire       [31:0]   _zz_result_135;
+  wire       [31:0]   _zz_result_136;
+  wire       [31:0]   _zz_result_137;
+  wire       [31:0]   _zz_result_138;
+  wire       [31:0]   _zz_result_139;
+  wire       [31:0]   _zz_result_140;
+  wire       [62:0]   _zz_result_141;
+  wire       [31:0]   _zz_result_142;
+  wire       [31:0]   _zz_result_143;
+  wire       [31:0]   _zz_result_144;
+  wire       [31:0]   _zz_result_145;
+  wire       [63:0]   _zz_result_146;
+  wire       [31:0]   _zz_result_147;
+  wire       [5:0]    _zz_result_148;
+  wire                _zz_result_149;
+  wire                _zz_result_150;
+  wire       [5:0]    _zz_result_151;
+  wire       [5:0]    _zz_result_152;
+  wire                _zz_result_153;
+  wire                _zz_result_154;
+  wire       [5:0]    _zz_result_155;
+  wire       [5:0]    _zz_result_156;
+  wire                _zz_result_157;
+  wire                _zz_result_158;
+  wire       [5:0]    _zz_result_159;
+  wire       [5:0]    _zz_result_160;
+  wire                _zz_result_161;
+  wire                _zz_result_162;
+  wire       [5:0]    _zz_result_163;
+  wire       [5:0]    _zz_result_164;
+  wire       [31:0]   _zz_result_165;
+  wire       [5:0]    _zz_result_166;
+  wire                _zz_result_167;
+  wire                _zz_result_168;
+  wire       [5:0]    _zz_result_169;
+  wire       [5:0]    _zz_result_170;
+  wire                _zz_result_171;
+  wire                _zz_result_172;
+  wire       [5:0]    _zz_result_173;
+  wire       [5:0]    _zz_result_174;
+  wire                _zz_result_175;
+  wire                _zz_result_176;
+  wire       [5:0]    _zz_result_177;
+  wire       [5:0]    _zz_result_178;
+  wire                _zz_result_179;
+  wire                _zz_result_180;
+  wire       [5:0]    _zz_result_181;
+  wire       [5:0]    _zz_result_182;
+  wire       [31:0]   _zz_result_183;
+  wire       [5:0]    _zz_result_184;
+  wire       [6:0]    _zz_result_185;
+  wire       [5:0]    _zz_result_186;
+  wire       [6:0]    _zz_result_187;
+  wire       [5:0]    _zz_result_188;
+  wire       [6:0]    _zz_result_189;
+  wire       [5:0]    _zz_result_190;
+  wire       [6:0]    _zz_result_191;
+  wire       [5:0]    _zz_result_192;
+  wire       [6:0]    _zz_result_193;
+  wire       [5:0]    _zz_result_194;
+  wire       [6:0]    _zz_result_195;
+  wire       [5:0]    _zz_result_196;
+  wire       [6:0]    _zz_result_197;
+  wire       [5:0]    _zz_result_198;
+  wire       [6:0]    _zz_result_199;
+  wire       [5:0]    _zz_result_200;
+  wire       [6:0]    _zz_result_201;
+  wire       [5:0]    _zz_result_202;
+  wire       [6:0]    _zz_result_203;
+  wire       [5:0]    _zz_result_204;
+  wire       [6:0]    _zz_result_205;
+  wire       [5:0]    _zz_result_206;
+  wire       [6:0]    _zz_result_207;
+  wire       [5:0]    _zz_result_208;
+  wire       [6:0]    _zz_result_209;
+  wire       [5:0]    _zz_result_210;
+  wire       [6:0]    _zz_result_211;
+  wire       [5:0]    _zz_result_212;
+  wire       [6:0]    _zz_result_213;
+  wire       [5:0]    _zz_result_214;
+  wire       [6:0]    _zz_result_215;
+  wire       [5:0]    _zz_result_216;
+  wire       [6:0]    _zz_result_217;
+  wire       [5:0]    _zz_result_218;
+  wire       [6:0]    _zz_result_219;
+  wire       [5:0]    _zz_result_220;
+  wire       [6:0]    _zz_result_221;
+  wire       [5:0]    _zz_result_222;
+  wire       [6:0]    _zz_result_223;
+  wire       [5:0]    _zz_result_224;
+  wire       [6:0]    _zz_result_225;
+  wire       [5:0]    _zz_result_226;
+  wire       [6:0]    _zz_result_227;
+  wire       [5:0]    _zz_result_228;
+  wire       [6:0]    _zz_result_229;
+  wire       [5:0]    _zz_result_230;
+  wire       [6:0]    _zz_result_231;
+  wire       [5:0]    _zz_result_232;
+  wire       [6:0]    _zz_result_233;
+  wire       [5:0]    _zz_result_234;
+  wire       [6:0]    _zz_result_235;
+  wire       [5:0]    _zz_result_236;
+  wire       [6:0]    _zz_result_237;
+  wire       [5:0]    _zz_result_238;
+  wire       [6:0]    _zz_result_239;
+  wire       [5:0]    _zz_result_240;
+  wire       [6:0]    _zz_result_241;
+  wire       [5:0]    _zz_result_242;
+  wire       [6:0]    _zz_result_243;
+  wire       [5:0]    _zz_result_244;
+  wire       [6:0]    _zz_result_245;
+  wire       [5:0]    _zz_result_246;
+  wire       [6:0]    _zz_result_247;
+  wire       [6:0]    _zz_result_248;
+  wire       [1:0]    _zz_result_249;
+  wire       [6:0]    _zz_result_250;
+  wire       [1:0]    _zz_result_251;
+  wire       [6:0]    _zz_result_252;
+  wire       [1:0]    _zz_result_253;
+  wire       [6:0]    _zz_result_254;
+  wire       [1:0]    _zz_result_255;
+  wire       [6:0]    _zz_result_256;
+  wire       [1:0]    _zz_result_257;
+  wire       [6:0]    _zz_result_258;
+  wire       [1:0]    _zz_result_259;
+  wire       [6:0]    _zz_result_260;
+  wire       [1:0]    _zz_result_261;
+  wire       [6:0]    _zz_result_262;
+  wire       [1:0]    _zz_result_263;
+  wire       [6:0]    _zz_result_264;
+  wire       [1:0]    _zz_result_265;
+  wire       [6:0]    _zz_result_266;
+  wire       [1:0]    _zz_result_267;
+  wire       [6:0]    _zz_result_268;
+  wire       [1:0]    _zz_result_269;
+  wire       [6:0]    _zz_result_270;
+  wire       [1:0]    _zz_result_271;
+  wire       [6:0]    _zz_result_272;
+  wire       [1:0]    _zz_result_273;
+  wire       [6:0]    _zz_result_274;
+  wire       [1:0]    _zz_result_275;
+  wire       [6:0]    _zz_result_276;
+  wire       [1:0]    _zz_result_277;
+  wire       [6:0]    _zz_result_278;
+  wire       [1:0]    _zz_result_279;
+  wire       [6:0]    _zz_result_280;
+  wire       [1:0]    _zz_result_281;
+  wire       [6:0]    _zz_result_282;
+  wire       [1:0]    _zz_result_283;
+  wire       [6:0]    _zz_result_284;
+  wire       [1:0]    _zz_result_285;
+  wire       [6:0]    _zz_result_286;
+  wire       [1:0]    _zz_result_287;
+  wire       [6:0]    _zz_result_288;
+  wire       [1:0]    _zz_result_289;
+  wire       [6:0]    _zz_result_290;
+  wire       [1:0]    _zz_result_291;
+  wire       [6:0]    _zz_result_292;
+  wire       [1:0]    _zz_result_293;
+  wire       [6:0]    _zz_result_294;
+  wire       [1:0]    _zz_result_295;
+  wire       [6:0]    _zz_result_296;
+  wire       [1:0]    _zz_result_297;
+  wire       [6:0]    _zz_result_298;
+  wire       [1:0]    _zz_result_299;
+  wire       [6:0]    _zz_result_300;
+  wire       [1:0]    _zz_result_301;
+  wire       [6:0]    _zz_result_302;
+  wire       [1:0]    _zz_result_303;
+  wire       [6:0]    _zz_result_304;
+  wire       [1:0]    _zz_result_305;
+  wire       [6:0]    _zz_result_306;
+  wire       [1:0]    _zz_result_307;
+  wire       [6:0]    _zz_result_308;
+  wire       [1:0]    _zz_result_309;
+  wire       [6:0]    _zz_result_310;
+  wire       [1:0]    _zz_result_311;
+  wire       [31:0]   _zz_result_312;
+  wire       [7:0]    _zz_result_313;
+  wire       [31:0]   _zz_result_314;
+  wire       [15:0]   _zz_result_315;
+  wire       [31:0]   _zz_result_316;
+  wire       [15:0]   _zz_result_317;
+  wire       [31:0]   _zz_result_318;
+  wire       [62:0]   _zz_result_319;
+  wire       [4:0]    _zz_result_320;
+  wire       [31:0]   _zz_result_321;
+  wire       [5:0]    _zz_result_322;
+  wire       [31:0]   _zz_result_323;
+  wire       [31:0]   _zz_result_324;
+  wire       [94:0]   _zz_result_325;
+  wire       [5:0]    _zz_result_326;
+  wire       [31:0]   _zz_result_327;
+  wire       [32:0]   _zz_result_328;
+  wire       [32:0]   _zz_result_329;
+  wire       [32:0]   _zz_result_330;
+  wire       [31:0]   _zz_result_331;
+  wire       [33:0]   _zz_result_332;
+  wire       [33:0]   _zz_result_333;
+  wire       [33:0]   _zz_result_334;
+  wire       [31:0]   _zz_result_335;
+  wire       [34:0]   _zz_result_336;
+  wire       [34:0]   _zz_result_337;
+  wire       [34:0]   _zz_result_338;
+  wire       [31:0]   _zz_result_339;
+  wire       [31:0]   _zz_result_340;
+  wire       [32:0]   _zz_result_341;
+  wire       [32:0]   _zz_result_342;
+  wire       [32:0]   _zz_result_343;
+  wire       [31:0]   _zz_result_344;
+  wire       [33:0]   _zz_result_345;
+  wire       [33:0]   _zz_result_346;
+  wire       [33:0]   _zz_result_347;
+  wire       [31:0]   _zz_result_348;
+  wire       [34:0]   _zz_result_349;
+  wire       [34:0]   _zz_result_350;
+  wire       [34:0]   _zz_result_351;
+  wire       [31:0]   _zz_result_352;
+  wire       [62:0]   _zz_result_353;
+  wire       [31:0]   _zz_result_354;
+  wire       [5:0]    _zz_result_355;
+  wire                _zz_result_356;
+  wire                _zz_result_357;
+  wire       [5:0]    _zz_result_358;
+  wire       [5:0]    _zz_result_359;
+  wire                _zz_result_360;
+  wire                _zz_result_361;
+  wire       [5:0]    _zz_result_362;
+  wire       [5:0]    _zz_result_363;
+  wire                _zz_result_364;
+  wire                _zz_result_365;
+  wire       [5:0]    _zz_result_366;
+  wire       [5:0]    _zz_result_367;
+  wire                _zz_result_368;
+  wire                _zz_result_369;
+  wire       [5:0]    _zz_result_370;
+  wire       [5:0]    _zz_result_371;
+  wire       [31:0]   _zz_result_372;
+  wire       [5:0]    _zz_result_373;
+  wire                _zz_result_374;
+  wire                _zz_result_375;
+  wire       [5:0]    _zz_result_376;
+  wire       [5:0]    _zz_result_377;
+  wire                _zz_result_378;
+  wire                _zz_result_379;
+  wire       [5:0]    _zz_result_380;
+  wire       [5:0]    _zz_result_381;
+  wire                _zz_result_382;
+  wire                _zz_result_383;
+  wire       [5:0]    _zz_result_384;
+  wire       [5:0]    _zz_result_385;
+  wire                _zz_result_386;
+  wire                _zz_result_387;
+  wire       [5:0]    _zz_result_388;
+  wire       [5:0]    _zz_result_389;
+  wire       [31:0]   _zz_result_390;
+  wire       [5:0]    _zz_result_391;
+  wire       [6:0]    _zz_result_392;
+  wire       [5:0]    _zz_result_393;
+  wire       [6:0]    _zz_result_394;
+  wire       [5:0]    _zz_result_395;
+  wire       [6:0]    _zz_result_396;
+  wire       [5:0]    _zz_result_397;
+  wire       [6:0]    _zz_result_398;
+  wire       [5:0]    _zz_result_399;
+  wire       [6:0]    _zz_result_400;
+  wire       [5:0]    _zz_result_401;
+  wire       [6:0]    _zz_result_402;
+  wire       [5:0]    _zz_result_403;
+  wire       [6:0]    _zz_result_404;
+  wire       [5:0]    _zz_result_405;
+  wire       [6:0]    _zz_result_406;
+  wire       [5:0]    _zz_result_407;
+  wire       [6:0]    _zz_result_408;
+  wire       [5:0]    _zz_result_409;
+  wire       [6:0]    _zz_result_410;
+  wire       [5:0]    _zz_result_411;
+  wire       [6:0]    _zz_result_412;
+  wire       [5:0]    _zz_result_413;
+  wire       [6:0]    _zz_result_414;
+  wire       [5:0]    _zz_result_415;
+  wire       [6:0]    _zz_result_416;
+  wire       [5:0]    _zz_result_417;
+  wire       [6:0]    _zz_result_418;
+  wire       [5:0]    _zz_result_419;
+  wire       [6:0]    _zz_result_420;
+  wire       [5:0]    _zz_result_421;
+  wire       [6:0]    _zz_result_422;
+  wire       [5:0]    _zz_result_423;
+  wire       [6:0]    _zz_result_424;
+  wire       [5:0]    _zz_result_425;
+  wire       [6:0]    _zz_result_426;
+  wire       [5:0]    _zz_result_427;
+  wire       [6:0]    _zz_result_428;
+  wire       [5:0]    _zz_result_429;
+  wire       [6:0]    _zz_result_430;
+  wire       [5:0]    _zz_result_431;
+  wire       [6:0]    _zz_result_432;
+  wire       [5:0]    _zz_result_433;
+  wire       [6:0]    _zz_result_434;
+  wire       [5:0]    _zz_result_435;
+  wire       [6:0]    _zz_result_436;
+  wire       [5:0]    _zz_result_437;
+  wire       [6:0]    _zz_result_438;
+  wire       [5:0]    _zz_result_439;
+  wire       [6:0]    _zz_result_440;
+  wire       [5:0]    _zz_result_441;
+  wire       [6:0]    _zz_result_442;
+  wire       [5:0]    _zz_result_443;
+  wire       [6:0]    _zz_result_444;
+  wire       [5:0]    _zz_result_445;
+  wire       [6:0]    _zz_result_446;
+  wire       [5:0]    _zz_result_447;
+  wire       [6:0]    _zz_result_448;
+  wire       [5:0]    _zz_result_449;
+  wire       [6:0]    _zz_result_450;
+  wire       [5:0]    _zz_result_451;
+  wire       [6:0]    _zz_result_452;
+  wire       [5:0]    _zz_result_453;
+  wire       [6:0]    _zz_result_454;
+  wire       [6:0]    _zz_result_455;
+  wire       [1:0]    _zz_result_456;
+  wire       [6:0]    _zz_result_457;
+  wire       [1:0]    _zz_result_458;
+  wire       [6:0]    _zz_result_459;
+  wire       [1:0]    _zz_result_460;
+  wire       [6:0]    _zz_result_461;
+  wire       [1:0]    _zz_result_462;
+  wire       [6:0]    _zz_result_463;
+  wire       [1:0]    _zz_result_464;
+  wire       [6:0]    _zz_result_465;
+  wire       [1:0]    _zz_result_466;
+  wire       [6:0]    _zz_result_467;
+  wire       [1:0]    _zz_result_468;
+  wire       [6:0]    _zz_result_469;
+  wire       [1:0]    _zz_result_470;
+  wire       [6:0]    _zz_result_471;
+  wire       [1:0]    _zz_result_472;
+  wire       [6:0]    _zz_result_473;
+  wire       [1:0]    _zz_result_474;
+  wire       [6:0]    _zz_result_475;
+  wire       [1:0]    _zz_result_476;
+  wire       [6:0]    _zz_result_477;
+  wire       [1:0]    _zz_result_478;
+  wire       [6:0]    _zz_result_479;
+  wire       [1:0]    _zz_result_480;
+  wire       [6:0]    _zz_result_481;
+  wire       [1:0]    _zz_result_482;
+  wire       [6:0]    _zz_result_483;
+  wire       [1:0]    _zz_result_484;
+  wire       [6:0]    _zz_result_485;
+  wire       [1:0]    _zz_result_486;
+  wire       [6:0]    _zz_result_487;
+  wire       [1:0]    _zz_result_488;
+  wire       [6:0]    _zz_result_489;
+  wire       [1:0]    _zz_result_490;
+  wire       [6:0]    _zz_result_491;
+  wire       [1:0]    _zz_result_492;
+  wire       [6:0]    _zz_result_493;
+  wire       [1:0]    _zz_result_494;
+  wire       [6:0]    _zz_result_495;
+  wire       [1:0]    _zz_result_496;
+  wire       [6:0]    _zz_result_497;
+  wire       [1:0]    _zz_result_498;
+  wire       [6:0]    _zz_result_499;
+  wire       [1:0]    _zz_result_500;
+  wire       [6:0]    _zz_result_501;
+  wire       [1:0]    _zz_result_502;
+  wire       [6:0]    _zz_result_503;
+  wire       [1:0]    _zz_result_504;
+  wire       [6:0]    _zz_result_505;
+  wire       [1:0]    _zz_result_506;
+  wire       [6:0]    _zz_result_507;
+  wire       [1:0]    _zz_result_508;
+  wire       [6:0]    _zz_result_509;
+  wire       [1:0]    _zz_result_510;
+  wire       [6:0]    _zz_result_511;
+  wire       [1:0]    _zz_result_512;
+  wire       [6:0]    _zz_result_513;
+  wire       [1:0]    _zz_result_514;
+  wire       [6:0]    _zz_result_515;
+  wire       [1:0]    _zz_result_516;
+  wire       [6:0]    _zz_result_517;
+  wire       [1:0]    _zz_result_518;
+  wire       [31:0]   _zz_result_519;
+  wire       [31:0]   _zz_result_520;
+  wire       [62:0]   _zz_result_521;
+  wire       [4:0]    _zz_result_522;
+  wire       [31:0]   _zz_result_523;
+  wire       [5:0]    _zz_result_524;
+  wire       [31:0]   _zz_result_525;
+  wire       [31:0]   _zz_result_526;
+  wire       [31:0]   _zz_result_527;
+  wire       [94:0]   _zz_result_528;
+  wire       [5:0]    _zz_result_529;
   wire       [31:0]   aU;
   wire       [31:0]   bU;
   wire       [31:0]   aS;
@@ -1476,6 +1962,8 @@ module Alu (
   wire       [31:0]   bW;
   wire       [31:0]   aWU;
   wire       [4:0]    shamtW;
+  wire       [31:0]   bitOneHot;
+  wire       [31:0]   aZext;
   wire       [63:0]   mulUU;
   wire       [63:0]   mulSS;
   wire       [32:0]   aSE;
@@ -1486,64 +1974,613 @@ module Alu (
   wire       [31:0]   mulHighSu;
   wire       [31:0]   mulHighU;
   reg        [31:0]   result;
+  wire                _zz_result;
+  wire                _zz_result_1;
+  wire                _zz_result_2;
+  wire                _zz_result_3;
+  wire                _zz_result_4;
+  wire                _zz_result_5;
+  wire                _zz_result_6;
+  wire                _zz_result_7;
+  wire                _zz_result_8;
+  wire                _zz_result_9;
+  wire                _zz_result_10;
+  wire                _zz_result_11;
+  wire                _zz_result_12;
+  wire                _zz_result_13;
+  wire                _zz_result_14;
+  wire                _zz_result_15;
+  wire                _zz_result_16;
+  wire                _zz_result_17;
+  wire                _zz_result_18;
+  wire                _zz_result_19;
+  wire                _zz_result_20;
+  wire                _zz_result_21;
+  wire                _zz_result_22;
+  wire                _zz_result_23;
+  wire                _zz_result_24;
+  wire                _zz_result_25;
+  wire                _zz_result_26;
+  wire                _zz_result_27;
+  wire                _zz_result_28;
+  wire                _zz_result_29;
+  wire                _zz_result_30;
+  wire                _zz_result_31;
+  wire                _zz_result_32;
+  wire                _zz_result_33;
+  wire                _zz_result_34;
+  wire                _zz_result_35;
+  wire                _zz_result_36;
+  wire                _zz_result_37;
+  wire                _zz_result_38;
+  wire                _zz_result_39;
+  wire                _zz_result_40;
+  wire                _zz_result_41;
+  wire                _zz_result_42;
+  wire                _zz_result_43;
+  wire                _zz_result_44;
+  wire                _zz_result_45;
+  wire                _zz_result_46;
+  wire                _zz_result_47;
+  wire                _zz_result_48;
+  wire                _zz_result_49;
+  wire                _zz_result_50;
+  wire                _zz_result_51;
+  wire                _zz_result_52;
+  wire                _zz_result_53;
+  wire                _zz_result_54;
+  wire                _zz_result_55;
+  wire                _zz_result_56;
+  wire                _zz_result_57;
+  wire                _zz_result_58;
+  wire                _zz_result_59;
+  wire                _zz_result_60;
+  wire                _zz_result_61;
+  wire       [5:0]    _zz_result_62;
+  wire       [5:0]    _zz_result_63;
+  wire       [31:0]   _zz_result_64;
+  wire                _zz_result_65;
+  wire                _zz_result_66;
+  wire                _zz_result_67;
+  wire                _zz_result_68;
+  wire                _zz_result_69;
+  wire                _zz_result_70;
+  wire                _zz_result_71;
+  wire                _zz_result_72;
+  wire                _zz_result_73;
+  wire                _zz_result_74;
+  wire                _zz_result_75;
+  wire                _zz_result_76;
+  wire                _zz_result_77;
+  wire                _zz_result_78;
+  wire                _zz_result_79;
+  wire                _zz_result_80;
+  wire                _zz_result_81;
+  wire                _zz_result_82;
+  wire                _zz_result_83;
+  wire                _zz_result_84;
+  wire                _zz_result_85;
+  wire                _zz_result_86;
+  wire                _zz_result_87;
+  wire                _zz_result_88;
+  wire                _zz_result_89;
+  wire                _zz_result_90;
+  wire                _zz_result_91;
+  wire                _zz_result_92;
+  wire                _zz_result_93;
+  wire                _zz_result_94;
+  wire                _zz_result_95;
+  wire       [31:0]   _zz_result_96;
+  wire                _zz_result_97;
+  wire                _zz_result_98;
+  wire                _zz_result_99;
+  wire                _zz_result_100;
+  wire                _zz_result_101;
+  wire                _zz_result_102;
+  wire                _zz_result_103;
+  wire                _zz_result_104;
+  wire                _zz_result_105;
+  wire                _zz_result_106;
+  wire                _zz_result_107;
+  wire                _zz_result_108;
+  wire                _zz_result_109;
+  wire                _zz_result_110;
+  wire                _zz_result_111;
+  wire                _zz_result_112;
+  wire                _zz_result_113;
+  wire                _zz_result_114;
+  wire                _zz_result_115;
+  wire                _zz_result_116;
+  wire                _zz_result_117;
+  wire                _zz_result_118;
+  wire                _zz_result_119;
+  wire                _zz_result_120;
+  wire                _zz_result_121;
+  wire                _zz_result_122;
+  wire                _zz_result_123;
+  wire                _zz_result_124;
+  wire                _zz_result_125;
+  wire                _zz_result_126;
+  wire                _zz_result_127;
+  wire       [31:0]   _zz_result_128;
+  wire       [5:0]    _zz_result_129;
+  wire       [5:0]    _zz_result_130;
   `ifndef SYNTHESIS
-  reg [47:0] io_op_string;
+  reg [63:0] io_op_string;
   `endif
 
 
+  assign _zz_bitOneHot = ({31'd0,32'h00000001} <<< shamt);
   assign _zz_bUE = {1'd0, bU};
   assign _zz_mulLow = mulUU;
   assign _zz_mulHighS = mulSS;
   assign _zz_mulHighSu = mulSU;
   assign _zz_mulHighU = mulUU;
-  assign _zz_result = (aU + bU);
-  assign _zz_result_1 = (aU - bU);
-  assign _zz_result_3 = ({31'd0,aU} <<< shamt);
-  assign _zz_result_2 = _zz_result_3[31:0];
-  assign _zz_result_4 = (aU >>> shamt);
-  assign _zz_result_5 = ($signed(aS) >>> shamt);
-  assign _zz_result_6 = ($signed(aW) + $signed(bW));
-  assign _zz_result_7 = ($signed(aW) - $signed(bW));
-  assign _zz_result_8 = _zz_result_9;
-  assign _zz_result_10 = ({31'd0,aWU} <<< shamtW);
-  assign _zz_result_9 = _zz_result_10[31:0];
-  assign _zz_result_11 = _zz_result_12;
-  assign _zz_result_12 = (aWU >>> shamtW);
-  assign _zz_result_13 = ($signed(aW) >>> shamtW);
-  assign _zz_result_15 = ($signed(aW) * $signed(bW));
-  assign _zz_result_14 = _zz_result_15[31:0];
+  assign _zz_result_131 = (aU + bU);
+  assign _zz_result_132 = (aU - bU);
+  assign _zz_result_134 = ({31'd0,aU} <<< shamt);
+  assign _zz_result_133 = _zz_result_134[31:0];
+  assign _zz_result_135 = (aU >>> shamt);
+  assign _zz_result_136 = ($signed(aS) >>> shamt);
+  assign _zz_result_137 = ($signed(aW) + $signed(bW));
+  assign _zz_result_138 = ($signed(aW) - $signed(bW));
+  assign _zz_result_139 = _zz_result_140;
+  assign _zz_result_141 = ({31'd0,aWU} <<< shamtW);
+  assign _zz_result_140 = _zz_result_141[31:0];
+  assign _zz_result_142 = _zz_result_143;
+  assign _zz_result_143 = (aWU >>> shamtW);
+  assign _zz_result_144 = ($signed(aW) >>> shamtW);
+  assign _zz_result_146 = ($signed(aW) * $signed(bW));
+  assign _zz_result_145 = _zz_result_146[31:0];
+  assign _zz_result_148 = (((_zz_result_30 && (! io_a[1])) && io_a[0]) ? 6'h1f : ((_zz_result_30 && io_a[1]) ? 6'h1e : ((_zz_result_29 && io_a[2]) ? 6'h1d : ((_zz_result_28 && io_a[3]) ? 6'h1c : ((_zz_result_27 && _zz_result_149) ? 6'h1b : (_zz_result_150 ? _zz_result_151 : _zz_result_152))))));
+  assign _zz_result_147 = {26'd0, _zz_result_148};
+  assign _zz_result_166 = (((_zz_result_61 && (! io_a[30])) && io_a[31]) ? 6'h1f : ((_zz_result_61 && io_a[30]) ? 6'h1e : ((_zz_result_60 && io_a[29]) ? 6'h1d : ((_zz_result_59 && io_a[28]) ? 6'h1c : ((_zz_result_58 && _zz_result_167) ? 6'h1b : (_zz_result_168 ? _zz_result_169 : _zz_result_170))))));
+  assign _zz_result_165 = {26'd0, _zz_result_166};
+  assign _zz_result_184 = _zz_result_185[5:0];
+  assign _zz_result_183 = {26'd0, _zz_result_184};
+  assign _zz_result_185 = ({1'b0,_zz_result_186} + _zz_result_310);
+  assign _zz_result_187 = ({1'b0,_zz_result_188} + _zz_result_308);
+  assign _zz_result_186 = _zz_result_187[5:0];
+  assign _zz_result_189 = ({1'b0,_zz_result_190} + _zz_result_306);
+  assign _zz_result_188 = _zz_result_189[5:0];
+  assign _zz_result_191 = ({1'b0,_zz_result_192} + _zz_result_304);
+  assign _zz_result_190 = _zz_result_191[5:0];
+  assign _zz_result_193 = ({1'b0,_zz_result_194} + _zz_result_302);
+  assign _zz_result_192 = _zz_result_193[5:0];
+  assign _zz_result_195 = ({1'b0,_zz_result_196} + _zz_result_300);
+  assign _zz_result_194 = _zz_result_195[5:0];
+  assign _zz_result_197 = ({1'b0,_zz_result_198} + _zz_result_298);
+  assign _zz_result_196 = _zz_result_197[5:0];
+  assign _zz_result_199 = ({1'b0,_zz_result_200} + _zz_result_296);
+  assign _zz_result_198 = _zz_result_199[5:0];
+  assign _zz_result_201 = ({1'b0,_zz_result_202} + _zz_result_294);
+  assign _zz_result_200 = _zz_result_201[5:0];
+  assign _zz_result_203 = ({1'b0,_zz_result_204} + _zz_result_292);
+  assign _zz_result_202 = _zz_result_203[5:0];
+  assign _zz_result_205 = ({1'b0,_zz_result_206} + _zz_result_290);
+  assign _zz_result_204 = _zz_result_205[5:0];
+  assign _zz_result_207 = ({1'b0,_zz_result_208} + _zz_result_288);
+  assign _zz_result_206 = _zz_result_207[5:0];
+  assign _zz_result_209 = ({1'b0,_zz_result_210} + _zz_result_286);
+  assign _zz_result_208 = _zz_result_209[5:0];
+  assign _zz_result_211 = ({1'b0,_zz_result_212} + _zz_result_284);
+  assign _zz_result_210 = _zz_result_211[5:0];
+  assign _zz_result_213 = ({1'b0,_zz_result_214} + _zz_result_282);
+  assign _zz_result_212 = _zz_result_213[5:0];
+  assign _zz_result_215 = ({1'b0,_zz_result_216} + _zz_result_280);
+  assign _zz_result_214 = _zz_result_215[5:0];
+  assign _zz_result_217 = ({1'b0,_zz_result_218} + _zz_result_278);
+  assign _zz_result_216 = _zz_result_217[5:0];
+  assign _zz_result_219 = ({1'b0,_zz_result_220} + _zz_result_276);
+  assign _zz_result_218 = _zz_result_219[5:0];
+  assign _zz_result_221 = ({1'b0,_zz_result_222} + _zz_result_274);
+  assign _zz_result_220 = _zz_result_221[5:0];
+  assign _zz_result_223 = ({1'b0,_zz_result_224} + _zz_result_272);
+  assign _zz_result_222 = _zz_result_223[5:0];
+  assign _zz_result_225 = ({1'b0,_zz_result_226} + _zz_result_270);
+  assign _zz_result_224 = _zz_result_225[5:0];
+  assign _zz_result_227 = ({1'b0,_zz_result_228} + _zz_result_268);
+  assign _zz_result_226 = _zz_result_227[5:0];
+  assign _zz_result_229 = ({1'b0,_zz_result_230} + _zz_result_266);
+  assign _zz_result_228 = _zz_result_229[5:0];
+  assign _zz_result_231 = ({1'b0,_zz_result_232} + _zz_result_264);
+  assign _zz_result_230 = _zz_result_231[5:0];
+  assign _zz_result_233 = ({1'b0,_zz_result_234} + _zz_result_262);
+  assign _zz_result_232 = _zz_result_233[5:0];
+  assign _zz_result_235 = ({1'b0,_zz_result_236} + _zz_result_260);
+  assign _zz_result_234 = _zz_result_235[5:0];
+  assign _zz_result_237 = ({1'b0,_zz_result_238} + _zz_result_258);
+  assign _zz_result_236 = _zz_result_237[5:0];
+  assign _zz_result_239 = ({1'b0,_zz_result_240} + _zz_result_256);
+  assign _zz_result_238 = _zz_result_239[5:0];
+  assign _zz_result_241 = ({1'b0,_zz_result_242} + _zz_result_254);
+  assign _zz_result_240 = _zz_result_241[5:0];
+  assign _zz_result_243 = ({1'b0,_zz_result_244} + _zz_result_252);
+  assign _zz_result_242 = _zz_result_243[5:0];
+  assign _zz_result_245 = ({1'b0,_zz_result_246} + _zz_result_250);
+  assign _zz_result_244 = _zz_result_245[5:0];
+  assign _zz_result_247 = ({1'b0,6'h0} + _zz_result_248);
+  assign _zz_result_246 = _zz_result_247[5:0];
+  assign _zz_result_249 = {1'b0,io_a[0]};
+  assign _zz_result_248 = {5'd0, _zz_result_249};
+  assign _zz_result_251 = {1'b0,io_a[1]};
+  assign _zz_result_250 = {5'd0, _zz_result_251};
+  assign _zz_result_253 = {1'b0,io_a[2]};
+  assign _zz_result_252 = {5'd0, _zz_result_253};
+  assign _zz_result_255 = {1'b0,io_a[3]};
+  assign _zz_result_254 = {5'd0, _zz_result_255};
+  assign _zz_result_257 = {1'b0,io_a[4]};
+  assign _zz_result_256 = {5'd0, _zz_result_257};
+  assign _zz_result_259 = {1'b0,io_a[5]};
+  assign _zz_result_258 = {5'd0, _zz_result_259};
+  assign _zz_result_261 = {1'b0,io_a[6]};
+  assign _zz_result_260 = {5'd0, _zz_result_261};
+  assign _zz_result_263 = {1'b0,io_a[7]};
+  assign _zz_result_262 = {5'd0, _zz_result_263};
+  assign _zz_result_265 = {1'b0,io_a[8]};
+  assign _zz_result_264 = {5'd0, _zz_result_265};
+  assign _zz_result_267 = {1'b0,io_a[9]};
+  assign _zz_result_266 = {5'd0, _zz_result_267};
+  assign _zz_result_269 = {1'b0,io_a[10]};
+  assign _zz_result_268 = {5'd0, _zz_result_269};
+  assign _zz_result_271 = {1'b0,io_a[11]};
+  assign _zz_result_270 = {5'd0, _zz_result_271};
+  assign _zz_result_273 = {1'b0,io_a[12]};
+  assign _zz_result_272 = {5'd0, _zz_result_273};
+  assign _zz_result_275 = {1'b0,io_a[13]};
+  assign _zz_result_274 = {5'd0, _zz_result_275};
+  assign _zz_result_277 = {1'b0,io_a[14]};
+  assign _zz_result_276 = {5'd0, _zz_result_277};
+  assign _zz_result_279 = {1'b0,io_a[15]};
+  assign _zz_result_278 = {5'd0, _zz_result_279};
+  assign _zz_result_281 = {1'b0,io_a[16]};
+  assign _zz_result_280 = {5'd0, _zz_result_281};
+  assign _zz_result_283 = {1'b0,io_a[17]};
+  assign _zz_result_282 = {5'd0, _zz_result_283};
+  assign _zz_result_285 = {1'b0,io_a[18]};
+  assign _zz_result_284 = {5'd0, _zz_result_285};
+  assign _zz_result_287 = {1'b0,io_a[19]};
+  assign _zz_result_286 = {5'd0, _zz_result_287};
+  assign _zz_result_289 = {1'b0,io_a[20]};
+  assign _zz_result_288 = {5'd0, _zz_result_289};
+  assign _zz_result_291 = {1'b0,io_a[21]};
+  assign _zz_result_290 = {5'd0, _zz_result_291};
+  assign _zz_result_293 = {1'b0,io_a[22]};
+  assign _zz_result_292 = {5'd0, _zz_result_293};
+  assign _zz_result_295 = {1'b0,io_a[23]};
+  assign _zz_result_294 = {5'd0, _zz_result_295};
+  assign _zz_result_297 = {1'b0,io_a[24]};
+  assign _zz_result_296 = {5'd0, _zz_result_297};
+  assign _zz_result_299 = {1'b0,io_a[25]};
+  assign _zz_result_298 = {5'd0, _zz_result_299};
+  assign _zz_result_301 = {1'b0,io_a[26]};
+  assign _zz_result_300 = {5'd0, _zz_result_301};
+  assign _zz_result_303 = {1'b0,io_a[27]};
+  assign _zz_result_302 = {5'd0, _zz_result_303};
+  assign _zz_result_305 = {1'b0,io_a[28]};
+  assign _zz_result_304 = {5'd0, _zz_result_305};
+  assign _zz_result_307 = {1'b0,io_a[29]};
+  assign _zz_result_306 = {5'd0, _zz_result_307};
+  assign _zz_result_309 = {1'b0,io_a[30]};
+  assign _zz_result_308 = {5'd0, _zz_result_309};
+  assign _zz_result_311 = {1'b0,io_a[31]};
+  assign _zz_result_310 = {5'd0, _zz_result_311};
+  assign _zz_result_313 = io_a[7 : 0];
+  assign _zz_result_312 = {{24{_zz_result_313[7]}}, _zz_result_313};
+  assign _zz_result_315 = io_a[15 : 0];
+  assign _zz_result_314 = {{16{_zz_result_315[15]}}, _zz_result_315};
+  assign _zz_result_317 = io_a[15 : 0];
+  assign _zz_result_316 = {16'd0, _zz_result_317};
+  assign _zz_result_319 = ({31'd0,aU} <<< _zz_result_320);
+  assign _zz_result_318 = _zz_result_319[31:0];
+  assign _zz_result_320 = _zz_result_62[4:0];
+  assign _zz_result_321 = (aU >>> _zz_result_322);
+  assign _zz_result_322 = (6'h20 - _zz_result_62);
+  assign _zz_result_323 = (aU >>> _zz_result_63);
+  assign _zz_result_325 = ({63'd0,aU} <<< _zz_result_326);
+  assign _zz_result_324 = _zz_result_325[31:0];
+  assign _zz_result_326 = (6'h20 - _zz_result_63);
+  assign _zz_result_328 = (_zz_result_329 + _zz_result_330);
+  assign _zz_result_327 = _zz_result_328[31:0];
+  assign _zz_result_329 = ({1'd0,aU} <<< 1'd1);
+  assign _zz_result_330 = {1'd0, bU};
+  assign _zz_result_332 = (_zz_result_333 + _zz_result_334);
+  assign _zz_result_331 = _zz_result_332[31:0];
+  assign _zz_result_333 = ({2'd0,aU} <<< 2'd2);
+  assign _zz_result_334 = {2'd0, bU};
+  assign _zz_result_336 = (_zz_result_337 + _zz_result_338);
+  assign _zz_result_335 = _zz_result_336[31:0];
+  assign _zz_result_337 = ({3'd0,aU} <<< 2'd3);
+  assign _zz_result_338 = {3'd0, bU};
+  assign _zz_result_339 = (aZext + bU);
+  assign _zz_result_341 = (_zz_result_342 + _zz_result_343);
+  assign _zz_result_340 = _zz_result_341[31:0];
+  assign _zz_result_342 = ({1'd0,aZext} <<< 1'd1);
+  assign _zz_result_343 = {1'd0, bU};
+  assign _zz_result_345 = (_zz_result_346 + _zz_result_347);
+  assign _zz_result_344 = _zz_result_345[31:0];
+  assign _zz_result_346 = ({2'd0,aZext} <<< 2'd2);
+  assign _zz_result_347 = {2'd0, bU};
+  assign _zz_result_349 = (_zz_result_350 + _zz_result_351);
+  assign _zz_result_348 = _zz_result_349[31:0];
+  assign _zz_result_350 = ({3'd0,aZext} <<< 2'd3);
+  assign _zz_result_351 = {3'd0, bU};
+  assign _zz_result_353 = ({31'd0,aZext} <<< shamt);
+  assign _zz_result_352 = _zz_result_353[31:0];
+  assign _zz_result_355 = (((_zz_result_95 && (! _zz_result_64[1])) && _zz_result_64[0]) ? 6'h1f : ((_zz_result_95 && _zz_result_64[1]) ? 6'h1e : ((_zz_result_94 && _zz_result_64[2]) ? 6'h1d : ((_zz_result_93 && _zz_result_64[3]) ? 6'h1c : ((_zz_result_92 && _zz_result_356) ? 6'h1b : (_zz_result_357 ? _zz_result_358 : _zz_result_359))))));
+  assign _zz_result_354 = {26'd0, _zz_result_355};
+  assign _zz_result_373 = (((_zz_result_127 && (! _zz_result_96[30])) && _zz_result_96[31]) ? 6'h1f : ((_zz_result_127 && _zz_result_96[30]) ? 6'h1e : ((_zz_result_126 && _zz_result_96[29]) ? 6'h1d : ((_zz_result_125 && _zz_result_96[28]) ? 6'h1c : ((_zz_result_124 && _zz_result_374) ? 6'h1b : (_zz_result_375 ? _zz_result_376 : _zz_result_377))))));
+  assign _zz_result_372 = {26'd0, _zz_result_373};
+  assign _zz_result_391 = _zz_result_392[5:0];
+  assign _zz_result_390 = {26'd0, _zz_result_391};
+  assign _zz_result_392 = ({1'b0,_zz_result_393} + _zz_result_517);
+  assign _zz_result_394 = ({1'b0,_zz_result_395} + _zz_result_515);
+  assign _zz_result_393 = _zz_result_394[5:0];
+  assign _zz_result_396 = ({1'b0,_zz_result_397} + _zz_result_513);
+  assign _zz_result_395 = _zz_result_396[5:0];
+  assign _zz_result_398 = ({1'b0,_zz_result_399} + _zz_result_511);
+  assign _zz_result_397 = _zz_result_398[5:0];
+  assign _zz_result_400 = ({1'b0,_zz_result_401} + _zz_result_509);
+  assign _zz_result_399 = _zz_result_400[5:0];
+  assign _zz_result_402 = ({1'b0,_zz_result_403} + _zz_result_507);
+  assign _zz_result_401 = _zz_result_402[5:0];
+  assign _zz_result_404 = ({1'b0,_zz_result_405} + _zz_result_505);
+  assign _zz_result_403 = _zz_result_404[5:0];
+  assign _zz_result_406 = ({1'b0,_zz_result_407} + _zz_result_503);
+  assign _zz_result_405 = _zz_result_406[5:0];
+  assign _zz_result_408 = ({1'b0,_zz_result_409} + _zz_result_501);
+  assign _zz_result_407 = _zz_result_408[5:0];
+  assign _zz_result_410 = ({1'b0,_zz_result_411} + _zz_result_499);
+  assign _zz_result_409 = _zz_result_410[5:0];
+  assign _zz_result_412 = ({1'b0,_zz_result_413} + _zz_result_497);
+  assign _zz_result_411 = _zz_result_412[5:0];
+  assign _zz_result_414 = ({1'b0,_zz_result_415} + _zz_result_495);
+  assign _zz_result_413 = _zz_result_414[5:0];
+  assign _zz_result_416 = ({1'b0,_zz_result_417} + _zz_result_493);
+  assign _zz_result_415 = _zz_result_416[5:0];
+  assign _zz_result_418 = ({1'b0,_zz_result_419} + _zz_result_491);
+  assign _zz_result_417 = _zz_result_418[5:0];
+  assign _zz_result_420 = ({1'b0,_zz_result_421} + _zz_result_489);
+  assign _zz_result_419 = _zz_result_420[5:0];
+  assign _zz_result_422 = ({1'b0,_zz_result_423} + _zz_result_487);
+  assign _zz_result_421 = _zz_result_422[5:0];
+  assign _zz_result_424 = ({1'b0,_zz_result_425} + _zz_result_485);
+  assign _zz_result_423 = _zz_result_424[5:0];
+  assign _zz_result_426 = ({1'b0,_zz_result_427} + _zz_result_483);
+  assign _zz_result_425 = _zz_result_426[5:0];
+  assign _zz_result_428 = ({1'b0,_zz_result_429} + _zz_result_481);
+  assign _zz_result_427 = _zz_result_428[5:0];
+  assign _zz_result_430 = ({1'b0,_zz_result_431} + _zz_result_479);
+  assign _zz_result_429 = _zz_result_430[5:0];
+  assign _zz_result_432 = ({1'b0,_zz_result_433} + _zz_result_477);
+  assign _zz_result_431 = _zz_result_432[5:0];
+  assign _zz_result_434 = ({1'b0,_zz_result_435} + _zz_result_475);
+  assign _zz_result_433 = _zz_result_434[5:0];
+  assign _zz_result_436 = ({1'b0,_zz_result_437} + _zz_result_473);
+  assign _zz_result_435 = _zz_result_436[5:0];
+  assign _zz_result_438 = ({1'b0,_zz_result_439} + _zz_result_471);
+  assign _zz_result_437 = _zz_result_438[5:0];
+  assign _zz_result_440 = ({1'b0,_zz_result_441} + _zz_result_469);
+  assign _zz_result_439 = _zz_result_440[5:0];
+  assign _zz_result_442 = ({1'b0,_zz_result_443} + _zz_result_467);
+  assign _zz_result_441 = _zz_result_442[5:0];
+  assign _zz_result_444 = ({1'b0,_zz_result_445} + _zz_result_465);
+  assign _zz_result_443 = _zz_result_444[5:0];
+  assign _zz_result_446 = ({1'b0,_zz_result_447} + _zz_result_463);
+  assign _zz_result_445 = _zz_result_446[5:0];
+  assign _zz_result_448 = ({1'b0,_zz_result_449} + _zz_result_461);
+  assign _zz_result_447 = _zz_result_448[5:0];
+  assign _zz_result_450 = ({1'b0,_zz_result_451} + _zz_result_459);
+  assign _zz_result_449 = _zz_result_450[5:0];
+  assign _zz_result_452 = ({1'b0,_zz_result_453} + _zz_result_457);
+  assign _zz_result_451 = _zz_result_452[5:0];
+  assign _zz_result_454 = ({1'b0,6'h0} + _zz_result_455);
+  assign _zz_result_453 = _zz_result_454[5:0];
+  assign _zz_result_456 = {1'b0,_zz_result_128[0]};
+  assign _zz_result_455 = {5'd0, _zz_result_456};
+  assign _zz_result_458 = {1'b0,_zz_result_128[1]};
+  assign _zz_result_457 = {5'd0, _zz_result_458};
+  assign _zz_result_460 = {1'b0,_zz_result_128[2]};
+  assign _zz_result_459 = {5'd0, _zz_result_460};
+  assign _zz_result_462 = {1'b0,_zz_result_128[3]};
+  assign _zz_result_461 = {5'd0, _zz_result_462};
+  assign _zz_result_464 = {1'b0,_zz_result_128[4]};
+  assign _zz_result_463 = {5'd0, _zz_result_464};
+  assign _zz_result_466 = {1'b0,_zz_result_128[5]};
+  assign _zz_result_465 = {5'd0, _zz_result_466};
+  assign _zz_result_468 = {1'b0,_zz_result_128[6]};
+  assign _zz_result_467 = {5'd0, _zz_result_468};
+  assign _zz_result_470 = {1'b0,_zz_result_128[7]};
+  assign _zz_result_469 = {5'd0, _zz_result_470};
+  assign _zz_result_472 = {1'b0,_zz_result_128[8]};
+  assign _zz_result_471 = {5'd0, _zz_result_472};
+  assign _zz_result_474 = {1'b0,_zz_result_128[9]};
+  assign _zz_result_473 = {5'd0, _zz_result_474};
+  assign _zz_result_476 = {1'b0,_zz_result_128[10]};
+  assign _zz_result_475 = {5'd0, _zz_result_476};
+  assign _zz_result_478 = {1'b0,_zz_result_128[11]};
+  assign _zz_result_477 = {5'd0, _zz_result_478};
+  assign _zz_result_480 = {1'b0,_zz_result_128[12]};
+  assign _zz_result_479 = {5'd0, _zz_result_480};
+  assign _zz_result_482 = {1'b0,_zz_result_128[13]};
+  assign _zz_result_481 = {5'd0, _zz_result_482};
+  assign _zz_result_484 = {1'b0,_zz_result_128[14]};
+  assign _zz_result_483 = {5'd0, _zz_result_484};
+  assign _zz_result_486 = {1'b0,_zz_result_128[15]};
+  assign _zz_result_485 = {5'd0, _zz_result_486};
+  assign _zz_result_488 = {1'b0,_zz_result_128[16]};
+  assign _zz_result_487 = {5'd0, _zz_result_488};
+  assign _zz_result_490 = {1'b0,_zz_result_128[17]};
+  assign _zz_result_489 = {5'd0, _zz_result_490};
+  assign _zz_result_492 = {1'b0,_zz_result_128[18]};
+  assign _zz_result_491 = {5'd0, _zz_result_492};
+  assign _zz_result_494 = {1'b0,_zz_result_128[19]};
+  assign _zz_result_493 = {5'd0, _zz_result_494};
+  assign _zz_result_496 = {1'b0,_zz_result_128[20]};
+  assign _zz_result_495 = {5'd0, _zz_result_496};
+  assign _zz_result_498 = {1'b0,_zz_result_128[21]};
+  assign _zz_result_497 = {5'd0, _zz_result_498};
+  assign _zz_result_500 = {1'b0,_zz_result_128[22]};
+  assign _zz_result_499 = {5'd0, _zz_result_500};
+  assign _zz_result_502 = {1'b0,_zz_result_128[23]};
+  assign _zz_result_501 = {5'd0, _zz_result_502};
+  assign _zz_result_504 = {1'b0,_zz_result_128[24]};
+  assign _zz_result_503 = {5'd0, _zz_result_504};
+  assign _zz_result_506 = {1'b0,_zz_result_128[25]};
+  assign _zz_result_505 = {5'd0, _zz_result_506};
+  assign _zz_result_508 = {1'b0,_zz_result_128[26]};
+  assign _zz_result_507 = {5'd0, _zz_result_508};
+  assign _zz_result_510 = {1'b0,_zz_result_128[27]};
+  assign _zz_result_509 = {5'd0, _zz_result_510};
+  assign _zz_result_512 = {1'b0,_zz_result_128[28]};
+  assign _zz_result_511 = {5'd0, _zz_result_512};
+  assign _zz_result_514 = {1'b0,_zz_result_128[29]};
+  assign _zz_result_513 = {5'd0, _zz_result_514};
+  assign _zz_result_516 = {1'b0,_zz_result_128[30]};
+  assign _zz_result_515 = {5'd0, _zz_result_516};
+  assign _zz_result_518 = {1'b0,_zz_result_128[31]};
+  assign _zz_result_517 = {5'd0, _zz_result_518};
+  assign _zz_result_519 = ((shamtW == 5'h0) ? aWU : (_zz_result_520 | _zz_result_523));
+  assign _zz_result_521 = ({31'd0,aWU} <<< _zz_result_522);
+  assign _zz_result_520 = _zz_result_521[31:0];
+  assign _zz_result_522 = _zz_result_129[4:0];
+  assign _zz_result_523 = (aWU >>> _zz_result_524);
+  assign _zz_result_524 = (6'h20 - _zz_result_129);
+  assign _zz_result_525 = ((shamtW == 5'h0) ? aWU : (_zz_result_526 | _zz_result_527));
+  assign _zz_result_526 = (aWU >>> _zz_result_130);
+  assign _zz_result_528 = ({63'd0,aWU} <<< _zz_result_529);
+  assign _zz_result_527 = _zz_result_528[31:0];
+  assign _zz_result_529 = (6'h20 - _zz_result_130);
+  assign _zz_result_149 = io_a[4];
+  assign _zz_result_150 = (_zz_result_26 && io_a[5]);
+  assign _zz_result_151 = 6'h1a;
+  assign _zz_result_152 = ((_zz_result_25 && io_a[6]) ? 6'h19 : ((_zz_result_24 && io_a[7]) ? 6'h18 : ((_zz_result_23 && io_a[8]) ? 6'h17 : ((_zz_result_22 && io_a[9]) ? 6'h16 : ((_zz_result_21 && io_a[10]) ? 6'h15 : ((_zz_result_20 && _zz_result_153) ? 6'h14 : (_zz_result_154 ? _zz_result_155 : _zz_result_156)))))));
+  assign _zz_result_153 = io_a[11];
+  assign _zz_result_154 = (_zz_result_19 && io_a[12]);
+  assign _zz_result_155 = 6'h13;
+  assign _zz_result_156 = ((_zz_result_18 && io_a[13]) ? 6'h12 : ((_zz_result_17 && io_a[14]) ? 6'h11 : ((_zz_result_16 && io_a[15]) ? 6'h10 : ((_zz_result_15 && io_a[16]) ? 6'h0f : ((_zz_result_14 && io_a[17]) ? 6'h0e : ((_zz_result_13 && _zz_result_157) ? 6'h0d : (_zz_result_158 ? _zz_result_159 : _zz_result_160)))))));
+  assign _zz_result_157 = io_a[18];
+  assign _zz_result_158 = (_zz_result_12 && io_a[19]);
+  assign _zz_result_159 = 6'h0c;
+  assign _zz_result_160 = ((_zz_result_11 && io_a[20]) ? 6'h0b : ((_zz_result_10 && io_a[21]) ? 6'h0a : ((_zz_result_9 && io_a[22]) ? 6'h09 : ((_zz_result_8 && io_a[23]) ? 6'h08 : ((_zz_result_7 && io_a[24]) ? 6'h07 : ((_zz_result_6 && _zz_result_161) ? 6'h06 : (_zz_result_162 ? _zz_result_163 : _zz_result_164)))))));
+  assign _zz_result_161 = io_a[25];
+  assign _zz_result_162 = (_zz_result_5 && io_a[26]);
+  assign _zz_result_163 = 6'h05;
+  assign _zz_result_164 = ((_zz_result_4 && io_a[27]) ? 6'h04 : ((_zz_result_3 && io_a[28]) ? 6'h03 : ((_zz_result_2 && io_a[29]) ? 6'h02 : ((_zz_result_1 && io_a[30]) ? 6'h01 : ((_zz_result && io_a[31]) ? 6'h0 : 6'h20)))));
+  assign _zz_result_167 = io_a[27];
+  assign _zz_result_168 = (_zz_result_57 && io_a[26]);
+  assign _zz_result_169 = 6'h1a;
+  assign _zz_result_170 = ((_zz_result_56 && io_a[25]) ? 6'h19 : ((_zz_result_55 && io_a[24]) ? 6'h18 : ((_zz_result_54 && io_a[23]) ? 6'h17 : ((_zz_result_53 && io_a[22]) ? 6'h16 : ((_zz_result_52 && io_a[21]) ? 6'h15 : ((_zz_result_51 && _zz_result_171) ? 6'h14 : (_zz_result_172 ? _zz_result_173 : _zz_result_174)))))));
+  assign _zz_result_171 = io_a[20];
+  assign _zz_result_172 = (_zz_result_50 && io_a[19]);
+  assign _zz_result_173 = 6'h13;
+  assign _zz_result_174 = ((_zz_result_49 && io_a[18]) ? 6'h12 : ((_zz_result_48 && io_a[17]) ? 6'h11 : ((_zz_result_47 && io_a[16]) ? 6'h10 : ((_zz_result_46 && io_a[15]) ? 6'h0f : ((_zz_result_45 && io_a[14]) ? 6'h0e : ((_zz_result_44 && _zz_result_175) ? 6'h0d : (_zz_result_176 ? _zz_result_177 : _zz_result_178)))))));
+  assign _zz_result_175 = io_a[13];
+  assign _zz_result_176 = (_zz_result_43 && io_a[12]);
+  assign _zz_result_177 = 6'h0c;
+  assign _zz_result_178 = ((_zz_result_42 && io_a[11]) ? 6'h0b : ((_zz_result_41 && io_a[10]) ? 6'h0a : ((_zz_result_40 && io_a[9]) ? 6'h09 : ((_zz_result_39 && io_a[8]) ? 6'h08 : ((_zz_result_38 && io_a[7]) ? 6'h07 : ((_zz_result_37 && _zz_result_179) ? 6'h06 : (_zz_result_180 ? _zz_result_181 : _zz_result_182)))))));
+  assign _zz_result_179 = io_a[6];
+  assign _zz_result_180 = (_zz_result_36 && io_a[5]);
+  assign _zz_result_181 = 6'h05;
+  assign _zz_result_182 = ((_zz_result_35 && io_a[4]) ? 6'h04 : ((_zz_result_34 && io_a[3]) ? 6'h03 : ((_zz_result_33 && io_a[2]) ? 6'h02 : ((_zz_result_32 && io_a[1]) ? 6'h01 : ((_zz_result_31 && io_a[0]) ? 6'h0 : 6'h20)))));
+  assign _zz_result_356 = _zz_result_64[4];
+  assign _zz_result_357 = (_zz_result_91 && _zz_result_64[5]);
+  assign _zz_result_358 = 6'h1a;
+  assign _zz_result_359 = ((_zz_result_90 && _zz_result_64[6]) ? 6'h19 : ((_zz_result_89 && _zz_result_64[7]) ? 6'h18 : ((_zz_result_88 && _zz_result_64[8]) ? 6'h17 : ((_zz_result_87 && _zz_result_64[9]) ? 6'h16 : ((_zz_result_86 && _zz_result_64[10]) ? 6'h15 : ((_zz_result_85 && _zz_result_360) ? 6'h14 : (_zz_result_361 ? _zz_result_362 : _zz_result_363)))))));
+  assign _zz_result_360 = _zz_result_64[11];
+  assign _zz_result_361 = (_zz_result_84 && _zz_result_64[12]);
+  assign _zz_result_362 = 6'h13;
+  assign _zz_result_363 = ((_zz_result_83 && _zz_result_64[13]) ? 6'h12 : ((_zz_result_82 && _zz_result_64[14]) ? 6'h11 : ((_zz_result_81 && _zz_result_64[15]) ? 6'h10 : ((_zz_result_80 && _zz_result_64[16]) ? 6'h0f : ((_zz_result_79 && _zz_result_64[17]) ? 6'h0e : ((_zz_result_78 && _zz_result_364) ? 6'h0d : (_zz_result_365 ? _zz_result_366 : _zz_result_367)))))));
+  assign _zz_result_364 = _zz_result_64[18];
+  assign _zz_result_365 = (_zz_result_77 && _zz_result_64[19]);
+  assign _zz_result_366 = 6'h0c;
+  assign _zz_result_367 = ((_zz_result_76 && _zz_result_64[20]) ? 6'h0b : ((_zz_result_75 && _zz_result_64[21]) ? 6'h0a : ((_zz_result_74 && _zz_result_64[22]) ? 6'h09 : ((_zz_result_73 && _zz_result_64[23]) ? 6'h08 : ((_zz_result_72 && _zz_result_64[24]) ? 6'h07 : ((_zz_result_71 && _zz_result_368) ? 6'h06 : (_zz_result_369 ? _zz_result_370 : _zz_result_371)))))));
+  assign _zz_result_368 = _zz_result_64[25];
+  assign _zz_result_369 = (_zz_result_70 && _zz_result_64[26]);
+  assign _zz_result_370 = 6'h05;
+  assign _zz_result_371 = ((_zz_result_69 && _zz_result_64[27]) ? 6'h04 : ((_zz_result_68 && _zz_result_64[28]) ? 6'h03 : ((_zz_result_67 && _zz_result_64[29]) ? 6'h02 : ((_zz_result_66 && _zz_result_64[30]) ? 6'h01 : ((_zz_result_65 && _zz_result_64[31]) ? 6'h0 : 6'h20)))));
+  assign _zz_result_374 = _zz_result_96[27];
+  assign _zz_result_375 = (_zz_result_123 && _zz_result_96[26]);
+  assign _zz_result_376 = 6'h1a;
+  assign _zz_result_377 = ((_zz_result_122 && _zz_result_96[25]) ? 6'h19 : ((_zz_result_121 && _zz_result_96[24]) ? 6'h18 : ((_zz_result_120 && _zz_result_96[23]) ? 6'h17 : ((_zz_result_119 && _zz_result_96[22]) ? 6'h16 : ((_zz_result_118 && _zz_result_96[21]) ? 6'h15 : ((_zz_result_117 && _zz_result_378) ? 6'h14 : (_zz_result_379 ? _zz_result_380 : _zz_result_381)))))));
+  assign _zz_result_378 = _zz_result_96[20];
+  assign _zz_result_379 = (_zz_result_116 && _zz_result_96[19]);
+  assign _zz_result_380 = 6'h13;
+  assign _zz_result_381 = ((_zz_result_115 && _zz_result_96[18]) ? 6'h12 : ((_zz_result_114 && _zz_result_96[17]) ? 6'h11 : ((_zz_result_113 && _zz_result_96[16]) ? 6'h10 : ((_zz_result_112 && _zz_result_96[15]) ? 6'h0f : ((_zz_result_111 && _zz_result_96[14]) ? 6'h0e : ((_zz_result_110 && _zz_result_382) ? 6'h0d : (_zz_result_383 ? _zz_result_384 : _zz_result_385)))))));
+  assign _zz_result_382 = _zz_result_96[13];
+  assign _zz_result_383 = (_zz_result_109 && _zz_result_96[12]);
+  assign _zz_result_384 = 6'h0c;
+  assign _zz_result_385 = ((_zz_result_108 && _zz_result_96[11]) ? 6'h0b : ((_zz_result_107 && _zz_result_96[10]) ? 6'h0a : ((_zz_result_106 && _zz_result_96[9]) ? 6'h09 : ((_zz_result_105 && _zz_result_96[8]) ? 6'h08 : ((_zz_result_104 && _zz_result_96[7]) ? 6'h07 : ((_zz_result_103 && _zz_result_386) ? 6'h06 : (_zz_result_387 ? _zz_result_388 : _zz_result_389)))))));
+  assign _zz_result_386 = _zz_result_96[6];
+  assign _zz_result_387 = (_zz_result_102 && _zz_result_96[5]);
+  assign _zz_result_388 = 6'h05;
+  assign _zz_result_389 = ((_zz_result_101 && _zz_result_96[4]) ? 6'h04 : ((_zz_result_100 && _zz_result_96[3]) ? 6'h03 : ((_zz_result_99 && _zz_result_96[2]) ? 6'h02 : ((_zz_result_98 && _zz_result_96[1]) ? 6'h01 : ((_zz_result_97 && _zz_result_96[0]) ? 6'h0 : 6'h20)))));
   `ifndef SYNTHESIS
   always @(*) begin
     case(io_op)
-      AluOp_ADD : io_op_string = "ADD   ";
-      AluOp_SUB : io_op_string = "SUB   ";
-      AluOp_SLL_1 : io_op_string = "SLL_1 ";
-      AluOp_SLT : io_op_string = "SLT   ";
-      AluOp_SLTU : io_op_string = "SLTU  ";
-      AluOp_XOR_1 : io_op_string = "XOR_1 ";
-      AluOp_SRL_1 : io_op_string = "SRL_1 ";
-      AluOp_SRA_1 : io_op_string = "SRA_1 ";
-      AluOp_OR_1 : io_op_string = "OR_1  ";
-      AluOp_AND_1 : io_op_string = "AND_1 ";
-      AluOp_ADDW : io_op_string = "ADDW  ";
-      AluOp_SUBW : io_op_string = "SUBW  ";
-      AluOp_SLLW : io_op_string = "SLLW  ";
-      AluOp_SRLW : io_op_string = "SRLW  ";
-      AluOp_SRAW : io_op_string = "SRAW  ";
-      AluOp_MUL : io_op_string = "MUL   ";
-      AluOp_MULH : io_op_string = "MULH  ";
-      AluOp_MULHSU : io_op_string = "MULHSU";
-      AluOp_MULHU : io_op_string = "MULHU ";
-      AluOp_DIV : io_op_string = "DIV   ";
-      AluOp_DIVU : io_op_string = "DIVU  ";
-      AluOp_REM_1 : io_op_string = "REM_1 ";
-      AluOp_REMU : io_op_string = "REMU  ";
-      AluOp_MULW : io_op_string = "MULW  ";
-      AluOp_DIVW : io_op_string = "DIVW  ";
-      AluOp_DIVUW : io_op_string = "DIVUW ";
-      AluOp_REMW : io_op_string = "REMW  ";
-      AluOp_REMUW : io_op_string = "REMUW ";
-      default : io_op_string = "??????";
+      AluOp_ADD : io_op_string = "ADD     ";
+      AluOp_SUB : io_op_string = "SUB     ";
+      AluOp_SLL_1 : io_op_string = "SLL_1   ";
+      AluOp_SLT : io_op_string = "SLT     ";
+      AluOp_SLTU : io_op_string = "SLTU    ";
+      AluOp_XOR_1 : io_op_string = "XOR_1   ";
+      AluOp_SRL_1 : io_op_string = "SRL_1   ";
+      AluOp_SRA_1 : io_op_string = "SRA_1   ";
+      AluOp_OR_1 : io_op_string = "OR_1    ";
+      AluOp_AND_1 : io_op_string = "AND_1   ";
+      AluOp_ADDW : io_op_string = "ADDW    ";
+      AluOp_SUBW : io_op_string = "SUBW    ";
+      AluOp_SLLW : io_op_string = "SLLW    ";
+      AluOp_SRLW : io_op_string = "SRLW    ";
+      AluOp_SRAW : io_op_string = "SRAW    ";
+      AluOp_MUL : io_op_string = "MUL     ";
+      AluOp_MULH : io_op_string = "MULH    ";
+      AluOp_MULHSU : io_op_string = "MULHSU  ";
+      AluOp_MULHU : io_op_string = "MULHU   ";
+      AluOp_DIV : io_op_string = "DIV     ";
+      AluOp_DIVU : io_op_string = "DIVU    ";
+      AluOp_REM_1 : io_op_string = "REM_1   ";
+      AluOp_REMU : io_op_string = "REMU    ";
+      AluOp_MULW : io_op_string = "MULW    ";
+      AluOp_DIVW : io_op_string = "DIVW    ";
+      AluOp_DIVUW : io_op_string = "DIVUW   ";
+      AluOp_REMW : io_op_string = "REMW    ";
+      AluOp_REMUW : io_op_string = "REMUW   ";
+      AluOp_ANDN : io_op_string = "ANDN    ";
+      AluOp_ORN : io_op_string = "ORN     ";
+      AluOp_XNOR_1 : io_op_string = "XNOR_1  ";
+      AluOp_CLZ : io_op_string = "CLZ     ";
+      AluOp_CTZ : io_op_string = "CTZ     ";
+      AluOp_CPOP : io_op_string = "CPOP    ";
+      AluOp_SEXTB : io_op_string = "SEXTB   ";
+      AluOp_SEXTH : io_op_string = "SEXTH   ";
+      AluOp_ZEXTH : io_op_string = "ZEXTH   ";
+      AluOp_ORCB : io_op_string = "ORCB    ";
+      AluOp_REV8 : io_op_string = "REV8    ";
+      AluOp_ROL_1 : io_op_string = "ROL_1   ";
+      AluOp_ROR_1 : io_op_string = "ROR_1   ";
+      AluOp_MIN : io_op_string = "MIN     ";
+      AluOp_MINU : io_op_string = "MINU    ";
+      AluOp_MAX : io_op_string = "MAX     ";
+      AluOp_MAXU : io_op_string = "MAXU    ";
+      AluOp_BSET : io_op_string = "BSET    ";
+      AluOp_BCLR : io_op_string = "BCLR    ";
+      AluOp_BINV : io_op_string = "BINV    ";
+      AluOp_BEXT : io_op_string = "BEXT    ";
+      AluOp_SH1ADD : io_op_string = "SH1ADD  ";
+      AluOp_SH2ADD : io_op_string = "SH2ADD  ";
+      AluOp_SH3ADD : io_op_string = "SH3ADD  ";
+      AluOp_ADDUW : io_op_string = "ADDUW   ";
+      AluOp_SH1ADDUW : io_op_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : io_op_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : io_op_string = "SH3ADDUW";
+      AluOp_SLLIUW : io_op_string = "SLLIUW  ";
+      AluOp_CLZW : io_op_string = "CLZW    ";
+      AluOp_CTZW : io_op_string = "CTZW    ";
+      AluOp_CPOPW : io_op_string = "CPOPW   ";
+      AluOp_ROLW : io_op_string = "ROLW    ";
+      AluOp_RORW : io_op_string = "RORW    ";
+      default : io_op_string = "????????";
     endcase
   end
   `endif
@@ -1557,6 +2594,8 @@ module Alu (
   assign bW = bS[31 : 0];
   assign aWU = aU[31 : 0];
   assign shamtW = io_b[4 : 0];
+  assign bitOneHot = _zz_bitOneHot[31:0];
+  assign aZext = aU[31 : 0];
   assign mulUU = (aU * bU);
   assign mulSS = ($signed(aS) * $signed(bS));
   assign aSE = {{1{aS[31]}}, aS};
@@ -1569,13 +2608,13 @@ module Alu (
   always @(*) begin
     case(io_op)
       AluOp_ADD : begin
-        result = _zz_result;
+        result = _zz_result_131;
       end
       AluOp_SUB : begin
-        result = _zz_result_1;
+        result = _zz_result_132;
       end
       AluOp_SLL_1 : begin
-        result = _zz_result_2;
+        result = _zz_result_133;
       end
       AluOp_SLT : begin
         result = (($signed(aS) < $signed(bS)) ? 32'h00000001 : 32'h0);
@@ -1587,10 +2626,10 @@ module Alu (
         result = (io_a ^ io_b);
       end
       AluOp_SRL_1 : begin
-        result = _zz_result_4;
+        result = _zz_result_135;
       end
       AluOp_SRA_1 : begin
-        result = _zz_result_5;
+        result = _zz_result_136;
       end
       AluOp_OR_1 : begin
         result = (io_a | io_b);
@@ -1599,19 +2638,19 @@ module Alu (
         result = (io_a & io_b);
       end
       AluOp_ADDW : begin
-        result = _zz_result_6;
+        result = _zz_result_137;
       end
       AluOp_SUBW : begin
-        result = _zz_result_7;
+        result = _zz_result_138;
       end
       AluOp_SLLW : begin
-        result = _zz_result_8;
+        result = _zz_result_139;
       end
       AluOp_SRLW : begin
-        result = _zz_result_11;
+        result = _zz_result_142;
       end
       AluOp_SRAW : begin
-        result = _zz_result_13;
+        result = _zz_result_144;
       end
       AluOp_MUL : begin
         result = mulLow;
@@ -1638,7 +2677,7 @@ module Alu (
         result = 32'h0;
       end
       AluOp_MULW : begin
-        result = _zz_result_14;
+        result = _zz_result_145;
       end
       AluOp_DIVW : begin
         result = 32'h0;
@@ -1649,12 +2688,245 @@ module Alu (
       AluOp_REMW : begin
         result = 32'h0;
       end
-      default : begin
+      AluOp_REMUW : begin
         result = 32'h0;
+      end
+      AluOp_ANDN : begin
+        result = (io_a & (~ io_b));
+      end
+      AluOp_ORN : begin
+        result = (io_a | (~ io_b));
+      end
+      AluOp_XNOR_1 : begin
+        result = (~ (io_a ^ io_b));
+      end
+      AluOp_CLZ : begin
+        result = _zz_result_147;
+      end
+      AluOp_CTZ : begin
+        result = _zz_result_165;
+      end
+      AluOp_CPOP : begin
+        result = _zz_result_183;
+      end
+      AluOp_SEXTB : begin
+        result = _zz_result_312;
+      end
+      AluOp_SEXTH : begin
+        result = _zz_result_314;
+      end
+      AluOp_ZEXTH : begin
+        result = _zz_result_316;
+      end
+      AluOp_ORCB : begin
+        result = {((|io_a[31 : 24]) ? 8'hff : 8'h0),{((|io_a[23 : 16]) ? 8'hff : 8'h0),{((|io_a[15 : 8]) ? 8'hff : 8'h0),((|io_a[7 : 0]) ? 8'hff : 8'h0)}}};
+      end
+      AluOp_REV8 : begin
+        result = {io_a[7 : 0],{io_a[15 : 8],{io_a[23 : 16],io_a[31 : 24]}}};
+      end
+      AluOp_ROL_1 : begin
+        result = ((shamt == 5'h0) ? aU : (_zz_result_318 | _zz_result_321));
+      end
+      AluOp_ROR_1 : begin
+        result = ((shamt == 5'h0) ? aU : (_zz_result_323 | _zz_result_324));
+      end
+      AluOp_MIN : begin
+        result = (($signed(aS) < $signed(bS)) ? io_a : io_b);
+      end
+      AluOp_MINU : begin
+        result = ((aU < bU) ? io_a : io_b);
+      end
+      AluOp_MAX : begin
+        result = (($signed(bS) < $signed(aS)) ? io_a : io_b);
+      end
+      AluOp_MAXU : begin
+        result = ((bU < aU) ? io_a : io_b);
+      end
+      AluOp_BSET : begin
+        result = (io_a | bitOneHot);
+      end
+      AluOp_BCLR : begin
+        result = (io_a & (~ bitOneHot));
+      end
+      AluOp_BINV : begin
+        result = (io_a ^ bitOneHot);
+      end
+      AluOp_BEXT : begin
+        result = ((|(aU & bitOneHot)) ? 32'h00000001 : 32'h0);
+      end
+      AluOp_SH1ADD : begin
+        result = _zz_result_327;
+      end
+      AluOp_SH2ADD : begin
+        result = _zz_result_331;
+      end
+      AluOp_SH3ADD : begin
+        result = _zz_result_335;
+      end
+      AluOp_ADDUW : begin
+        result = _zz_result_339;
+      end
+      AluOp_SH1ADDUW : begin
+        result = _zz_result_340;
+      end
+      AluOp_SH2ADDUW : begin
+        result = _zz_result_344;
+      end
+      AluOp_SH3ADDUW : begin
+        result = _zz_result_348;
+      end
+      AluOp_SLLIUW : begin
+        result = _zz_result_352;
+      end
+      AluOp_CLZW : begin
+        result = _zz_result_354;
+      end
+      AluOp_CTZW : begin
+        result = _zz_result_372;
+      end
+      AluOp_CPOPW : begin
+        result = _zz_result_390;
+      end
+      AluOp_ROLW : begin
+        result = _zz_result_519;
+      end
+      default : begin
+        result = _zz_result_525;
       end
     endcase
   end
 
+  assign _zz_result = 1'b1;
+  assign _zz_result_1 = (_zz_result && (! io_a[31]));
+  assign _zz_result_2 = (_zz_result_1 && (! io_a[30]));
+  assign _zz_result_3 = (_zz_result_2 && (! io_a[29]));
+  assign _zz_result_4 = (_zz_result_3 && (! io_a[28]));
+  assign _zz_result_5 = (_zz_result_4 && (! io_a[27]));
+  assign _zz_result_6 = (_zz_result_5 && (! io_a[26]));
+  assign _zz_result_7 = (_zz_result_6 && (! io_a[25]));
+  assign _zz_result_8 = (_zz_result_7 && (! io_a[24]));
+  assign _zz_result_9 = (_zz_result_8 && (! io_a[23]));
+  assign _zz_result_10 = (_zz_result_9 && (! io_a[22]));
+  assign _zz_result_11 = (_zz_result_10 && (! io_a[21]));
+  assign _zz_result_12 = (_zz_result_11 && (! io_a[20]));
+  assign _zz_result_13 = (_zz_result_12 && (! io_a[19]));
+  assign _zz_result_14 = (_zz_result_13 && (! io_a[18]));
+  assign _zz_result_15 = (_zz_result_14 && (! io_a[17]));
+  assign _zz_result_16 = (_zz_result_15 && (! io_a[16]));
+  assign _zz_result_17 = (_zz_result_16 && (! io_a[15]));
+  assign _zz_result_18 = (_zz_result_17 && (! io_a[14]));
+  assign _zz_result_19 = (_zz_result_18 && (! io_a[13]));
+  assign _zz_result_20 = (_zz_result_19 && (! io_a[12]));
+  assign _zz_result_21 = (_zz_result_20 && (! io_a[11]));
+  assign _zz_result_22 = (_zz_result_21 && (! io_a[10]));
+  assign _zz_result_23 = (_zz_result_22 && (! io_a[9]));
+  assign _zz_result_24 = (_zz_result_23 && (! io_a[8]));
+  assign _zz_result_25 = (_zz_result_24 && (! io_a[7]));
+  assign _zz_result_26 = (_zz_result_25 && (! io_a[6]));
+  assign _zz_result_27 = (_zz_result_26 && (! io_a[5]));
+  assign _zz_result_28 = (_zz_result_27 && (! io_a[4]));
+  assign _zz_result_29 = (_zz_result_28 && (! io_a[3]));
+  assign _zz_result_30 = (_zz_result_29 && (! io_a[2]));
+  assign _zz_result_31 = 1'b1;
+  assign _zz_result_32 = (_zz_result_31 && (! io_a[0]));
+  assign _zz_result_33 = (_zz_result_32 && (! io_a[1]));
+  assign _zz_result_34 = (_zz_result_33 && (! io_a[2]));
+  assign _zz_result_35 = (_zz_result_34 && (! io_a[3]));
+  assign _zz_result_36 = (_zz_result_35 && (! io_a[4]));
+  assign _zz_result_37 = (_zz_result_36 && (! io_a[5]));
+  assign _zz_result_38 = (_zz_result_37 && (! io_a[6]));
+  assign _zz_result_39 = (_zz_result_38 && (! io_a[7]));
+  assign _zz_result_40 = (_zz_result_39 && (! io_a[8]));
+  assign _zz_result_41 = (_zz_result_40 && (! io_a[9]));
+  assign _zz_result_42 = (_zz_result_41 && (! io_a[10]));
+  assign _zz_result_43 = (_zz_result_42 && (! io_a[11]));
+  assign _zz_result_44 = (_zz_result_43 && (! io_a[12]));
+  assign _zz_result_45 = (_zz_result_44 && (! io_a[13]));
+  assign _zz_result_46 = (_zz_result_45 && (! io_a[14]));
+  assign _zz_result_47 = (_zz_result_46 && (! io_a[15]));
+  assign _zz_result_48 = (_zz_result_47 && (! io_a[16]));
+  assign _zz_result_49 = (_zz_result_48 && (! io_a[17]));
+  assign _zz_result_50 = (_zz_result_49 && (! io_a[18]));
+  assign _zz_result_51 = (_zz_result_50 && (! io_a[19]));
+  assign _zz_result_52 = (_zz_result_51 && (! io_a[20]));
+  assign _zz_result_53 = (_zz_result_52 && (! io_a[21]));
+  assign _zz_result_54 = (_zz_result_53 && (! io_a[22]));
+  assign _zz_result_55 = (_zz_result_54 && (! io_a[23]));
+  assign _zz_result_56 = (_zz_result_55 && (! io_a[24]));
+  assign _zz_result_57 = (_zz_result_56 && (! io_a[25]));
+  assign _zz_result_58 = (_zz_result_57 && (! io_a[26]));
+  assign _zz_result_59 = (_zz_result_58 && (! io_a[27]));
+  assign _zz_result_60 = (_zz_result_59 && (! io_a[28]));
+  assign _zz_result_61 = (_zz_result_60 && (! io_a[29]));
+  assign _zz_result_62 = {1'd0, shamt};
+  assign _zz_result_63 = {1'd0, shamt};
+  assign _zz_result_64 = io_a[31 : 0];
+  assign _zz_result_65 = 1'b1;
+  assign _zz_result_66 = (_zz_result_65 && (! _zz_result_64[31]));
+  assign _zz_result_67 = (_zz_result_66 && (! _zz_result_64[30]));
+  assign _zz_result_68 = (_zz_result_67 && (! _zz_result_64[29]));
+  assign _zz_result_69 = (_zz_result_68 && (! _zz_result_64[28]));
+  assign _zz_result_70 = (_zz_result_69 && (! _zz_result_64[27]));
+  assign _zz_result_71 = (_zz_result_70 && (! _zz_result_64[26]));
+  assign _zz_result_72 = (_zz_result_71 && (! _zz_result_64[25]));
+  assign _zz_result_73 = (_zz_result_72 && (! _zz_result_64[24]));
+  assign _zz_result_74 = (_zz_result_73 && (! _zz_result_64[23]));
+  assign _zz_result_75 = (_zz_result_74 && (! _zz_result_64[22]));
+  assign _zz_result_76 = (_zz_result_75 && (! _zz_result_64[21]));
+  assign _zz_result_77 = (_zz_result_76 && (! _zz_result_64[20]));
+  assign _zz_result_78 = (_zz_result_77 && (! _zz_result_64[19]));
+  assign _zz_result_79 = (_zz_result_78 && (! _zz_result_64[18]));
+  assign _zz_result_80 = (_zz_result_79 && (! _zz_result_64[17]));
+  assign _zz_result_81 = (_zz_result_80 && (! _zz_result_64[16]));
+  assign _zz_result_82 = (_zz_result_81 && (! _zz_result_64[15]));
+  assign _zz_result_83 = (_zz_result_82 && (! _zz_result_64[14]));
+  assign _zz_result_84 = (_zz_result_83 && (! _zz_result_64[13]));
+  assign _zz_result_85 = (_zz_result_84 && (! _zz_result_64[12]));
+  assign _zz_result_86 = (_zz_result_85 && (! _zz_result_64[11]));
+  assign _zz_result_87 = (_zz_result_86 && (! _zz_result_64[10]));
+  assign _zz_result_88 = (_zz_result_87 && (! _zz_result_64[9]));
+  assign _zz_result_89 = (_zz_result_88 && (! _zz_result_64[8]));
+  assign _zz_result_90 = (_zz_result_89 && (! _zz_result_64[7]));
+  assign _zz_result_91 = (_zz_result_90 && (! _zz_result_64[6]));
+  assign _zz_result_92 = (_zz_result_91 && (! _zz_result_64[5]));
+  assign _zz_result_93 = (_zz_result_92 && (! _zz_result_64[4]));
+  assign _zz_result_94 = (_zz_result_93 && (! _zz_result_64[3]));
+  assign _zz_result_95 = (_zz_result_94 && (! _zz_result_64[2]));
+  assign _zz_result_96 = io_a[31 : 0];
+  assign _zz_result_97 = 1'b1;
+  assign _zz_result_98 = (_zz_result_97 && (! _zz_result_96[0]));
+  assign _zz_result_99 = (_zz_result_98 && (! _zz_result_96[1]));
+  assign _zz_result_100 = (_zz_result_99 && (! _zz_result_96[2]));
+  assign _zz_result_101 = (_zz_result_100 && (! _zz_result_96[3]));
+  assign _zz_result_102 = (_zz_result_101 && (! _zz_result_96[4]));
+  assign _zz_result_103 = (_zz_result_102 && (! _zz_result_96[5]));
+  assign _zz_result_104 = (_zz_result_103 && (! _zz_result_96[6]));
+  assign _zz_result_105 = (_zz_result_104 && (! _zz_result_96[7]));
+  assign _zz_result_106 = (_zz_result_105 && (! _zz_result_96[8]));
+  assign _zz_result_107 = (_zz_result_106 && (! _zz_result_96[9]));
+  assign _zz_result_108 = (_zz_result_107 && (! _zz_result_96[10]));
+  assign _zz_result_109 = (_zz_result_108 && (! _zz_result_96[11]));
+  assign _zz_result_110 = (_zz_result_109 && (! _zz_result_96[12]));
+  assign _zz_result_111 = (_zz_result_110 && (! _zz_result_96[13]));
+  assign _zz_result_112 = (_zz_result_111 && (! _zz_result_96[14]));
+  assign _zz_result_113 = (_zz_result_112 && (! _zz_result_96[15]));
+  assign _zz_result_114 = (_zz_result_113 && (! _zz_result_96[16]));
+  assign _zz_result_115 = (_zz_result_114 && (! _zz_result_96[17]));
+  assign _zz_result_116 = (_zz_result_115 && (! _zz_result_96[18]));
+  assign _zz_result_117 = (_zz_result_116 && (! _zz_result_96[19]));
+  assign _zz_result_118 = (_zz_result_117 && (! _zz_result_96[20]));
+  assign _zz_result_119 = (_zz_result_118 && (! _zz_result_96[21]));
+  assign _zz_result_120 = (_zz_result_119 && (! _zz_result_96[22]));
+  assign _zz_result_121 = (_zz_result_120 && (! _zz_result_96[23]));
+  assign _zz_result_122 = (_zz_result_121 && (! _zz_result_96[24]));
+  assign _zz_result_123 = (_zz_result_122 && (! _zz_result_96[25]));
+  assign _zz_result_124 = (_zz_result_123 && (! _zz_result_96[26]));
+  assign _zz_result_125 = (_zz_result_124 && (! _zz_result_96[27]));
+  assign _zz_result_126 = (_zz_result_125 && (! _zz_result_96[28]));
+  assign _zz_result_127 = (_zz_result_126 && (! _zz_result_96[29]));
+  assign _zz_result_128 = io_a[31 : 0];
+  assign _zz_result_129 = {1'd0, shamtW};
+  assign _zz_result_130 = {1'd0, shamtW};
   assign io_result = result;
 
 endmodule
@@ -12817,7 +14089,7 @@ module Decoder (
   output reg           io_output_branch,
   output reg           io_output_jump,
   output reg           io_output_jalr,
-  output reg  [4:0]    io_output_aluOp,
+  output reg  [5:0]    io_output_aluOp,
   output reg  [2:0]    io_output_branchType,
   output reg  [1:0]    io_output_aluASrc,
   output reg           io_output_memRead,
@@ -12849,34 +14121,68 @@ module Decoder (
   output reg  [2:0]    io_output_sysOp,
   output reg           io_output_valid
 );
-  localparam AluOp_ADD = 5'd0;
-  localparam AluOp_SUB = 5'd1;
-  localparam AluOp_SLL_1 = 5'd2;
-  localparam AluOp_SLT = 5'd3;
-  localparam AluOp_SLTU = 5'd4;
-  localparam AluOp_XOR_1 = 5'd5;
-  localparam AluOp_SRL_1 = 5'd6;
-  localparam AluOp_SRA_1 = 5'd7;
-  localparam AluOp_OR_1 = 5'd8;
-  localparam AluOp_AND_1 = 5'd9;
-  localparam AluOp_ADDW = 5'd10;
-  localparam AluOp_SUBW = 5'd11;
-  localparam AluOp_SLLW = 5'd12;
-  localparam AluOp_SRLW = 5'd13;
-  localparam AluOp_SRAW = 5'd14;
-  localparam AluOp_MUL = 5'd15;
-  localparam AluOp_MULH = 5'd16;
-  localparam AluOp_MULHSU = 5'd17;
-  localparam AluOp_MULHU = 5'd18;
-  localparam AluOp_DIV = 5'd19;
-  localparam AluOp_DIVU = 5'd20;
-  localparam AluOp_REM_1 = 5'd21;
-  localparam AluOp_REMU = 5'd22;
-  localparam AluOp_MULW = 5'd23;
-  localparam AluOp_DIVW = 5'd24;
-  localparam AluOp_DIVUW = 5'd25;
-  localparam AluOp_REMW = 5'd26;
-  localparam AluOp_REMUW = 5'd27;
+  localparam AluOp_ADD = 6'd0;
+  localparam AluOp_SUB = 6'd1;
+  localparam AluOp_SLL_1 = 6'd2;
+  localparam AluOp_SLT = 6'd3;
+  localparam AluOp_SLTU = 6'd4;
+  localparam AluOp_XOR_1 = 6'd5;
+  localparam AluOp_SRL_1 = 6'd6;
+  localparam AluOp_SRA_1 = 6'd7;
+  localparam AluOp_OR_1 = 6'd8;
+  localparam AluOp_AND_1 = 6'd9;
+  localparam AluOp_ADDW = 6'd10;
+  localparam AluOp_SUBW = 6'd11;
+  localparam AluOp_SLLW = 6'd12;
+  localparam AluOp_SRLW = 6'd13;
+  localparam AluOp_SRAW = 6'd14;
+  localparam AluOp_MUL = 6'd15;
+  localparam AluOp_MULH = 6'd16;
+  localparam AluOp_MULHSU = 6'd17;
+  localparam AluOp_MULHU = 6'd18;
+  localparam AluOp_DIV = 6'd19;
+  localparam AluOp_DIVU = 6'd20;
+  localparam AluOp_REM_1 = 6'd21;
+  localparam AluOp_REMU = 6'd22;
+  localparam AluOp_MULW = 6'd23;
+  localparam AluOp_DIVW = 6'd24;
+  localparam AluOp_DIVUW = 6'd25;
+  localparam AluOp_REMW = 6'd26;
+  localparam AluOp_REMUW = 6'd27;
+  localparam AluOp_ANDN = 6'd28;
+  localparam AluOp_ORN = 6'd29;
+  localparam AluOp_XNOR_1 = 6'd30;
+  localparam AluOp_CLZ = 6'd31;
+  localparam AluOp_CTZ = 6'd32;
+  localparam AluOp_CPOP = 6'd33;
+  localparam AluOp_SEXTB = 6'd34;
+  localparam AluOp_SEXTH = 6'd35;
+  localparam AluOp_ZEXTH = 6'd36;
+  localparam AluOp_ORCB = 6'd37;
+  localparam AluOp_REV8 = 6'd38;
+  localparam AluOp_ROL_1 = 6'd39;
+  localparam AluOp_ROR_1 = 6'd40;
+  localparam AluOp_MIN = 6'd41;
+  localparam AluOp_MINU = 6'd42;
+  localparam AluOp_MAX = 6'd43;
+  localparam AluOp_MAXU = 6'd44;
+  localparam AluOp_BSET = 6'd45;
+  localparam AluOp_BCLR = 6'd46;
+  localparam AluOp_BINV = 6'd47;
+  localparam AluOp_BEXT = 6'd48;
+  localparam AluOp_SH1ADD = 6'd49;
+  localparam AluOp_SH2ADD = 6'd50;
+  localparam AluOp_SH3ADD = 6'd51;
+  localparam AluOp_ADDUW = 6'd52;
+  localparam AluOp_SH1ADDUW = 6'd53;
+  localparam AluOp_SH2ADDUW = 6'd54;
+  localparam AluOp_SH3ADDUW = 6'd55;
+  localparam AluOp_SLLIUW = 6'd56;
+  localparam AluOp_CLZW = 6'd57;
+  localparam AluOp_CTZW = 6'd58;
+  localparam AluOp_CPOPW = 6'd59;
+  localparam AluOp_ROLW = 6'd60;
+  localparam AluOp_RORW = 6'd61;
   localparam BranchOp_NONE = 3'd0;
   localparam BranchOp_BEQ = 3'd1;
   localparam BranchOp_BNE = 3'd2;
@@ -12939,7 +14245,7 @@ module Decoder (
   wire       [31:0]   immU;
   wire       [31:0]   immJ;
   reg                 csrWrite;
-  wire                when_Decoder_l151;
+  wire                when_Decoder_l154;
   wire                isComp;
   wire       [2:0]    cfunct3;
   wire       [4:0]    crd;
@@ -12960,46 +14266,46 @@ module Decoder (
   wire       [7:0]    cLdImm;
   wire       [8:0]    cLdspImm;
   wire       [8:0]    cSdspImm;
-  wire       [1:0]    switch_Decoder_l188;
-  wire                when_Decoder_l192;
-  wire                when_Decoder_l255;
-  wire                when_Decoder_l260;
-  wire       [1:0]    switch_Decoder_l270;
-  wire                when_Decoder_l276;
-  wire                when_Decoder_l287;
-  wire                when_Decoder_l298;
-  wire       [4:0]    _zz_io_output_aluOp;
-  wire       [4:0]    _zz_io_output_aluOp_1;
-  wire       [4:0]    _zz_io_output_aluOp_2;
-  wire                when_Decoder_l345;
-  wire                when_Decoder_l352;
-  wire                when_Decoder_l370;
-  wire                when_Decoder_l371;
-  wire                when_Decoder_l372;
-  wire                when_Decoder_l383;
-  wire                when_Decoder_l384;
-  wire                when_Decoder_l540;
-  wire                when_Decoder_l586;
-  wire                when_Decoder_l640;
-  wire                when_Decoder_l649;
-  wire                when_Decoder_l658;
-  wire                when_Decoder_l667;
-  wire       [4:0]    _zz_io_output_aluOp_3;
-  wire                when_Decoder_l778;
-  wire       [4:0]    _zz_io_output_aluOp_4;
-  wire       [4:0]    _zz_io_output_aluOp_5;
-  wire       [11:0]   switch_Decoder_l860;
+  wire       [1:0]    switch_Decoder_l191;
+  wire                when_Decoder_l195;
+  wire                when_Decoder_l258;
+  wire                when_Decoder_l263;
+  wire       [1:0]    switch_Decoder_l273;
+  wire                when_Decoder_l279;
+  wire                when_Decoder_l290;
+  wire                when_Decoder_l301;
+  wire       [5:0]    _zz_io_output_aluOp;
+  wire       [5:0]    _zz_io_output_aluOp_1;
+  wire       [5:0]    _zz_io_output_aluOp_2;
+  wire                when_Decoder_l348;
+  wire                when_Decoder_l355;
+  wire                when_Decoder_l373;
+  wire                when_Decoder_l374;
+  wire                when_Decoder_l375;
+  wire                when_Decoder_l386;
+  wire                when_Decoder_l387;
+  wire                when_Decoder_l543;
+  wire                when_Decoder_l589;
+  wire                when_Decoder_l643;
+  wire                when_Decoder_l652;
+  wire                when_Decoder_l661;
+  wire                when_Decoder_l670;
+  wire       [5:0]    _zz_io_output_aluOp_3;
+  wire                when_Decoder_l881;
+  wire       [5:0]    _zz_io_output_aluOp_4;
+  wire       [5:0]    _zz_io_output_aluOp_5;
+  wire       [11:0]   switch_Decoder_l1013;
   `ifndef SYNTHESIS
-  reg [47:0] io_output_aluOp_string;
+  reg [63:0] io_output_aluOp_string;
   reg [31:0] io_output_branchType_string;
   reg [39:0] io_output_csrOp_string;
   reg [55:0] io_output_sysOp_string;
-  reg [47:0] _zz_io_output_aluOp_string;
-  reg [47:0] _zz_io_output_aluOp_1_string;
-  reg [47:0] _zz_io_output_aluOp_2_string;
-  reg [47:0] _zz_io_output_aluOp_3_string;
-  reg [47:0] _zz_io_output_aluOp_4_string;
-  reg [47:0] _zz_io_output_aluOp_5_string;
+  reg [63:0] _zz_io_output_aluOp_string;
+  reg [63:0] _zz_io_output_aluOp_1_string;
+  reg [63:0] _zz_io_output_aluOp_2_string;
+  reg [63:0] _zz_io_output_aluOp_3_string;
+  reg [63:0] _zz_io_output_aluOp_4_string;
+  reg [63:0] _zz_io_output_aluOp_5_string;
   `endif
 
 
@@ -13036,35 +14342,69 @@ module Decoder (
   `ifndef SYNTHESIS
   always @(*) begin
     case(io_output_aluOp)
-      AluOp_ADD : io_output_aluOp_string = "ADD   ";
-      AluOp_SUB : io_output_aluOp_string = "SUB   ";
-      AluOp_SLL_1 : io_output_aluOp_string = "SLL_1 ";
-      AluOp_SLT : io_output_aluOp_string = "SLT   ";
-      AluOp_SLTU : io_output_aluOp_string = "SLTU  ";
-      AluOp_XOR_1 : io_output_aluOp_string = "XOR_1 ";
-      AluOp_SRL_1 : io_output_aluOp_string = "SRL_1 ";
-      AluOp_SRA_1 : io_output_aluOp_string = "SRA_1 ";
-      AluOp_OR_1 : io_output_aluOp_string = "OR_1  ";
-      AluOp_AND_1 : io_output_aluOp_string = "AND_1 ";
-      AluOp_ADDW : io_output_aluOp_string = "ADDW  ";
-      AluOp_SUBW : io_output_aluOp_string = "SUBW  ";
-      AluOp_SLLW : io_output_aluOp_string = "SLLW  ";
-      AluOp_SRLW : io_output_aluOp_string = "SRLW  ";
-      AluOp_SRAW : io_output_aluOp_string = "SRAW  ";
-      AluOp_MUL : io_output_aluOp_string = "MUL   ";
-      AluOp_MULH : io_output_aluOp_string = "MULH  ";
-      AluOp_MULHSU : io_output_aluOp_string = "MULHSU";
-      AluOp_MULHU : io_output_aluOp_string = "MULHU ";
-      AluOp_DIV : io_output_aluOp_string = "DIV   ";
-      AluOp_DIVU : io_output_aluOp_string = "DIVU  ";
-      AluOp_REM_1 : io_output_aluOp_string = "REM_1 ";
-      AluOp_REMU : io_output_aluOp_string = "REMU  ";
-      AluOp_MULW : io_output_aluOp_string = "MULW  ";
-      AluOp_DIVW : io_output_aluOp_string = "DIVW  ";
-      AluOp_DIVUW : io_output_aluOp_string = "DIVUW ";
-      AluOp_REMW : io_output_aluOp_string = "REMW  ";
-      AluOp_REMUW : io_output_aluOp_string = "REMUW ";
-      default : io_output_aluOp_string = "??????";
+      AluOp_ADD : io_output_aluOp_string = "ADD     ";
+      AluOp_SUB : io_output_aluOp_string = "SUB     ";
+      AluOp_SLL_1 : io_output_aluOp_string = "SLL_1   ";
+      AluOp_SLT : io_output_aluOp_string = "SLT     ";
+      AluOp_SLTU : io_output_aluOp_string = "SLTU    ";
+      AluOp_XOR_1 : io_output_aluOp_string = "XOR_1   ";
+      AluOp_SRL_1 : io_output_aluOp_string = "SRL_1   ";
+      AluOp_SRA_1 : io_output_aluOp_string = "SRA_1   ";
+      AluOp_OR_1 : io_output_aluOp_string = "OR_1    ";
+      AluOp_AND_1 : io_output_aluOp_string = "AND_1   ";
+      AluOp_ADDW : io_output_aluOp_string = "ADDW    ";
+      AluOp_SUBW : io_output_aluOp_string = "SUBW    ";
+      AluOp_SLLW : io_output_aluOp_string = "SLLW    ";
+      AluOp_SRLW : io_output_aluOp_string = "SRLW    ";
+      AluOp_SRAW : io_output_aluOp_string = "SRAW    ";
+      AluOp_MUL : io_output_aluOp_string = "MUL     ";
+      AluOp_MULH : io_output_aluOp_string = "MULH    ";
+      AluOp_MULHSU : io_output_aluOp_string = "MULHSU  ";
+      AluOp_MULHU : io_output_aluOp_string = "MULHU   ";
+      AluOp_DIV : io_output_aluOp_string = "DIV     ";
+      AluOp_DIVU : io_output_aluOp_string = "DIVU    ";
+      AluOp_REM_1 : io_output_aluOp_string = "REM_1   ";
+      AluOp_REMU : io_output_aluOp_string = "REMU    ";
+      AluOp_MULW : io_output_aluOp_string = "MULW    ";
+      AluOp_DIVW : io_output_aluOp_string = "DIVW    ";
+      AluOp_DIVUW : io_output_aluOp_string = "DIVUW   ";
+      AluOp_REMW : io_output_aluOp_string = "REMW    ";
+      AluOp_REMUW : io_output_aluOp_string = "REMUW   ";
+      AluOp_ANDN : io_output_aluOp_string = "ANDN    ";
+      AluOp_ORN : io_output_aluOp_string = "ORN     ";
+      AluOp_XNOR_1 : io_output_aluOp_string = "XNOR_1  ";
+      AluOp_CLZ : io_output_aluOp_string = "CLZ     ";
+      AluOp_CTZ : io_output_aluOp_string = "CTZ     ";
+      AluOp_CPOP : io_output_aluOp_string = "CPOP    ";
+      AluOp_SEXTB : io_output_aluOp_string = "SEXTB   ";
+      AluOp_SEXTH : io_output_aluOp_string = "SEXTH   ";
+      AluOp_ZEXTH : io_output_aluOp_string = "ZEXTH   ";
+      AluOp_ORCB : io_output_aluOp_string = "ORCB    ";
+      AluOp_REV8 : io_output_aluOp_string = "REV8    ";
+      AluOp_ROL_1 : io_output_aluOp_string = "ROL_1   ";
+      AluOp_ROR_1 : io_output_aluOp_string = "ROR_1   ";
+      AluOp_MIN : io_output_aluOp_string = "MIN     ";
+      AluOp_MINU : io_output_aluOp_string = "MINU    ";
+      AluOp_MAX : io_output_aluOp_string = "MAX     ";
+      AluOp_MAXU : io_output_aluOp_string = "MAXU    ";
+      AluOp_BSET : io_output_aluOp_string = "BSET    ";
+      AluOp_BCLR : io_output_aluOp_string = "BCLR    ";
+      AluOp_BINV : io_output_aluOp_string = "BINV    ";
+      AluOp_BEXT : io_output_aluOp_string = "BEXT    ";
+      AluOp_SH1ADD : io_output_aluOp_string = "SH1ADD  ";
+      AluOp_SH2ADD : io_output_aluOp_string = "SH2ADD  ";
+      AluOp_SH3ADD : io_output_aluOp_string = "SH3ADD  ";
+      AluOp_ADDUW : io_output_aluOp_string = "ADDUW   ";
+      AluOp_SH1ADDUW : io_output_aluOp_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : io_output_aluOp_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : io_output_aluOp_string = "SH3ADDUW";
+      AluOp_SLLIUW : io_output_aluOp_string = "SLLIUW  ";
+      AluOp_CLZW : io_output_aluOp_string = "CLZW    ";
+      AluOp_CTZW : io_output_aluOp_string = "CTZW    ";
+      AluOp_CPOPW : io_output_aluOp_string = "CPOPW   ";
+      AluOp_ROLW : io_output_aluOp_string = "ROLW    ";
+      AluOp_RORW : io_output_aluOp_string = "RORW    ";
+      default : io_output_aluOp_string = "????????";
     endcase
   end
   always @(*) begin
@@ -13101,200 +14441,404 @@ module Decoder (
   end
   always @(*) begin
     case(_zz_io_output_aluOp)
-      AluOp_ADD : _zz_io_output_aluOp_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_string = "REMUW ";
-      default : _zz_io_output_aluOp_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_string = "RORW    ";
+      default : _zz_io_output_aluOp_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_io_output_aluOp_1)
-      AluOp_ADD : _zz_io_output_aluOp_1_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_1_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_1_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_1_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_1_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_1_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_1_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_1_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_1_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_1_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_1_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_1_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_1_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_1_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_1_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_1_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_1_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_1_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_1_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_1_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_1_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_1_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_1_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_1_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_1_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_1_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_1_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_1_string = "REMUW ";
-      default : _zz_io_output_aluOp_1_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_1_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_1_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_1_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_1_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_1_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_1_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_1_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_1_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_1_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_1_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_1_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_1_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_1_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_1_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_1_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_1_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_1_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_1_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_1_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_1_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_1_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_1_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_1_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_1_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_1_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_1_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_1_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_1_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_1_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_1_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_1_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_1_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_1_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_1_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_1_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_1_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_1_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_1_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_1_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_1_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_1_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_1_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_1_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_1_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_1_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_1_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_1_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_1_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_1_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_1_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_1_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_1_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_1_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_1_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_1_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_1_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_1_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_1_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_1_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_1_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_1_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_1_string = "RORW    ";
+      default : _zz_io_output_aluOp_1_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_io_output_aluOp_2)
-      AluOp_ADD : _zz_io_output_aluOp_2_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_2_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_2_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_2_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_2_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_2_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_2_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_2_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_2_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_2_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_2_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_2_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_2_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_2_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_2_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_2_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_2_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_2_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_2_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_2_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_2_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_2_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_2_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_2_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_2_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_2_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_2_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_2_string = "REMUW ";
-      default : _zz_io_output_aluOp_2_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_2_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_2_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_2_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_2_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_2_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_2_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_2_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_2_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_2_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_2_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_2_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_2_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_2_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_2_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_2_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_2_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_2_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_2_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_2_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_2_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_2_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_2_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_2_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_2_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_2_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_2_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_2_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_2_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_2_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_2_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_2_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_2_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_2_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_2_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_2_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_2_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_2_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_2_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_2_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_2_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_2_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_2_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_2_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_2_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_2_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_2_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_2_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_2_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_2_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_2_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_2_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_2_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_2_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_2_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_2_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_2_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_2_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_2_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_2_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_2_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_2_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_2_string = "RORW    ";
+      default : _zz_io_output_aluOp_2_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_io_output_aluOp_3)
-      AluOp_ADD : _zz_io_output_aluOp_3_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_3_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_3_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_3_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_3_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_3_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_3_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_3_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_3_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_3_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_3_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_3_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_3_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_3_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_3_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_3_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_3_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_3_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_3_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_3_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_3_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_3_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_3_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_3_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_3_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_3_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_3_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_3_string = "REMUW ";
-      default : _zz_io_output_aluOp_3_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_3_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_3_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_3_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_3_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_3_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_3_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_3_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_3_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_3_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_3_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_3_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_3_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_3_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_3_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_3_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_3_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_3_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_3_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_3_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_3_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_3_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_3_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_3_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_3_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_3_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_3_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_3_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_3_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_3_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_3_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_3_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_3_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_3_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_3_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_3_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_3_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_3_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_3_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_3_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_3_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_3_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_3_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_3_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_3_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_3_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_3_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_3_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_3_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_3_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_3_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_3_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_3_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_3_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_3_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_3_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_3_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_3_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_3_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_3_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_3_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_3_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_3_string = "RORW    ";
+      default : _zz_io_output_aluOp_3_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_io_output_aluOp_4)
-      AluOp_ADD : _zz_io_output_aluOp_4_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_4_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_4_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_4_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_4_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_4_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_4_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_4_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_4_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_4_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_4_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_4_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_4_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_4_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_4_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_4_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_4_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_4_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_4_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_4_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_4_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_4_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_4_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_4_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_4_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_4_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_4_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_4_string = "REMUW ";
-      default : _zz_io_output_aluOp_4_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_4_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_4_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_4_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_4_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_4_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_4_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_4_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_4_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_4_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_4_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_4_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_4_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_4_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_4_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_4_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_4_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_4_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_4_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_4_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_4_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_4_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_4_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_4_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_4_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_4_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_4_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_4_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_4_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_4_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_4_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_4_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_4_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_4_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_4_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_4_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_4_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_4_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_4_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_4_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_4_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_4_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_4_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_4_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_4_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_4_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_4_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_4_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_4_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_4_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_4_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_4_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_4_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_4_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_4_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_4_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_4_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_4_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_4_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_4_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_4_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_4_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_4_string = "RORW    ";
+      default : _zz_io_output_aluOp_4_string = "????????";
     endcase
   end
   always @(*) begin
     case(_zz_io_output_aluOp_5)
-      AluOp_ADD : _zz_io_output_aluOp_5_string = "ADD   ";
-      AluOp_SUB : _zz_io_output_aluOp_5_string = "SUB   ";
-      AluOp_SLL_1 : _zz_io_output_aluOp_5_string = "SLL_1 ";
-      AluOp_SLT : _zz_io_output_aluOp_5_string = "SLT   ";
-      AluOp_SLTU : _zz_io_output_aluOp_5_string = "SLTU  ";
-      AluOp_XOR_1 : _zz_io_output_aluOp_5_string = "XOR_1 ";
-      AluOp_SRL_1 : _zz_io_output_aluOp_5_string = "SRL_1 ";
-      AluOp_SRA_1 : _zz_io_output_aluOp_5_string = "SRA_1 ";
-      AluOp_OR_1 : _zz_io_output_aluOp_5_string = "OR_1  ";
-      AluOp_AND_1 : _zz_io_output_aluOp_5_string = "AND_1 ";
-      AluOp_ADDW : _zz_io_output_aluOp_5_string = "ADDW  ";
-      AluOp_SUBW : _zz_io_output_aluOp_5_string = "SUBW  ";
-      AluOp_SLLW : _zz_io_output_aluOp_5_string = "SLLW  ";
-      AluOp_SRLW : _zz_io_output_aluOp_5_string = "SRLW  ";
-      AluOp_SRAW : _zz_io_output_aluOp_5_string = "SRAW  ";
-      AluOp_MUL : _zz_io_output_aluOp_5_string = "MUL   ";
-      AluOp_MULH : _zz_io_output_aluOp_5_string = "MULH  ";
-      AluOp_MULHSU : _zz_io_output_aluOp_5_string = "MULHSU";
-      AluOp_MULHU : _zz_io_output_aluOp_5_string = "MULHU ";
-      AluOp_DIV : _zz_io_output_aluOp_5_string = "DIV   ";
-      AluOp_DIVU : _zz_io_output_aluOp_5_string = "DIVU  ";
-      AluOp_REM_1 : _zz_io_output_aluOp_5_string = "REM_1 ";
-      AluOp_REMU : _zz_io_output_aluOp_5_string = "REMU  ";
-      AluOp_MULW : _zz_io_output_aluOp_5_string = "MULW  ";
-      AluOp_DIVW : _zz_io_output_aluOp_5_string = "DIVW  ";
-      AluOp_DIVUW : _zz_io_output_aluOp_5_string = "DIVUW ";
-      AluOp_REMW : _zz_io_output_aluOp_5_string = "REMW  ";
-      AluOp_REMUW : _zz_io_output_aluOp_5_string = "REMUW ";
-      default : _zz_io_output_aluOp_5_string = "??????";
+      AluOp_ADD : _zz_io_output_aluOp_5_string = "ADD     ";
+      AluOp_SUB : _zz_io_output_aluOp_5_string = "SUB     ";
+      AluOp_SLL_1 : _zz_io_output_aluOp_5_string = "SLL_1   ";
+      AluOp_SLT : _zz_io_output_aluOp_5_string = "SLT     ";
+      AluOp_SLTU : _zz_io_output_aluOp_5_string = "SLTU    ";
+      AluOp_XOR_1 : _zz_io_output_aluOp_5_string = "XOR_1   ";
+      AluOp_SRL_1 : _zz_io_output_aluOp_5_string = "SRL_1   ";
+      AluOp_SRA_1 : _zz_io_output_aluOp_5_string = "SRA_1   ";
+      AluOp_OR_1 : _zz_io_output_aluOp_5_string = "OR_1    ";
+      AluOp_AND_1 : _zz_io_output_aluOp_5_string = "AND_1   ";
+      AluOp_ADDW : _zz_io_output_aluOp_5_string = "ADDW    ";
+      AluOp_SUBW : _zz_io_output_aluOp_5_string = "SUBW    ";
+      AluOp_SLLW : _zz_io_output_aluOp_5_string = "SLLW    ";
+      AluOp_SRLW : _zz_io_output_aluOp_5_string = "SRLW    ";
+      AluOp_SRAW : _zz_io_output_aluOp_5_string = "SRAW    ";
+      AluOp_MUL : _zz_io_output_aluOp_5_string = "MUL     ";
+      AluOp_MULH : _zz_io_output_aluOp_5_string = "MULH    ";
+      AluOp_MULHSU : _zz_io_output_aluOp_5_string = "MULHSU  ";
+      AluOp_MULHU : _zz_io_output_aluOp_5_string = "MULHU   ";
+      AluOp_DIV : _zz_io_output_aluOp_5_string = "DIV     ";
+      AluOp_DIVU : _zz_io_output_aluOp_5_string = "DIVU    ";
+      AluOp_REM_1 : _zz_io_output_aluOp_5_string = "REM_1   ";
+      AluOp_REMU : _zz_io_output_aluOp_5_string = "REMU    ";
+      AluOp_MULW : _zz_io_output_aluOp_5_string = "MULW    ";
+      AluOp_DIVW : _zz_io_output_aluOp_5_string = "DIVW    ";
+      AluOp_DIVUW : _zz_io_output_aluOp_5_string = "DIVUW   ";
+      AluOp_REMW : _zz_io_output_aluOp_5_string = "REMW    ";
+      AluOp_REMUW : _zz_io_output_aluOp_5_string = "REMUW   ";
+      AluOp_ANDN : _zz_io_output_aluOp_5_string = "ANDN    ";
+      AluOp_ORN : _zz_io_output_aluOp_5_string = "ORN     ";
+      AluOp_XNOR_1 : _zz_io_output_aluOp_5_string = "XNOR_1  ";
+      AluOp_CLZ : _zz_io_output_aluOp_5_string = "CLZ     ";
+      AluOp_CTZ : _zz_io_output_aluOp_5_string = "CTZ     ";
+      AluOp_CPOP : _zz_io_output_aluOp_5_string = "CPOP    ";
+      AluOp_SEXTB : _zz_io_output_aluOp_5_string = "SEXTB   ";
+      AluOp_SEXTH : _zz_io_output_aluOp_5_string = "SEXTH   ";
+      AluOp_ZEXTH : _zz_io_output_aluOp_5_string = "ZEXTH   ";
+      AluOp_ORCB : _zz_io_output_aluOp_5_string = "ORCB    ";
+      AluOp_REV8 : _zz_io_output_aluOp_5_string = "REV8    ";
+      AluOp_ROL_1 : _zz_io_output_aluOp_5_string = "ROL_1   ";
+      AluOp_ROR_1 : _zz_io_output_aluOp_5_string = "ROR_1   ";
+      AluOp_MIN : _zz_io_output_aluOp_5_string = "MIN     ";
+      AluOp_MINU : _zz_io_output_aluOp_5_string = "MINU    ";
+      AluOp_MAX : _zz_io_output_aluOp_5_string = "MAX     ";
+      AluOp_MAXU : _zz_io_output_aluOp_5_string = "MAXU    ";
+      AluOp_BSET : _zz_io_output_aluOp_5_string = "BSET    ";
+      AluOp_BCLR : _zz_io_output_aluOp_5_string = "BCLR    ";
+      AluOp_BINV : _zz_io_output_aluOp_5_string = "BINV    ";
+      AluOp_BEXT : _zz_io_output_aluOp_5_string = "BEXT    ";
+      AluOp_SH1ADD : _zz_io_output_aluOp_5_string = "SH1ADD  ";
+      AluOp_SH2ADD : _zz_io_output_aluOp_5_string = "SH2ADD  ";
+      AluOp_SH3ADD : _zz_io_output_aluOp_5_string = "SH3ADD  ";
+      AluOp_ADDUW : _zz_io_output_aluOp_5_string = "ADDUW   ";
+      AluOp_SH1ADDUW : _zz_io_output_aluOp_5_string = "SH1ADDUW";
+      AluOp_SH2ADDUW : _zz_io_output_aluOp_5_string = "SH2ADDUW";
+      AluOp_SH3ADDUW : _zz_io_output_aluOp_5_string = "SH3ADDUW";
+      AluOp_SLLIUW : _zz_io_output_aluOp_5_string = "SLLIUW  ";
+      AluOp_CLZW : _zz_io_output_aluOp_5_string = "CLZW    ";
+      AluOp_CTZW : _zz_io_output_aluOp_5_string = "CTZW    ";
+      AluOp_CPOPW : _zz_io_output_aluOp_5_string = "CPOPW   ";
+      AluOp_ROLW : _zz_io_output_aluOp_5_string = "ROLW    ";
+      AluOp_RORW : _zz_io_output_aluOp_5_string = "RORW    ";
+      default : _zz_io_output_aluOp_5_string = "????????";
     endcase
   end
   `endif
@@ -13315,11 +14859,11 @@ module Decoder (
   always @(*) begin
     io_output_regWrite = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_regWrite = 1'b1;
               end
             end
@@ -13348,23 +14892,23 @@ module Decoder (
               io_output_regWrite = 1'b1;
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_regWrite = 1'b1;
               end else begin
-                if(!when_Decoder_l260) begin
+                if(!when_Decoder_l263) begin
                   io_output_regWrite = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_regWrite = 1'b1;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_regWrite = 1'b1;
                   end
                 end
@@ -13372,7 +14916,7 @@ module Decoder (
                   io_output_regWrite = 1'b1;
                 end
                 default : begin
-                  if(!when_Decoder_l298) begin
+                  if(!when_Decoder_l301) begin
                     io_output_regWrite = 1'b1;
                   end
                 end
@@ -13389,25 +14933,25 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_regWrite = 1'b1;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_regWrite = 1'b1;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(!when_Decoder_l371) begin
+              if(when_Decoder_l373) begin
+                if(!when_Decoder_l374) begin
                   io_output_regWrite = 1'b1;
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_regWrite = 1'b1;
                   end
                 end else begin
@@ -13504,7 +15048,7 @@ module Decoder (
         7'b0111011 : begin
         end
         7'b0110011 : begin
-          if(!when_Decoder_l778) begin
+          if(!when_Decoder_l881) begin
             io_output_regWrite = 1'b1;
           end
         end
@@ -13545,11 +15089,11 @@ module Decoder (
   always @(*) begin
     io_output_aluSrc = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_aluSrc = 1'b1;
               end
             end
@@ -13578,23 +15122,23 @@ module Decoder (
               io_output_aluSrc = 1'b1;
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_aluSrc = 1'b1;
               end else begin
-                if(!when_Decoder_l260) begin
+                if(!when_Decoder_l263) begin
                   io_output_aluSrc = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
@@ -13616,27 +15160,27 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_aluSrc = 1'b1;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_aluSrc = 1'b1;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
@@ -13715,7 +15259,7 @@ module Decoder (
   always @(*) begin
     io_output_wbSel = 3'b000;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -13760,22 +15304,22 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_wbSel = 3'b001;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_wbSel = 3'b010;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_wbSel = 3'b010;
                   end
                 end
@@ -13881,7 +15425,7 @@ module Decoder (
   always @(*) begin
     io_output_branch = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -13965,7 +15509,7 @@ module Decoder (
   always @(*) begin
     io_output_jump = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -13999,15 +15543,15 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_jump = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_jump = 1'b1;
                   end
                 end
@@ -14079,7 +15623,7 @@ module Decoder (
   always @(*) begin
     io_output_jalr = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -14093,15 +15637,15 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_jalr = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_jalr = 1'b1;
                   end
                 end
@@ -14172,11 +15716,11 @@ module Decoder (
   always @(*) begin
     io_output_aluOp = AluOp_ADD;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_aluOp = AluOp_ADD;
               end
             end
@@ -14205,23 +15749,23 @@ module Decoder (
               io_output_aluOp = AluOp_ADD;
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_aluOp = AluOp_ADD;
               end else begin
-                if(!when_Decoder_l260) begin
+                if(!when_Decoder_l263) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_aluOp = AluOp_SRL_1;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_aluOp = AluOp_SRA_1;
                   end
                 end
@@ -14229,7 +15773,7 @@ module Decoder (
                   io_output_aluOp = AluOp_AND_1;
                 end
                 default : begin
-                  if(!when_Decoder_l298) begin
+                  if(!when_Decoder_l301) begin
                     io_output_aluOp = _zz_io_output_aluOp_2;
                   end
                 end
@@ -14246,24 +15790,24 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_aluOp = AluOp_SLL_1;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_aluOp = AluOp_ADD;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(!when_Decoder_l371) begin
+              if(when_Decoder_l373) begin
+                if(!when_Decoder_l374) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end else begin
-                if(!when_Decoder_l383) begin
+                if(!when_Decoder_l386) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end
@@ -14347,7 +15891,7 @@ module Decoder (
         7'b0111011 : begin
         end
         7'b0110011 : begin
-          if(!when_Decoder_l778) begin
+          if(!when_Decoder_l881) begin
             casez(funct3)
               3'b000 : begin
                 io_output_aluOp = _zz_io_output_aluOp_4;
@@ -14391,7 +15935,7 @@ module Decoder (
   always @(*) begin
     io_output_branchType = BranchOp_NONE;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -14496,7 +16040,7 @@ module Decoder (
   always @(*) begin
     io_output_aluASrc = 2'b00;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -14508,8 +16052,8 @@ module Decoder (
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l255) begin
-                if(!when_Decoder_l260) begin
+              if(!when_Decoder_l258) begin
+                if(!when_Decoder_l263) begin
                   io_output_aluASrc = 2'b10;
                 end
               end
@@ -14533,8 +16077,8 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(!when_Decoder_l371) begin
+              if(when_Decoder_l373) begin
+                if(!when_Decoder_l374) begin
                   io_output_aluASrc = 2'b10;
                 end
               end
@@ -14605,7 +16149,7 @@ module Decoder (
   always @(*) begin
     io_output_memRead = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -14630,7 +16174,7 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_memRead = 1'b1;
               end
             end
@@ -14712,7 +16256,7 @@ module Decoder (
   always @(*) begin
     io_output_memWrite = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -14809,7 +16353,7 @@ module Decoder (
   always @(*) begin
     io_output_memSize = 2'b10;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -14835,7 +16379,7 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_memSize = 2'b10;
               end
             end
@@ -15719,11 +17263,11 @@ module Decoder (
   always @(*) begin
     io_output_rs1 = rs1Num;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_rs1 = 5'h02;
               end
             end
@@ -15752,19 +17296,19 @@ module Decoder (
               io_output_rs1 = 5'h0;
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_rs1 = 5'h02;
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_rs1 = crs1p;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_rs1 = crs1p;
                   end
                 end
@@ -15772,7 +17316,7 @@ module Decoder (
                   io_output_rs1 = crs1p;
                 end
                 default : begin
-                  if(!when_Decoder_l298) begin
+                  if(!when_Decoder_l301) begin
                     io_output_rs1 = crs1p;
                   end
                 end
@@ -15791,27 +17335,27 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_rs1 = crd;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_rs1 = 5'h02;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_rs1 = crd;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_rs1 = crd;
                   end
                 end else begin
@@ -15889,7 +17433,7 @@ module Decoder (
   always @(*) begin
     io_output_rs2 = io_instruction[24 : 20];
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -15918,7 +17462,7 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
                 end
                 2'b01 : begin
@@ -15926,7 +17470,7 @@ module Decoder (
                 2'b10 : begin
                 end
                 default : begin
-                  if(!when_Decoder_l298) begin
+                  if(!when_Decoder_l301) begin
                     io_output_rs2 = crs2p;
                   end
                 end
@@ -15951,12 +17495,12 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(!when_Decoder_l371) begin
+              if(when_Decoder_l373) begin
+                if(!when_Decoder_l374) begin
                   io_output_rs2 = crs2;
                 end
               end else begin
-                if(!when_Decoder_l383) begin
+                if(!when_Decoder_l386) begin
                   io_output_rs2 = crs2;
                 end
               end
@@ -16031,11 +17575,11 @@ module Decoder (
   always @(*) begin
     io_output_rd = rdNum;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_rd = crdp;
               end
             end
@@ -16064,23 +17608,23 @@ module Decoder (
               io_output_rd = crd;
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_rd = 5'h02;
               end else begin
-                if(!when_Decoder_l260) begin
+                if(!when_Decoder_l263) begin
                   io_output_rd = crd;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_rd = crs1p;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_rd = crs1p;
                   end
                 end
@@ -16088,7 +17632,7 @@ module Decoder (
                   io_output_rd = crs1p;
                 end
                 default : begin
-                  if(!when_Decoder_l298) begin
+                  if(!when_Decoder_l301) begin
                     io_output_rd = crs1p;
                   end
                 end
@@ -16106,25 +17650,25 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_rd = crd;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_rd = crd;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(!when_Decoder_l371) begin
+              if(when_Decoder_l373) begin
+                if(!when_Decoder_l374) begin
                   io_output_rd = crd;
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_rd = 5'h01;
                   end
                 end else begin
@@ -16210,11 +17754,11 @@ module Decoder (
   always @(*) begin
     io_output_imm = immI;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l192) begin
+              if(!when_Decoder_l195) begin
                 io_output_imm = _zz_io_output_imm;
               end
             end
@@ -16244,23 +17788,23 @@ module Decoder (
               io_output_imm = {{26{c6S[5]}}, c6S};
             end
             3'b011 : begin
-              if(when_Decoder_l255) begin
+              if(when_Decoder_l258) begin
                 io_output_imm = {{22{cAddi16sp[9]}}, cAddi16sp};
               end else begin
-                if(!when_Decoder_l260) begin
+                if(!when_Decoder_l263) begin
                   io_output_imm = {{14{_zz_io_output_imm_3[17]}}, _zz_io_output_imm_3};
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(!when_Decoder_l276) begin
+                  if(!when_Decoder_l279) begin
                     io_output_imm = cShamt;
                   end
                 end
                 2'b01 : begin
-                  if(!when_Decoder_l287) begin
+                  if(!when_Decoder_l290) begin
                     io_output_imm = cShamt;
                   end
                 end
@@ -16285,27 +17829,27 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l345) begin
+              if(!when_Decoder_l348) begin
                 io_output_imm = cShamt;
               end
             end
             3'b010 : begin
-              if(!when_Decoder_l352) begin
+              if(!when_Decoder_l355) begin
                 io_output_imm = _zz_io_output_imm_4;
               end
             end
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(!when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(!when_Decoder_l375) begin
                     io_output_imm = 32'h0;
                   end
                 end
               end else begin
-                if(when_Decoder_l383) begin
-                  if(!when_Decoder_l384) begin
+                if(when_Decoder_l386) begin
+                  if(!when_Decoder_l387) begin
                     io_output_imm = 32'h0;
                   end
                 end
@@ -16383,11 +17927,11 @@ module Decoder (
   always @(*) begin
     io_output_illegal = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l192) begin
+              if(when_Decoder_l195) begin
                 io_output_illegal = 1'b1;
               end
             end
@@ -16415,28 +17959,28 @@ module Decoder (
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l255) begin
-                if(when_Decoder_l260) begin
+              if(!when_Decoder_l258) begin
+                if(when_Decoder_l263) begin
                   io_output_illegal = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(when_Decoder_l276) begin
+                  if(when_Decoder_l279) begin
                     io_output_illegal = 1'b1;
                   end
                 end
                 2'b01 : begin
-                  if(when_Decoder_l287) begin
+                  if(when_Decoder_l290) begin
                     io_output_illegal = 1'b1;
                   end
                 end
                 2'b10 : begin
                 end
                 default : begin
-                  if(when_Decoder_l298) begin
+                  if(when_Decoder_l301) begin
                     io_output_illegal = 1'b1;
                   end
                 end
@@ -16453,12 +17997,12 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l345) begin
+              if(when_Decoder_l348) begin
                 io_output_illegal = 1'b1;
               end
             end
             3'b010 : begin
-              if(when_Decoder_l352) begin
+              if(when_Decoder_l355) begin
                 io_output_illegal = 1'b1;
               end
             end
@@ -16466,9 +18010,9 @@ module Decoder (
               io_output_illegal = 1'b1;
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(when_Decoder_l375) begin
                     io_output_illegal = 1'b1;
                   end
                 end
@@ -16581,7 +18125,7 @@ module Decoder (
           endcase
         end
         7'b1010011 : begin
-          if(when_Decoder_l540) begin
+          if(when_Decoder_l543) begin
             io_output_illegal = 1'b1;
           end
           case(funct6)
@@ -16644,7 +18188,7 @@ module Decoder (
               endcase
             end
             6'h3c : begin
-              if(when_Decoder_l586) begin
+              if(when_Decoder_l589) begin
                 io_output_illegal = 1'b1;
               end
             end
@@ -16685,22 +18229,22 @@ module Decoder (
           endcase
         end
         7'b1000011 : begin
-          if(when_Decoder_l640) begin
+          if(when_Decoder_l643) begin
             io_output_illegal = 1'b1;
           end
         end
         7'b1000111 : begin
-          if(when_Decoder_l649) begin
+          if(when_Decoder_l652) begin
             io_output_illegal = 1'b1;
           end
         end
         7'b1001011 : begin
-          if(when_Decoder_l658) begin
+          if(when_Decoder_l661) begin
             io_output_illegal = 1'b1;
           end
         end
         7'b1001111 : begin
-          if(when_Decoder_l667) begin
+          if(when_Decoder_l670) begin
             io_output_illegal = 1'b1;
           end
         end
@@ -16737,7 +18281,7 @@ module Decoder (
           io_output_illegal = 1'b1;
         end
         7'b0110011 : begin
-          if(when_Decoder_l778) begin
+          if(when_Decoder_l881) begin
             io_output_illegal = 1'b1;
           end else begin
             casez(funct3)
@@ -17083,7 +18627,7 @@ module Decoder (
   always @(*) begin
     io_output_sysOp = SysOp_NONE;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
         end
         2'b01 : begin
@@ -17097,9 +18641,9 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(!when_Decoder_l370) begin
-                if(when_Decoder_l383) begin
-                  if(when_Decoder_l384) begin
+              if(!when_Decoder_l373) begin
+                if(when_Decoder_l386) begin
+                  if(when_Decoder_l387) begin
                     io_output_sysOp = SysOp_EBREAK;
                   end
                 end
@@ -17173,7 +18717,7 @@ module Decoder (
             3'b111 : begin
             end
             3'b000 : begin
-              casez(switch_Decoder_l860)
+              casez(switch_Decoder_l1013)
                 12'b000000000000 : begin
                   io_output_sysOp = SysOp_ECALL;
                 end
@@ -17204,11 +18748,11 @@ module Decoder (
   always @(*) begin
     io_output_valid = 1'b1;
     if(isComp) begin
-      case(switch_Decoder_l188)
+      case(switch_Decoder_l191)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l192) begin
+              if(when_Decoder_l195) begin
                 io_output_valid = 1'b0;
               end
             end
@@ -17236,28 +18780,28 @@ module Decoder (
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l255) begin
-                if(when_Decoder_l260) begin
+              if(!when_Decoder_l258) begin
+                if(when_Decoder_l263) begin
                   io_output_valid = 1'b0;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l270)
+              case(switch_Decoder_l273)
                 2'b00 : begin
-                  if(when_Decoder_l276) begin
+                  if(when_Decoder_l279) begin
                     io_output_valid = 1'b0;
                   end
                 end
                 2'b01 : begin
-                  if(when_Decoder_l287) begin
+                  if(when_Decoder_l290) begin
                     io_output_valid = 1'b0;
                   end
                 end
                 2'b10 : begin
                 end
                 default : begin
-                  if(when_Decoder_l298) begin
+                  if(when_Decoder_l301) begin
                     io_output_valid = 1'b0;
                   end
                 end
@@ -17274,12 +18818,12 @@ module Decoder (
         2'b10 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l345) begin
+              if(when_Decoder_l348) begin
                 io_output_valid = 1'b0;
               end
             end
             3'b010 : begin
-              if(when_Decoder_l352) begin
+              if(when_Decoder_l355) begin
                 io_output_valid = 1'b0;
               end
             end
@@ -17287,9 +18831,9 @@ module Decoder (
               io_output_valid = 1'b0;
             end
             3'b100 : begin
-              if(when_Decoder_l370) begin
-                if(when_Decoder_l371) begin
-                  if(when_Decoder_l372) begin
+              if(when_Decoder_l373) begin
+                if(when_Decoder_l374) begin
+                  if(when_Decoder_l375) begin
                     io_output_valid = 1'b0;
                   end
                 end
@@ -17402,7 +18946,7 @@ module Decoder (
           endcase
         end
         7'b1010011 : begin
-          if(when_Decoder_l540) begin
+          if(when_Decoder_l543) begin
             io_output_valid = 1'b0;
           end
           case(funct6)
@@ -17465,7 +19009,7 @@ module Decoder (
               endcase
             end
             6'h3c : begin
-              if(when_Decoder_l586) begin
+              if(when_Decoder_l589) begin
                 io_output_valid = 1'b0;
               end
             end
@@ -17506,22 +19050,22 @@ module Decoder (
           endcase
         end
         7'b1000011 : begin
-          if(when_Decoder_l640) begin
+          if(when_Decoder_l643) begin
             io_output_valid = 1'b0;
           end
         end
         7'b1000111 : begin
-          if(when_Decoder_l649) begin
+          if(when_Decoder_l652) begin
             io_output_valid = 1'b0;
           end
         end
         7'b1001011 : begin
-          if(when_Decoder_l658) begin
+          if(when_Decoder_l661) begin
             io_output_valid = 1'b0;
           end
         end
         7'b1001111 : begin
-          if(when_Decoder_l667) begin
+          if(when_Decoder_l670) begin
             io_output_valid = 1'b0;
           end
         end
@@ -17558,7 +19102,7 @@ module Decoder (
           io_output_valid = 1'b0;
         end
         7'b0110011 : begin
-          if(when_Decoder_l778) begin
+          if(when_Decoder_l881) begin
             io_output_valid = 1'b0;
           end else begin
             casez(funct3)
@@ -17610,7 +19154,7 @@ module Decoder (
             3'b111 : begin
             end
             3'b000 : begin
-              casez(switch_Decoder_l860)
+              casez(switch_Decoder_l1013)
                 12'b000000000000 : begin
                 end
                 12'b000000000001 : begin
@@ -17636,9 +19180,9 @@ module Decoder (
     end
   end
 
-  assign when_Decoder_l151 = (io_output_csrOp == CsrOp_WRITE);
+  assign when_Decoder_l154 = (io_output_csrOp == CsrOp_WRITE);
   always @(*) begin
-    if(when_Decoder_l151) begin
+    if(when_Decoder_l154) begin
       csrWrite = (io_output_csrImm ? 1'b1 : (rs1Num != 5'h0));
     end else begin
       csrWrite = (rs1Num != 5'h0);
@@ -17665,34 +19209,34 @@ module Decoder (
   assign cLdImm = _zz_cLdImm;
   assign cLdspImm = _zz_cLdspImm;
   assign cSdspImm = _zz_cSdspImm;
-  assign switch_Decoder_l188 = io_instruction[1 : 0];
-  assign when_Decoder_l192 = (cAddi4spn == 10'h0);
-  assign when_Decoder_l255 = (crd == 5'h02);
-  assign when_Decoder_l260 = ((crd == 5'h0) || (c6 == 6'h0));
-  assign switch_Decoder_l270 = io_instruction[11 : 10];
-  assign when_Decoder_l276 = io_instruction[12];
-  assign when_Decoder_l287 = io_instruction[12];
-  assign when_Decoder_l298 = io_instruction[12];
+  assign switch_Decoder_l191 = io_instruction[1 : 0];
+  assign when_Decoder_l195 = (cAddi4spn == 10'h0);
+  assign when_Decoder_l258 = (crd == 5'h02);
+  assign when_Decoder_l263 = ((crd == 5'h0) || (c6 == 6'h0));
+  assign switch_Decoder_l273 = io_instruction[11 : 10];
+  assign when_Decoder_l279 = io_instruction[12];
+  assign when_Decoder_l290 = io_instruction[12];
+  assign when_Decoder_l301 = io_instruction[12];
   assign _zz_io_output_aluOp = (io_instruction[5] ? AluOp_AND_1 : AluOp_OR_1);
   assign _zz_io_output_aluOp_1 = (io_instruction[5] ? AluOp_XOR_1 : AluOp_SUB);
   assign _zz_io_output_aluOp_2 = (io_instruction[6] ? _zz_io_output_aluOp : _zz_io_output_aluOp_1);
-  assign when_Decoder_l345 = io_instruction[12];
-  assign when_Decoder_l352 = (crd == 5'h0);
-  assign when_Decoder_l370 = (io_instruction[12] == 1'b0);
-  assign when_Decoder_l371 = (crs2 == 5'h0);
-  assign when_Decoder_l372 = (crd == 5'h0);
-  assign when_Decoder_l383 = (crs2 == 5'h0);
-  assign when_Decoder_l384 = (crd == 5'h0);
-  assign when_Decoder_l540 = io_instruction[25];
-  assign when_Decoder_l586 = (funct3 != 3'b000);
-  assign when_Decoder_l640 = io_instruction[25];
-  assign when_Decoder_l649 = io_instruction[25];
-  assign when_Decoder_l658 = io_instruction[25];
-  assign when_Decoder_l667 = io_instruction[25];
+  assign when_Decoder_l348 = io_instruction[12];
+  assign when_Decoder_l355 = (crd == 5'h0);
+  assign when_Decoder_l373 = (io_instruction[12] == 1'b0);
+  assign when_Decoder_l374 = (crs2 == 5'h0);
+  assign when_Decoder_l375 = (crd == 5'h0);
+  assign when_Decoder_l386 = (crs2 == 5'h0);
+  assign when_Decoder_l387 = (crd == 5'h0);
+  assign when_Decoder_l543 = io_instruction[25];
+  assign when_Decoder_l589 = (funct3 != 3'b000);
+  assign when_Decoder_l643 = io_instruction[25];
+  assign when_Decoder_l652 = io_instruction[25];
+  assign when_Decoder_l661 = io_instruction[25];
+  assign when_Decoder_l670 = io_instruction[25];
   assign _zz_io_output_aluOp_3 = (io_instruction[30] ? AluOp_SRA_1 : AluOp_SRL_1);
-  assign when_Decoder_l778 = ((funct7 & 7'h7f) == 7'h01);
+  assign when_Decoder_l881 = ((funct7 & 7'h7f) == 7'h01);
   assign _zz_io_output_aluOp_4 = (io_instruction[30] ? AluOp_SUB : AluOp_ADD);
   assign _zz_io_output_aluOp_5 = (io_instruction[30] ? AluOp_SRA_1 : AluOp_SRL_1);
-  assign switch_Decoder_l860 = io_instruction[31 : 20];
+  assign switch_Decoder_l1013 = io_instruction[31 : 20];
 
 endmodule

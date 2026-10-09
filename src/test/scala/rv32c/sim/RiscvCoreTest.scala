@@ -1304,4 +1304,316 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV64D program finished in $cycles cycles")
       }
   }
+
+  // ---- RV32B (Zbb) integration: bit manipulation ----
+  val rv32zbbProgram: Seq[Long] = Seq[Long](
+    encI(15, 0, 0, 1, 0x13),               // addi x1, x0, 15
+    encI(3, 0, 0, 2, 0x13),                // addi x2, x0, 3
+    encI(-1, 0, 0, 3, 0x13),               // addi x3, x0, -1
+    encR(0x20, 2, 1, 7, 4, 0x33),          // andn x4, x1, x2
+    encR(0x20, 2, 1, 6, 5, 0x33),          // orn  x5, x1, x2
+    encR(0x20, 2, 1, 4, 6, 0x33),          // xnor x6, x1, x2
+    encR(0x05, 2, 1, 4, 7, 0x33),          // min  x7, x1, x2
+    encR(0x05, 2, 1, 6, 8, 0x33),          // max  x8, x1, x2
+    encR(0x05, 1, 3, 7, 9, 0x33),          // maxu x9, x3, x1
+    encR(0x05, 1, 3, 5, 10, 0x33),         // minu x10, x3, x1
+    encI(0x600, 1, 1, 11, 0x13),           // clz  x11, x1
+    encI(0x601, 1, 1, 12, 0x13),           // ctz  x12, x1
+    encI(0x602, 1, 1, 13, 0x13),           // cpop x13, x1
+    encI(0x600, 0, 1, 14, 0x13),           // clz  x14, x0
+    encI(0x601, 0, 1, 15, 0x13),           // ctz  x15, x0
+    encI(0x602, 0, 1, 16, 0x13),           // cpop x16, x0
+    encI(128, 0, 0, 20, 0x13),             // addi x20, x0, 128
+    encI(0x604, 20, 1, 21, 0x13),          // sext.b x21, x20
+    encI(1, 0, 0, 22, 0x13),               // addi x22, x0, 1
+    encI(15, 22, 1, 22, 0x13),             // slli x22, x22, 15
+    encI(0x605, 22, 1, 23, 0x13),          // sext.h x23, x22
+    encR(0x04, 0, 3, 4, 24, 0x33),         // zext.h x24, x3
+    encI(0x287, 1, 5, 25, 0x13),           // orc.b x25, x1
+    encI(0x698, 1, 5, 26, 0x13),           // rev8 x26, x1
+    encR(0x30, 2, 1, 1, 27, 0x33),         // rol x27, x1, x2
+    encR(0x30, 2, 1, 5, 28, 0x33),         // ror x28, x1, x2
+    encI(0x603, 1, 5, 29, 0x13)            // rori x29, x1, 3
+  )
+
+  test("RV32B (Zbb) bit manipulation") {
+    val cfg = CoreConfig.rv32imzbb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbbProgram.length - 1)
+        val cycles = runUntil(dut, 400, lastPc, 29, BigInt("E0000001", 16))
+        assert(cycles < 400, "RV32 Zbb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(4) == 12, "andn 15 & ~3")
+        assert(x(5) == 0xFFFFFFFFL, "orn 15 | ~3")
+        assert(x(6) == 0xFFFFFFF3L, "xnor ~(15^3)")
+        assert(x(7) == 3, "min signed 15,3")
+        assert(x(8) == 15, "max signed 15,3")
+        assert(x(9) == 0xFFFFFFFFL, "maxu 0xFFFFFFFF,15")
+        assert(x(10) == 15, "minu 0xFFFFFFFF,15")
+        assert(x(11) == 28, "clz 15")
+        assert(x(12) == 0, "ctz 15")
+        assert(x(13) == 4, "cpop 15")
+        assert(x(14) == 32, "clz 0")
+        assert(x(15) == 32, "ctz 0")
+        assert(x(16) == 0, "cpop 0")
+        assert(x(21) == 0xFFFFFF80L, "sext.b 0x80")
+        assert(x(22) == 0x8000L, "0x8000")
+        assert(x(23) == 0xFFFF8000L, "sext.h 0x8000")
+        assert(x(24) == 0xFFFFL, "zext.h 0xFFFFFFFF")
+        assert(x(25) == 0xFFL, "orc.b 0x0F")
+        assert(x(26) == 0x0F000000L, "rev8 0x0F")
+        assert(x(27) == 0x78L, "rol 15,3")
+        assert(x(28) == 0xE0000001L, "ror 15,3")
+        assert(x(29) == 0xE0000001L, "rori 15,3")
+        println(s"PASS: RV32 Zbb program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbb) integration: 64-bit ops and W-suffix forms ----
+  val rv64zbbProgram: Seq[Long] = Seq[Long](
+    encI(15, 0, 0, 1, 0x13),               // addi x1, x0, 15
+    encI(3, 0, 0, 2, 0x13),                // addi x2, x0, 3
+    encI(-1, 0, 0, 3, 0x13),               // addi x3, x0, -1
+    encR(0x20, 2, 1, 7, 4, 0x33),          // andn x4, x1, x2
+    encI(0x600, 1, 1, 5, 0x13),            // clz  x5, x1 -> 60
+    encI(0x601, 1, 1, 6, 0x13),            // ctz  x6, x1 -> 0
+    encI(0x602, 1, 1, 7, 0x13),            // cpop x7, x1 -> 4
+    encI(0x6B8, 1, 5, 8, 0x13),            // rev8 x8, x1
+    encI(0x287, 1, 5, 9, 0x13),            // orc.b x9, x1
+    encR(0x30, 2, 1, 1, 10, 0x33),         // rol  x10, x1, x2
+    encR(0x30, 2, 1, 5, 11, 0x33),         // ror  x11, x1, x2
+    encI(0x600, 1, 1, 12, 0x1b),           // clzw x12, x1 -> 28
+    encI(0x602, 1, 1, 13, 0x1b),           // cpopw x13, x1 -> 4
+    encI(1, 0, 0, 15, 0x13),               // addi x15, x0, 1
+    encI(31, 0, 0, 14, 0x13),              // addi x14, x0, 31
+    encR(0x30, 14, 15, 1, 16, 0x3b),       // rolw x16, x15, x14
+    encR(0x30, 15, 15, 5, 17, 0x3b),       // rorw x17, x15, x15
+    encR(0x04, 0, 3, 4, 18, 0x3b),         // zext.h x18, x3
+    encI(0x603, 1, 5, 19, 0x13),           // rori x19, x1, 3
+    encI(0x623, 1, 5, 20, 0x13),           // rori x20, x1, 35
+    encI(0x601, 15, 5, 21, 0x1b)           // roriw x21, x15, 1
+  )
+
+  test("RV64B (Zbb) bit manipulation and W forms") {
+    val cfg = CoreConfig.rv64imzbb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbbProgram.length - 1)
+        val cycles = runUntil(dut, 400, lastPc, 21, BigInt("FFFFFFFF80000000", 16))
+        assert(cycles < 400, "RV64 Zbb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(4) == 12, "andn 15 & ~3")
+        assert(x(5) == 60, "clz 15 (64-bit)")
+        assert(x(6) == 0, "ctz 15")
+        assert(x(7) == 4, "cpop 15")
+        assert(x(8) == BigInt("0F00000000000000", 16), "rev8 0x0F")
+        assert(x(9) == 0xFF, "orc.b 0x0F")
+        assert(x(10) == 0x78, "rol 15,3")
+        assert(x(11) == BigInt("E000000000000001", 16), "ror 15,3")
+        assert(x(12) == 28, "clzw 15")
+        assert(x(13) == 4, "cpopw 15")
+        assert(x(16) == BigInt("FFFFFFFF80000000", 16), "rolw 1,31 sign-extended")
+        assert(x(17) == BigInt("FFFFFFFF80000000", 16), "rorw 1,1 sign-extended")
+        assert(x(18) == 0xFFFF, "zext.h 0xFFFFFFFFFFFFFFFF")
+        assert(x(19) == BigInt("E000000000000001", 16), "rori 15,3")
+        assert(x(20) == BigInt("1E0000000", 16), "rori 15,35 (6-bit shamt)")
+        assert(x(21) == BigInt("FFFFFFFF80000000", 16), "roriw 1,1 sign-extended")
+        println(s"PASS: RV64 Zbb program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zbs) integration: single-bit set/clear/invert/test ----
+  val rv32zbsProgram: Seq[Long] = Seq[Long](
+    encI(0, 0, 0, 1, 0x13),                // addi x1, x0, 0
+    encI(3, 0, 0, 2, 0x13),                // addi x2, x0, 3
+    encR(0x14, 2, 1, 1, 3, 0x33),          // bset x3, x1, x2 -> 8
+    encI(-1, 0, 0, 4, 0x13),               // addi x4, x0, -1
+    encR(0x24, 2, 4, 1, 5, 0x33),          // bclr x5, x4, x2 -> clear bit3
+    encR(0x34, 2, 4, 1, 6, 0x33),          // binv x6, x4, x2 -> invert bit3
+    encR(0x24, 2, 3, 5, 7, 0x33),          // bext x7, x3, x2 -> 1
+    encI(5, 0, 0, 8, 0x13),                // addi x8, x0, 5
+    encR(0x24, 2, 8, 5, 9, 0x33),          // bext x9, x8, x2 -> 0
+    encI(0x287, 1, 1, 10, 0x13),           // bseti x10, x1, 7 -> 0x80
+    encI(0x480, 4, 1, 11, 0x13),           // bclri x11, x4, 0 -> 0xFFFFFFFE
+    encI(0x69F, 1, 1, 12, 0x13),           // binvi x12, x1, 31 -> 0x80000000
+    encI(0x49F, 12, 5, 13, 0x13),          // bexti x13, x12, 31 -> 1
+    encI(42, 0, 0, 14, 0x13),              // addi x14, x0, 42
+    encI(0x485, 14, 5, 15, 0x13),          // bexti x15, x14, 5 -> 1
+    encI(0x484, 14, 5, 16, 0x13),          // bexti x16, x14, 4 -> 0
+    encI(35, 0, 0, 18, 0x13),              // addi x18, x0, 35
+    encR(0x14, 18, 1, 1, 19, 0x33),        // bset x19, x1, x18 -> bit 35&31 = 8
+    encI(0x280, 0, 1, 20, 0x13)            // bseti x20, x0, 0 -> 1
+  )
+
+  test("RV32B (Zbs) single-bit operations") {
+    val cfg = CoreConfig.rv32imzbs
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbsProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbsProgram.length - 1)
+        val cycles = runUntil(dut, 300, lastPc, 20, 1)
+        assert(cycles < 300, "RV32 Zbs program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 8, "bset bit3")
+        assert(x(5) == 0xFFFFFFF7L, "bclr bit3 of all ones")
+        assert(x(6) == 0xFFFFFFF7L, "binv bit3 of all ones")
+        assert(x(7) == 1, "bext bit3 of 8")
+        assert(x(9) == 0, "bext bit3 of 5")
+        assert(x(10) == 0x80, "bseti bit7")
+        assert(x(11) == 0xFFFFFFFEL, "bclri bit0 of all ones")
+        assert(x(12) == 0x80000000L, "binvi bit31")
+        assert(x(13) == 1, "bexti bit31")
+        assert(x(15) == 1, "bexti bit5 of 42")
+        assert(x(16) == 0, "bexti bit4 of 42")
+        assert(x(19) == 8, "bset register index 35 wraps to bit3")
+        assert(x(20) == 1, "bseti bit0")
+        println(s"PASS: RV32 Zbs program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbs) integration: 6-bit bit indices and full-width results ----
+  val rv64zbsProgram: Seq[Long] = Seq[Long](
+    encI(0, 0, 0, 1, 0x13),                // addi x1, x0, 0
+    encI(-1, 0, 0, 6, 0x13),               // addi x6, x0, -1
+    encI(0x2A8, 1, 1, 3, 0x13),            // bseti x3, x1, 40
+    encI(40, 0, 0, 2, 0x13),               // addi x2, x0, 40
+    encR(0x14, 2, 1, 1, 4, 0x33),          // bset x4, x1, x2
+    encI(0x4A8, 6, 1, 5, 0x13),            // bclri x5, x6, 40
+    encI(0x4A8, 3, 5, 7, 0x13),            // bexti x7, x3, 40 -> 1
+    encI(0x6BF, 1, 1, 8, 0x13),            // binvi x8, x1, 63
+    encI(0x4BF, 8, 5, 9, 0x13),            // bexti x9, x8, 63 -> 1
+    encI(0x2A0, 1, 1, 10, 0x13),           // bseti x10, x1, 32
+    encI(69, 0, 0, 12, 0x13),              // addi x12, x0, 69
+    encR(0x24, 12, 6, 1, 11, 0x33),        // bclr x11, x6, x12 -> bit 69&63 = 5
+    encI(0x280, 0, 1, 13, 0x13)            // bseti x13, x0, 0 -> 1
+  )
+
+  test("RV64B (Zbs) single-bit operations with 6-bit indices") {
+    val cfg = CoreConfig.rv64imzbs
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbsProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbsProgram.length - 1)
+        val cycles = runUntil(dut, 300, lastPc, 13, 1)
+        assert(cycles < 300, "RV64 Zbs program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == BigInt("10000000000", 16), "bseti bit40")
+        assert(x(4) == BigInt("10000000000", 16), "bset register bit40")
+        assert(x(5) == BigInt("FFFFFEFFFFFFFFFF", 16), "bclri bit40 of all ones")
+        assert(x(7) == 1, "bexti bit40")
+        assert(x(8) == BigInt("8000000000000000", 16), "binvi bit63")
+        assert(x(9) == 1, "bexti bit63")
+        assert(x(10) == BigInt("100000000", 16), "bseti bit32")
+        assert(x(11) == BigInt("FFFFFFFFFFFFFFDF", 16), "bclr register index 69 wraps to bit5")
+        assert(x(13) == 1, "bseti bit0")
+        println(s"PASS: RV64 Zbs program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zba) integration: address-generation shifts ----
+  val rv32zbaProgram: Seq[Long] = Seq[Long](
+    encI(5, 0, 0, 1, 0x13),                // addi x1, x0, 5
+    encI(3, 0, 0, 2, 0x13),                // addi x2, x0, 3
+    encR(0x10, 2, 1, 2, 3, 0x33),          // sh1add x3, x1, x2 -> 13
+    encR(0x10, 2, 1, 4, 4, 0x33),          // sh2add x4, x1, x2 -> 23
+    encR(0x10, 2, 1, 6, 5, 0x33),          // sh3add x5, x1, x2 -> 43
+    encR(0x10, 1, 2, 2, 6, 0x33)           // sh1add x6, x2, x1 -> 11
+  )
+
+  test("RV32B (Zba) address generation") {
+    val cfg = CoreConfig.rv32imzba
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbaProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbaProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 6, 11)
+        assert(cycles < 200, "RV32 Zba program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 13, "sh1add (5<<1)+3")
+        assert(x(4) == 23, "sh2add (5<<2)+3")
+        assert(x(5) == 43, "sh3add (5<<3)+3")
+        assert(x(6) == 11, "sh1add (3<<1)+5")
+        println(s"PASS: RV32 Zba program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zba) integration: word forms and 64-bit address generation ----
+  val rv64zbaProgram: Seq[Long] = Seq[Long](
+    encI(5, 0, 0, 1, 0x13),                // addi x1, x0, 5
+    encI(3, 0, 0, 2, 0x13),                // addi x2, x0, 3
+    encR(0x10, 2, 1, 2, 3, 0x33),          // sh1add x3, x1, x2 -> 13
+    encR(0x10, 2, 1, 4, 4, 0x33),          // sh2add x4, x1, x2 -> 23
+    encR(0x10, 2, 1, 6, 5, 0x33),          // sh3add x5, x1, x2 -> 43
+    encI(1, 0, 0, 6, 0x13),                // addi x6, x0, 1
+    encI(31, 6, 1, 6, 0x13),               // slli x6, x6, 31 -> 0x80000000
+    encR(0x04, 2, 6, 0, 7, 0x3b),          // add.uw x7, x6, x2 -> 0x80000003
+    encI(0x84, 6, 1, 8, 0x1b),             // slli.uw x8, x6, 4 -> 0x800000000
+    encR(0x10, 2, 6, 2, 9, 0x3b),          // sh1add.uw x9, x6, x2 -> 0x100000003
+    encR(0x10, 2, 6, 4, 10, 0x3b),         // sh2add.uw x10, x6, x2 -> 0x200000003
+    encR(0x10, 2, 6, 6, 11, 0x3b),         // sh3add.uw x11, x6, x2 -> 0x400000003
+    encI(1, 0, 0, 12, 0x13),               // addi x12, x0, 1
+    encI(32, 12, 1, 12, 0x13),             // slli x12, x12, 32 -> 0x100000000
+    encR(0x10, 2, 12, 2, 13, 0x33)         // sh1add x13, x12, x2 -> 0x200000003
+  )
+
+  test("RV64B (Zba) word forms zero-extend rs1") {
+    val cfg = CoreConfig.rv64imzba
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbaProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbaProgram.length - 1)
+        val cycles = runUntil(dut, 300, lastPc, 13, BigInt("200000003", 16))
+        assert(cycles < 300, "RV64 Zba program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 13, "sh1add (5<<1)+3")
+        assert(x(4) == 23, "sh2add (5<<2)+3")
+        assert(x(5) == 43, "sh3add (5<<3)+3")
+        assert(x(7) == BigInt("80000003", 16), "add.uw zero-extends 0x80000000")
+        assert(x(8) == BigInt("800000000", 16), "slli.uw 0x80000000 by 4")
+        assert(x(9) == BigInt("100000003", 16), "sh1add.uw")
+        assert(x(10) == BigInt("200000003", 16), "sh2add.uw")
+        assert(x(11) == BigInt("400000003", 16), "sh3add.uw")
+        assert(x(13) == BigInt("200000003", 16), "sh1add full 64-bit")
+        println(s"PASS: RV64 Zba program finished in $cycles cycles")
+      }
+  }
 }

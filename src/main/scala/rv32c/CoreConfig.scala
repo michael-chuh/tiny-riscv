@@ -46,6 +46,9 @@ case class CoreConfig(
   def hasCompressed: Boolean = isa.hasCompressed
   def hasSingleFloat: Boolean = isa.hasSingleFloat
   def hasDoubleFloat: Boolean = isa.hasDoubleFloat
+  def hasZbb: Boolean = isa.hasZbb
+  def hasZbs: Boolean = isa.hasZbs
+  def hasZba: Boolean = isa.hasZba
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -80,4 +83,22 @@ object CoreConfig {
 
   /** RV64D + Zicsr on the M/U stack: double-precision float rv64 hart. */
   def rv64d: CoreConfig = CoreConfig(isa = IsaConfig.rv64d)
+
+  /** RV32IM + Zbb on the M/U stack: the bit-manipulation rv32 MCU hart. */
+  def rv32imzbb: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbb)
+
+  /** RV64IM + Zbb on the M/U stack: the bit-manipulation rv64 hart. */
+  def rv64imzbb: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbb)
+
+  /** RV32IM + Zbs on the M/U stack: the single-bit rv32 MCU hart. */
+  def rv32imzbs: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbs)
+
+  /** RV64IM + Zbs on the M/U stack: the single-bit rv64 hart. */
+  def rv64imzbs: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbs)
+
+  /** RV32IM + Zba on the M/U stack: the address-generation rv32 MCU hart. */
+  def rv32imzba: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzba)
+
+  /** RV64IM + Zba on the M/U stack: the address-generation rv64 hart. */
+  def rv64imzba: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzba)
 }

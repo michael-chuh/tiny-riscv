@@ -10,6 +10,24 @@ object AluOp extends SpinalEnum {
   val DIV, DIVU, REM, REMU = newElement()
   // RV64M W-suffix: 32-bit multiply/divide, result sign-extended to xlen.
   val MULW, DIVW, DIVUW, REMW, REMUW = newElement()
+  // Zbb (basic bit manipulation). The immediate and register forms of the
+  // shift-based ops share an opcode; operand b holds the register or immediate
+  // value and only its low log2Up(xlen) bits select the bit/rotation.
+  val ANDN, ORN, XNOR = newElement()
+  val CLZ, CTZ, CPOP = newElement()
+  val SEXTB, SEXTH, ZEXTH = newElement()
+  val ORCB, REV8 = newElement()
+  val ROL, ROR = newElement()
+  val MIN, MINU, MAX, MAXU = newElement()
+  // Zbs single-bit operations: set/clear/invert/test the bit selected by the
+  // low log2(xlen) bits of operand b (register or immediate).
+  val BSET, BCLR, BINV, BEXT = newElement()
+  // Zba address generation: rd = (rs1 << k) + rs2. The word forms ("uw")
+  // zero-extend rs1's low 32 bits before shifting/adding on RV64.
+  val SH1ADD, SH2ADD, SH3ADD = newElement()
+  val ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW, SLLIUW = newElement()
+  // RV64 Zbb W-suffix: 32-bit count/rotate, result sign-extended to xlen.
+  val CLZW, CTZW, CPOPW, ROLW, RORW = newElement()
 }
 
 object BranchOp extends SpinalEnum {
@@ -35,6 +53,59 @@ class Alu(xlen: Int) extends Component {
   val bW = bS(31 downto 0)
   val aWU = aU(31 downto 0)
   val shamtW = io.b(4 downto 0).asUInt
+
+  // Zbs: one-hot mask selecting the bit index held in the low log2(xlen) bits
+  // of operand b. The shift amount is already width-clamped, so the mask stays
+  // in range for both the register and immediate forms.
+  val bitOneHot = (U(1, xlen bits) << shamt).resize(xlen)
+
+  // Zba: zero-extended low 32 bits of operand a (identity on RV32), used by the
+  // RV64 word forms add.uw / slli.uw / sh*add.uw.
+  val aZext = aU(31 downto 0).resize(xlen)
+
+  // ----- Zbb bit-manipulation helpers -----
+  // Count leading/trailing zeros and population count for an arbitrary width.
+  // Scala `var`s combined with Mux keep the scan purely combinational.
+  private def clzN(x: Bits, w: Int): UInt = {
+    val rw = log2Up(w + 1)
+    var res = U(w, rw bits)
+    var active = True
+    for (i <- w - 1 downto 0) {
+      res = Mux(active && x(i), U(w - 1 - i, rw bits), res)
+      active = active && !x(i)
+    }
+    res
+  }
+  private def ctzN(x: Bits, w: Int): UInt = {
+    val rw = log2Up(w + 1)
+    var res = U(w, rw bits)
+    var active = True
+    for (i <- 0 until w) {
+      res = Mux(active && x(i), U(i, rw bits), res)
+      active = active && !x(i)
+    }
+    res
+  }
+  private def cpopN(x: Bits, w: Int): UInt = {
+    val rw = log2Up(w + 1)
+    var res = U(0, rw bits)
+    for (b <- x.asBools) res = (res +^ b.asUInt).resize(rw)
+    res
+  }
+  private def rotlN(x: UInt, s: UInt, w: Int): UInt = {
+    val sw = log2Up(w + 1)
+    val sh = s.resize(sw)
+    val left = (x << sh.resize(log2Up(w))).resize(w)
+    val right = x >> (U(w, sw bits) - sh)
+    Mux(s === 0, x, left | right)
+  }
+  private def rotrN(x: UInt, s: UInt, w: Int): UInt = {
+    val sw = log2Up(w + 1)
+    val sh = s.resize(sw)
+    val right = x >> sh
+    val left = (x << (U(w, sw bits) - sh)).resize(w)
+    Mux(s === 0, x, right | left)
+  }
 
   // ----- Multiplication helpers (full-width products) -----
   val mulUU = aU * bU                       // unsigned * unsigned (2*xlen bits)
@@ -140,6 +211,51 @@ class Alu(xlen: Int) extends Component {
     is(AluOp.REMUW) {
       result := B(0, xlen bits)
     }
+    // ---- Zbb: basic bit manipulation ----
+    is(AluOp.ANDN) { result := io.a & ~io.b }
+    is(AluOp.ORN)  { result := io.a | ~io.b }
+    is(AluOp.XNOR) { result := ~(io.a ^ io.b) }
+    is(AluOp.CLZ)  { result := clzN(io.a, xlen).resize(xlen).asBits }
+    is(AluOp.CTZ)  { result := ctzN(io.a, xlen).resize(xlen).asBits }
+    is(AluOp.CPOP) { result := cpopN(io.a, xlen).resize(xlen).asBits }
+    is(AluOp.SEXTB) { result := io.a(7 downto 0).asSInt.resize(xlen).asBits }
+    is(AluOp.SEXTH) { result := io.a(15 downto 0).asSInt.resize(xlen).asBits }
+    is(AluOp.ZEXTH) { result := io.a(15 downto 0).asUInt.resize(xlen).asBits }
+    is(AluOp.ORCB) {
+      val bs = (0 until xlen / 8).map(k => Mux(io.a(8 * k + 7 downto 8 * k).orR, B(0xFF, 8 bits), B(0, 8 bits)))
+      result := Cat(bs)
+    }
+    is(AluOp.REV8) {
+      val bs = (0 until xlen / 8).map(k => io.a(8 * k + 7 downto 8 * k))
+      result := Cat(bs.reverse)
+    }
+    is(AluOp.ROL) { result := rotlN(aU, shamt, xlen).asBits }
+    is(AluOp.ROR) { result := rotrN(aU, shamt, xlen).asBits }
+    is(AluOp.MIN)  { result := Mux(aS < bS, io.a, io.b) }
+    is(AluOp.MINU) { result := Mux(aU < bU, io.a, io.b) }
+    is(AluOp.MAX)  { result := Mux(aS > bS, io.a, io.b) }
+    is(AluOp.MAXU) { result := Mux(aU > bU, io.a, io.b) }
+    // ---- Zbs: single-bit set/clear/invert/test ----
+    is(AluOp.BSET) { result := io.a | bitOneHot.asBits }
+    is(AluOp.BCLR) { result := io.a & ~bitOneHot.asBits }
+    is(AluOp.BINV) { result := io.a ^ bitOneHot.asBits }
+    is(AluOp.BEXT) { result := Mux((aU & bitOneHot).orR, B(1, xlen bits), B(0, xlen bits)) }
+    // ---- Zba: address generation (rd = (rs1 << k) + rs2) ----
+    is(AluOp.SH1ADD) { result := ((aU << 1) + bU).resize(xlen).asBits }
+    is(AluOp.SH2ADD) { result := ((aU << 2) + bU).resize(xlen).asBits }
+    is(AluOp.SH3ADD) { result := ((aU << 3) + bU).resize(xlen).asBits }
+    // RV64 word forms: rs1's low 32 bits are zero-extended first.
+    is(AluOp.ADDUW)    { result := (aZext + bU).resize(xlen).asBits }
+    is(AluOp.SH1ADDUW) { result := ((aZext << 1) + bU).resize(xlen).asBits }
+    is(AluOp.SH2ADDUW) { result := ((aZext << 2) + bU).resize(xlen).asBits }
+    is(AluOp.SH3ADDUW) { result := ((aZext << 3) + bU).resize(xlen).asBits }
+    is(AluOp.SLLIUW)   { result := (aZext << shamt).resize(xlen).asBits }
+    // RV64 Zbb W-suffix: operate on the low 32 bits, sign-extend the result.
+    is(AluOp.CLZW)  { result := clzN(io.a(31 downto 0), 32).resize(xlen).asBits }
+    is(AluOp.CTZW)  { result := ctzN(io.a(31 downto 0), 32).resize(xlen).asBits }
+    is(AluOp.CPOPW) { result := cpopN(io.a(31 downto 0), 32).resize(xlen).asBits }
+    is(AluOp.ROLW)  { result := rotlN(aWU, shamtW, 32).asSInt.resize(xlen).asBits }
+    is(AluOp.RORW)  { result := rotrN(aWU, shamtW, 32).asSInt.resize(xlen).asBits }
   }
   io.result := result
 }

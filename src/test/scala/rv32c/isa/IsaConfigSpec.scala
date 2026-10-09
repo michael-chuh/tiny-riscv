@@ -82,6 +82,46 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
   }
 
+  // ---- Zbb bit-manipulation configuration ----------------------------------
+  test("rv32imzbb exposes Zbb without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzbb
+    assert(isa.hasZbb && isa.hasMulDiv)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbb_Zicsr  M/U")
+  }
+
+  test("rv64imzbb exposes Zbb on an RV64 hart") {
+    val isa = IsaConfig.rv64imzbb
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasZbb)
+    assert(isa.canonicalName == "RV64IM_Zbb_Zicsr  M/U")
+  }
+
+  test("rv32imzbs exposes Zbs without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzbs
+    assert(isa.hasZbs && isa.hasMulDiv && !isa.hasZbb)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbs_Zicsr  M/U")
+  }
+
+  test("rv64imzbs exposes Zbs on an RV64 hart") {
+    val isa = IsaConfig.rv64imzbs
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasZbs)
+    assert(isa.canonicalName == "RV64IM_Zbs_Zicsr  M/U")
+  }
+
+  test("rv32imzba exposes Zba without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzba
+    assert(isa.hasZba && isa.hasMulDiv && !isa.hasZbb && !isa.hasZbs)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zba_Zicsr  M/U")
+  }
+
+  test("rv64imzba exposes Zba on an RV64 hart") {
+    val isa = IsaConfig.rv64imzba
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasZba)
+    assert(isa.canonicalName == "RV64IM_Zba_Zicsr  M/U")
+  }
+
   test("D implies F") {
     intercept[IllegalArgumentException] {
       IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.DoubleFloat), PrivConfig.MU)
@@ -172,5 +212,14 @@ class IsaConfigSpec extends AnyFunSuite {
     val atomic = CoreConfig.rv32ima
     assert(atomic.hasAtomic && !atomic.hasCompressed)
     assert(!plain.hasAtomic)
+    val zbb = CoreConfig.rv32imzbb
+    assert(zbb.hasZbb && !zbb.hasAtomic && !zbb.hasFloat)
+    assert(!plain.hasZbb)
+    val zbs = CoreConfig.rv32imzbs
+    assert(zbs.hasZbs && !zbs.hasZbb)
+    assert(!plain.hasZbs)
+    val zba = CoreConfig.rv32imzba
+    assert(zba.hasZba && !zba.hasZbb && !zba.hasZbs)
+    assert(!plain.hasZba)
   }
 }

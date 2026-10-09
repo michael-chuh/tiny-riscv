@@ -87,6 +87,9 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withAtomic: Boolean = isa.hasAtomic
   private val withFloat: Boolean = isa.hasFpu
   private val withDouble: Boolean = isa.hasDoubleFloat
+  private val withZbb: Boolean = isa.hasZbb
+  private val withZbs: Boolean = isa.hasZbs
+  private val withZba: Boolean = isa.hasZba
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -717,6 +720,62 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         is(M"111") { d.aluOp := AluOp.AND }
         default { d.illegal := True; d.valid := False }
       }
+      if (withZbb) { // Zbb ops encoded in OP-IMM (last connect wins)
+        when(funct7 === M"0110000") {
+          switch(funct3) {
+            is(M"001") { // clz/ctz/cpop/sext.b/sext.h (rs2 selects)
+              switch(instr(24 downto 20)) {
+                is(M"00000") { d.aluOp := AluOp.CLZ }
+                is(M"00001") { d.aluOp := AluOp.CTZ }
+                is(M"00010") { d.aluOp := AluOp.CPOP }
+                is(M"00100") { d.aluOp := AluOp.SEXTB }
+                is(M"00101") { d.aluOp := AluOp.SEXTH }
+                default { d.illegal := True; d.valid := False }
+              }
+            }
+            is(M"101") { d.aluOp := AluOp.ROR } // rori (RV32, 5-bit shamt)
+            default {}
+          }
+        }
+        if (isRV64) { // rori with 6-bit shamt: shamt[5] is instr(25)
+          when(funct7 === M"0110001" && funct3 === M"101") { d.aluOp := AluOp.ROR }
+        }
+        when(funct7 === M"0010100" && funct3 === M"101" && instr(24 downto 20) === M"00111") {
+          d.aluOp := AluOp.ORCB
+        }
+        if (!isRV64) { // rev8 rv32
+          when(funct7 === M"0110100" && funct3 === M"101" && instr(24 downto 20) === M"11000") {
+            d.aluOp := AluOp.REV8
+          }
+        }
+        if (isRV64) { // rev8 rv64
+          when(funct7 === M"0110101" && funct3 === M"101" && instr(24 downto 20) === M"11000") {
+            d.aluOp := AluOp.REV8
+          }
+        }
+      }
+      if (withZbs) { // Zbs immediate forms (bit index in the low shamt bits)
+        when(funct7 === M"0010100" && funct3 === M"001") { d.aluOp := AluOp.BSET }
+        when(funct7 === M"0100100") {
+          switch(funct3) {
+            is(M"001") { d.aluOp := AluOp.BCLR }
+            is(M"101") { d.aluOp := AluOp.BEXT }
+            default {}
+          }
+        }
+        when(funct7 === M"0110100" && funct3 === M"001") { d.aluOp := AluOp.BINV }
+        if (isRV64) { // shamt[5] is carried in funct7 bit 0
+          when(funct7 === M"0010101" && funct3 === M"001") { d.aluOp := AluOp.BSET }
+          when(funct7 === M"0100101") {
+            switch(funct3) {
+              is(M"001") { d.aluOp := AluOp.BCLR }
+              is(M"101") { d.aluOp := AluOp.BEXT }
+              default {}
+            }
+          }
+          when(funct7 === M"0110101" && funct3 === M"001") { d.aluOp := AluOp.BINV }
+        }
+      }
     }
     is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
       if (isRV64) {
@@ -727,6 +786,25 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           is(M"001") { d.aluOp := AluOp.SLLW }
           is(M"101") { d.aluOp := Mux(instr(30), AluOp.SRAW, AluOp.SRLW) }
           default { d.illegal := True; d.valid := False }
+        }
+        if (withZbb) { // RV64 Zbb W-suffix counts and roriw
+          when(funct7 === M"0110000") {
+            switch(funct3) {
+              is(M"001") {
+                switch(instr(24 downto 20)) {
+                  is(M"00000") { d.aluOp := AluOp.CLZW }
+                  is(M"00001") { d.aluOp := AluOp.CTZW }
+                  is(M"00010") { d.aluOp := AluOp.CPOPW }
+                  default { d.illegal := True; d.valid := False }
+                }
+              }
+              is(M"101") { d.aluOp := AluOp.RORW }
+              default {}
+            }
+          }
+        }
+        if (withZba) { // Zba slli.uw: funct6=000010, 6-bit shamt in imm[5:0]
+          when(funct6 === M"000010" && funct3 === M"001") { d.aluOp := AluOp.SLLIUW }
         }
       } else {
         d.illegal := True
@@ -769,6 +847,31 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
           default { d.illegal := True; d.valid := False }
         }
+        if (withZbb) { // RV64 Zbb W-suffix: rolw/rorw and zext.h
+          when(funct7 === M"0110000") {
+            switch(funct3) {
+              is(M"001") { d.aluOp := AluOp.ROLW; d.illegal := False; d.valid := True }
+              is(M"101") { d.aluOp := AluOp.RORW; d.illegal := False; d.valid := True }
+              default {}
+            }
+          }
+          when(funct7 === M"0000100" && funct3 === M"100") {
+            d.aluOp := AluOp.ZEXTH; d.illegal := False; d.valid := True
+          }
+        }
+        if (withZba) { // Zba RV64 word forms: add.uw and sh*add.uw
+          when(funct7 === M"0000100" && funct3 === M"000") {
+            d.aluOp := AluOp.ADDUW; d.illegal := False; d.valid := True
+          }
+          when(funct7 === M"0010000") {
+            switch(funct3) {
+              is(M"010") { d.aluOp := AluOp.SH1ADDUW; d.illegal := False; d.valid := True }
+              is(M"100") { d.aluOp := AluOp.SH2ADDUW; d.illegal := False; d.valid := True }
+              is(M"110") { d.aluOp := AluOp.SH3ADDUW; d.illegal := False; d.valid := True }
+              default {}
+            }
+          }
+        }
       } else {
         d.illegal := True
         d.valid := False
@@ -805,6 +908,56 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           is(M"110") { d.aluOp := AluOp.OR }
           is(M"111") { d.aluOp := AluOp.AND }
           default { d.illegal := True; d.valid := False }
+        }
+      }
+      if (withZbb) { // Zbb register-register ops (last connect wins over RV32I)
+        when(funct7 === M"0100000") {
+          switch(funct3) {
+            is(M"100") { d.aluOp := AluOp.XNOR }
+            is(M"110") { d.aluOp := AluOp.ORN }
+            is(M"111") { d.aluOp := AluOp.ANDN }
+            default {}
+          }
+        }
+        when(funct7 === M"0000101") {
+          switch(funct3) {
+            is(M"100") { d.aluOp := AluOp.MIN }
+            is(M"101") { d.aluOp := AluOp.MINU }
+            is(M"110") { d.aluOp := AluOp.MAX }
+            is(M"111") { d.aluOp := AluOp.MAXU }
+            default {}
+          }
+        }
+        when(funct7 === M"0110000") {
+          switch(funct3) {
+            is(M"001") { d.aluOp := AluOp.ROL }
+            is(M"101") { d.aluOp := AluOp.ROR }
+            default {}
+          }
+        }
+        if (!isRV64) { // zext.h uses OP on RV32, OP-32 on RV64
+          when(funct7 === M"0000100" && funct3 === M"100") { d.aluOp := AluOp.ZEXTH }
+        }
+      }
+      if (withZbs) { // Zbs register forms (bit index from rs2's low bits)
+        when(funct7 === M"0010100" && funct3 === M"001") { d.aluOp := AluOp.BSET }
+        when(funct7 === M"0100100") {
+          switch(funct3) {
+            is(M"001") { d.aluOp := AluOp.BCLR }
+            is(M"101") { d.aluOp := AluOp.BEXT }
+            default {}
+          }
+        }
+        when(funct7 === M"0110100" && funct3 === M"001") { d.aluOp := AluOp.BINV }
+      }
+      if (withZba) { // Zba sh1add/sh2add/sh3add (RV32 and RV64)
+        when(funct7 === M"0010000") {
+          switch(funct3) {
+            is(M"010") { d.aluOp := AluOp.SH1ADD }
+            is(M"100") { d.aluOp := AluOp.SH2ADD }
+            is(M"110") { d.aluOp := AluOp.SH3ADD }
+            default {}
+          }
         }
       }
     }

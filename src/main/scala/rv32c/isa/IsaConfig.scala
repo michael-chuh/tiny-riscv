@@ -34,6 +34,9 @@ case class IsaConfig(
   def hasCompressed: Boolean = extensions.contains(RvExtension.Compressed)
   def hasSingleFloat: Boolean = extensions.contains(RvExtension.SingleFloat)
   def hasDoubleFloat: Boolean = extensions.contains(RvExtension.DoubleFloat)
+  def hasZbb: Boolean = extensions.contains(RvExtension.Zbb)
+  def hasZbs: Boolean = extensions.contains(RvExtension.Zbs)
+  def hasZba: Boolean = extensions.contains(RvExtension.Zba)
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
@@ -48,9 +51,12 @@ case class IsaConfig(
   // ---- names --------------------------------------------------------------
   def baseName: String = s"RV${xlen}I"
 
-  /** Canonical name, e.g. "RV32IM_Zicsr  M/U". */
+  /** Canonical name, e.g. "RV32IM_Zicsr  M/U". Single-letter extensions follow
+    * the standard "IMAFDQLCB..." ordering; Z-extensions are sorted by name. */
   def canonicalName: String = {
-    val letters = extensions.flatMap(_.misaLetter).toSeq.sorted.mkString
+    val order = "MAFDQLCBJTPVN"
+    val letters = extensions.flatMap(_.misaLetter).toSeq
+      .sortBy(c => { val i = order.indexOf(c); if (i >= 0) i else 100 + (c - 'A') }).mkString
     val zExts = extensions.filter(_.misaLetter.isEmpty).map(_.name).toSeq.sorted
     val ext = letters + (if (zExts.nonEmpty) "_" + zExts.mkString("_") else "")
     s"$baseName$ext  ${priv.name}"
@@ -114,6 +120,30 @@ object IsaConfig {
   /** RV64 with F and D (RV64D_Zicsr, M/U): double-precision float rv64 hart. */
   val rv64d: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.SingleFloat, RvExtension.DoubleFloat), PrivConfig.MU)
+
+  /** RV32 with Zbb (RV32IM_Zbb_Zicsr, M/U): the bit-manipulation rv32 MCU hart. */
+  val rv32imzbb: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbb), PrivConfig.MU)
+
+  /** RV64 with Zbb (RV64IM_Zbb_Zicsr, M/U): the bit-manipulation rv64 hart. */
+  val rv64imzbb: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbb), PrivConfig.MU)
+
+  /** RV32 with Zbs (RV32IM_Zbs_Zicsr, M/U): single-bit rv32 MCU hart. */
+  val rv32imzbs: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbs), PrivConfig.MU)
+
+  /** RV64 with Zbs (RV64IM_Zbs_Zicsr, M/U): single-bit rv64 hart. */
+  val rv64imzbs: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbs), PrivConfig.MU)
+
+  /** RV32 with Zba (RV32IM_Zba_Zicsr, M/U): address-generation rv32 MCU hart. */
+  val rv32imzba: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zba), PrivConfig.MU)
+
+  /** RV64 with Zba (RV64IM_Zba_Zicsr, M/U): address-generation rv64 hart. */
+  val rv64imzba: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zba), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */

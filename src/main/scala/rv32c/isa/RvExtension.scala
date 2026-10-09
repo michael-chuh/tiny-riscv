@@ -38,14 +38,25 @@ object RvExtension {
   case object DoubleFloat extends RvExtension("D") {
     override val misaLetter: Option[Char] = Some('D')
   }
+  /** Zbb: basic bit manipulation (clz/ctz/cpop, sext/zext, min/max, rol/ror,
+    * andn/orn/xnor, orc.b, rev8). Implemented on both RV32 and RV64. */
+  case object Zbb extends RvExtension("Zbb")
+  /** Zbs: single-bit operations (bset/bclr/binv/bext and their immediate
+    * forms). Implemented on both RV32 (5-bit shamt) and RV64 (6-bit shamt). */
+  case object Zbs extends RvExtension("Zbs")
+  /** Zba: address-generation bit manipulation (sh1add/sh2add/sh3add plus the
+    * RV64 word forms add.uw/slli.uw/sh*add.uw). Implemented on both RV32 and
+    * RV64. */
+  case object Zba extends RvExtension("Zba")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
-  /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C). */
+  /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
+    * Zba). */
   val implemented: Set[RvExtension] =
-    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zicsr, Compressed)
+    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

@@ -43,8 +43,8 @@ Entries discovered by the Agent during task execution should follow this format:
 - Context: Discovered by Agent while implementing the RV32C extension
 - Category: Build Methods
 - Instructions:
-  - RTL 生成：`bash scripts/gen-rtl.sh` 同时输出 `rtl/RiscvCore.v`（rv32im，C 关闭）与 `rtl/RiscvCoreC.v`（rv32imc，C 使能）；`rtl/` 未被忽略且已被 git 跟踪，重新生成后需一并提交
-  - 测试命令：全量 `sbt -batch test`；单类 `sbt -batch "testOnly rv32c.sim.RiscvCoreTest"`（RV32C 后基线为 29 项）
+  - RTL 生成：`bash scripts/gen-rtl.sh` 调用 `rv32c.RiscvCoreGen`，按能力组合输出全部 `rtl/RiscvCore*.v`（位操作族含 `RiscvCoreB.v`/`RiscvCore64B.v` = Zbb、`RiscvCoreBS.v`/`RiscvCore64BS.v` = Zbs、`RiscvCoreBA.v`/`RiscvCore64BA.v` = Zba）；`rtl/` 已被 git 跟踪，重新生成后需一并提交
+  - 测试命令：全量 `sbt -batch test`；单类 `sbt -batch "testOnly rv32c.sim.RiscvCoreTest"`；ISA 配置单测 `sbt -batch "testOnly rv32c.isa.IsaConfigSpec"`
 
 [User Instruction Summary]
 - Date: 2026-09-16
