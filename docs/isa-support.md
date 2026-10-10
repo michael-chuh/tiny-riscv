@@ -1,6 +1,6 @@
 # 指令集支持
 
-当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO）、**RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）、**RV32F / RV64F** 单精度与 **RV64D** 双精度浮点扩展（FLW/FSW/FLD/FSD、算术/比较/分类/转换/FMA/格式转换，5 种舍入与 fflags），以及 **Zba / Zbb / Zbs** 位操作扩展（RV32 与 RV64 均支持）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持），F 扩展由 `RvExtension.SingleFloat` 使能，D 扩展由 `RvExtension.DoubleFloat` 使能（蕴含 F，仅 RV64），位操作扩展分别由 `RvExtension.Zba` / `RvExtension.Zbb` / `RvExtension.Zbs` 使能（三个 `Zb*` 均为无 MISA 位的命名扩展）；默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`，浮点核配置为 `rv32f` / `rv64f` / `rv64d`，位操作核配置为 `rv32imzbb` / `rv64imzbb` / `rv32imzbs` / `rv64imzbs` / `rv32imzba` / `rv64imzba`。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
+当前版本实现 **RV32I / RV64I** 基础整数指令集、**RV32M** 乘除扩展、**RV64M** 的 W 后缀乘除、**RV32A / RV64A** 原子扩展（LR/SC 与 9 种 AMO）、**RV32C / RV64C** 压缩指令扩展（RISC-V 规范 v2.1+ 中 I 扩展的全部指令，含 RV64 专属编码）、**RV32F / RV64F** 单精度与 **RV64D** 双精度浮点扩展（FLW/FSW/FLD/FSD、算术/比较/分类/转换/FMA/格式转换，5 种舍入与 fflags），以及 **Zba / Zbb / Zbs / Zbc** 位操作扩展（RV32 与 RV64 均支持）。位宽由 `IsaConfig.xlen` 选择；M 扩展由 `RvExtension.MulDiv` 使能，A 扩展由 `RvExtension.Atomic` 使能，C 扩展由 `RvExtension.Compressed` 使能（RV32 与 RV64 均支持），F 扩展由 `RvExtension.SingleFloat` 使能，D 扩展由 `RvExtension.DoubleFloat` 使能（蕴含 F，仅 RV64），位操作扩展分别由 `RvExtension.Zba` / `RvExtension.Zbb` / `RvExtension.Zbs` / `RvExtension.Zbc` 使能（四个 `Zb*` 均为无 MISA 位的命名扩展）；默认 RV32 配置为 `rv32im`，原子核配置为 `rv32ima` / `rv64ima`，压缩核配置为 `rv32imc` / `rv64imc`，浮点核配置为 `rv32f` / `rv64f` / `rv64d`，位操作核配置为 `rv32imzbb` / `rv64imzbb` / `rv32imzbs` / `rv64imzbs` / `rv32imzba` / `rv64imzba` / `rv32imzbc` / `rv64imzbc`。RV64 下额外支持 `*W` 后缀指令、64 位移位与 `LD/LWU/SD`；S/H 模式为 roadmap。
 
 ## 指令覆盖矩阵
 
@@ -193,9 +193,9 @@ FP 扩展使用独立的浮点寄存器堆（`f0`–`f31`，无硬连线零寄�
 >
 > **CSR 与状态**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 仅在 FPU 使能时实现；提交任意 FP 算术指令会累积 NV/DZ/OF/UF/NX 异常标志到 `fflags`，并将 `mstatus.FS` 置 Dirty(11)。`frm` 为 WARL，仅接受 0–4。`mstatus.FS` 为 WARL（`FS=Off` 时 FP 指令与 FP CSR 访问均非法）。
 
-### 位操作指令（Zba / Zbb / Zbs，分别由 `RvExtension.Zba` / `RvExtension.Zbb` / `RvExtension.Zbs` 使能）
+### 位操作指令（Zba / Zbb / Zbs / Zbc，分别由 `RvExtension.Zba` / `RvExtension.Zbb` / `RvExtension.Zbs` / `RvExtension.Zbc` 使能）
 
-三个 `Zb*` 子扩展均为无 MISA 位的命名扩展（单字母 `B` 位保留），仅当对应 `RvExtension` 使能时其编码合法，否则按非法指令（cause 2）处理。所有位操作在 EX 段组合完成，复用现有 ALU 结果通路，不引入新的停顿状态。
+四个 `Zb*` 子扩展均为无 MISA 位的命名扩展（单字母 `B` 位保留），仅当对应 `RvExtension` 使能时其编码合法，否则按非法指令（cause 2）处理。所有位操作在 EX 段组合完成，复用现有 ALU 结果通路，不引入新的停顿状态。
 
 **Zbb（基础位操作）**
 
@@ -234,6 +234,16 @@ FP 扩展使用独立的浮点寄存器堆（`f0`–`f31`，无硬连线零寄�
 | SH1ADD / SH2ADD / SH3ADD | 0110011 | 0010000 | 010 / 100 / 110 | `(rs1 << 1/2/3) + rs2` |
 
 > RV64 word 形式（`rs1` 低 32 位先零扩展）：`ADD.UW`（OP-32 `0111011`，funct7=0000100，funct3=000）、`SH1ADD.UW`/`SH2ADD.UW`/`SH3ADD.UW`（OP-32，funct7=0010000，funct3=010/100/110）、`SLLI.UW`（OP-IMM-32 `0011011`，funct6=000010，funct3=001，6 位 shamt）。
+
+**Zbc（无进位乘法）**
+
+| 指令 | opcode | funct7 | funct3 | 语义 |
+|------|--------|--------|--------|------|
+| CLMUL | 0110011 | 0000101 | 001 | 无进位乘积低 XLEN 位 |
+| CLMULH | 0110011 | 0000101 | 011 | 无进位乘积高 XLEN 位 |
+| CLMULR | 0110011 | 0000101 | 010 | 无进位乘积的 `[2*XLEN-2 : XLEN-1]` 位 |
+
+> Zbc 与 Zbb 的 `MIN/MAX` 共享 funct7=0000101，靠 funct3 区分（Zbc 用 001/010/011，Zbb 用 100–111）。无进位乘法在 EX 段按位组合：对 `rs2` 每个置位 `i` 异或 `(rs1 << i)`，得到 2*XLEN 位积后按位段选择结果。
 
 ### 分支（BRANCH, 1100011）
 
@@ -314,5 +324,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
 - **F/D**：RV32F / RV64F 单精度（FLEN=32）与 RV64D 双精度（FLEN=64，含 `FCVT.S.D`/`FCVT.D.S` 与 NaN-boxing）均已实现并有定向测试与 RTL 生成
-- **Zba / Zbb / Zbs**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zbc`、`Zbkb/Zbkc/Zbkx/Zk*` 等未实现
+- **Zba / Zbb / Zbs / Zbc**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zbkb/Zbkc/Zbkx/Zk*` 等未实现
 - **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）

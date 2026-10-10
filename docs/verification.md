@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 67 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 71 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -48,6 +48,8 @@ graph LR
 | RV64B (Zbs) single-bit operations with 6-bit indices | 6 位位索引（`funct7` 低位携带 shamt[5]）与全宽结果 | x3==x4==`0x10000000000`(bit40)、x5==`0xFFFFFEFFFFFFFFFF`、x8==`0x8000000000000000`(bit63)、x10==`0x100000000`(bit32)、x11==`0xFFFFFFFFFFFFFFDF`（索引 69 回绕到 bit5） |
 | RV32B (Zba) address generation | `sh1add/sh2add/sh3add`（交换操作数） | x3==13、x4==23、x5==43、x6==11 |
 | RV64B (Zba) word forms zero-extend rs1 | `add.uw`（rs1 bit31=1 零扩展）、`slli.uw`（6 位 shamt）、`sh*add.uw`、64 位 `sh1add` | x7==`0x80000003`、x8==`0x800000000`、x9==`0x100000003`、x10==`0x200000003`、x11==`0x400000003`、x13==`0x200000003` |
+| RV32B (Zbc) carry-less multiply | `clmul`（0b1011×0b1101）、`clmulh`/`clmulr`（跨 bit31 的积）、全 1 操作数 | x3==0x7F、x6==0、x7==1、x8==2、x10==x11==`0x55555555`、x12==`0xAAAAAAAA` |
+| RV64B (Zbc) carry-less multiply across the 64-bit boundary | `clmulh`/`clmulr`（跨 bit63 的积）、全 1 操作数 | x3==0、x4==1、x5==2、x7==x8==`0x5555555555555555`、x9==`0xAAAAAAAAAAAAAAAA` |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -55,7 +57,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 34 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 36 项。
 
 ## 运行方式
 
