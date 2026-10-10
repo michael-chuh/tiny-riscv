@@ -26,6 +26,8 @@ object AluOp extends SpinalEnum {
   // zero-extend rs1's low 32 bits before shifting/adding on RV64.
   val SH1ADD, SH2ADD, SH3ADD = newElement()
   val ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW, SLLIUW = newElement()
+  // Zbc carry-less multiply: low / high / reversed halves of the GF(2) product.
+  val CLMUL, CLMULH, CLMULR = newElement()
   // RV64 Zbb W-suffix: 32-bit count/rotate, result sign-extended to xlen.
   val CLZW, CTZW, CPOPW, ROLW, RORW = newElement()
 }
@@ -62,6 +64,18 @@ class Alu(xlen: Int) extends Component {
   // Zba: zero-extended low 32 bits of operand a (identity on RV32), used by the
   // RV64 word forms add.uw / slli.uw / sh*add.uw.
   val aZext = aU(31 downto 0).resize(xlen)
+
+  // Zbc: full 2*xlen-bit carry-less (GF(2)) product = XOR of (aU << i) over
+  // every set bit i of bU. clmul reads the low half, clmulh the high half and
+  // clmulr the high half shifted down by one bit.
+  val clmulFull: UInt = {
+    var acc = U(0, (2 * xlen) bits)
+    for (i <- 0 until xlen) {
+      val term = (aU << i).resize(2 * xlen)
+      acc = acc ^ Mux(bU(i), term, U(0, (2 * xlen) bits))
+    }
+    acc
+  }
 
   // ----- Zbb bit-manipulation helpers -----
   // Count leading/trailing zeros and population count for an arbitrary width.
@@ -250,6 +264,10 @@ class Alu(xlen: Int) extends Component {
     is(AluOp.SH2ADDUW) { result := ((aZext << 2) + bU).resize(xlen).asBits }
     is(AluOp.SH3ADDUW) { result := ((aZext << 3) + bU).resize(xlen).asBits }
     is(AluOp.SLLIUW)   { result := (aZext << shamt).resize(xlen).asBits }
+    // ---- Zbc: carry-less multiply ----
+    is(AluOp.CLMUL)  { result := clmulFull(xlen - 1 downto 0).asBits }
+    is(AluOp.CLMULH) { result := clmulFull(2 * xlen - 1 downto xlen).asBits }
+    is(AluOp.CLMULR) { result := clmulFull(2 * xlen - 2 downto xlen - 1).asBits }
     // RV64 Zbb W-suffix: operate on the low 32 bits, sign-extend the result.
     is(AluOp.CLZW)  { result := clzN(io.a(31 downto 0), 32).resize(xlen).asBits }
     is(AluOp.CTZW)  { result := ctzN(io.a(31 downto 0), 32).resize(xlen).asBits }

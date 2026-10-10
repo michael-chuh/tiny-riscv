@@ -49,6 +49,7 @@ case class CoreConfig(
   def hasZbb: Boolean = isa.hasZbb
   def hasZbs: Boolean = isa.hasZbs
   def hasZba: Boolean = isa.hasZba
+  def hasZbc: Boolean = isa.hasZbc
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -101,4 +102,10 @@ object CoreConfig {
 
   /** RV64IM + Zba on the M/U stack: the address-generation rv64 hart. */
   def rv64imzba: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzba)
+
+  /** RV32IM + Zbc on the M/U stack: the carry-less multiply rv32 MCU hart. */
+  def rv32imzbc: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbc)
+
+  /** RV64IM + Zbc on the M/U stack: the carry-less multiply rv64 hart. */
+  def rv64imzbc: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbc)
 }

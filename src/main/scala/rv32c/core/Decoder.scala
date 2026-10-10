@@ -90,6 +90,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZbb: Boolean = isa.hasZbb
   private val withZbs: Boolean = isa.hasZbs
   private val withZba: Boolean = isa.hasZba
+  private val withZbc: Boolean = isa.hasZbc
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -956,6 +957,16 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             is(M"010") { d.aluOp := AluOp.SH1ADD }
             is(M"100") { d.aluOp := AluOp.SH2ADD }
             is(M"110") { d.aluOp := AluOp.SH3ADD }
+            default {}
+          }
+        }
+      }
+      if (withZbc) { // Zbc carry-less multiply (shares funct7 with Zbb min/max)
+        when(funct7 === M"0000101") {
+          switch(funct3) {
+            is(M"001") { d.aluOp := AluOp.CLMUL }
+            is(M"010") { d.aluOp := AluOp.CLMULR }
+            is(M"011") { d.aluOp := AluOp.CLMULH }
             default {}
           }
         }

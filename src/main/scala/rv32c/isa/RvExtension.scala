@@ -48,15 +48,18 @@ object RvExtension {
     * RV64 word forms add.uw/slli.uw/sh*add.uw). Implemented on both RV32 and
     * RV64. */
   case object Zba extends RvExtension("Zba")
+  /** Zbc: carry-less multiplication (clmul/clmulh/clmulr). Implemented on both
+    * RV32 and RV64. */
+  case object Zbc extends RvExtension("Zbc")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba). */
+    * Zba, Zbc). */
   val implemented: Set[RvExtension] =
-    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zicsr, Compressed)
+    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

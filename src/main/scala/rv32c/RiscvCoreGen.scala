@@ -31,9 +31,12 @@ object RiscvCoreGen {
     gen(CoreConfig.rv64imzbs, "RiscvCore64BS")
     gen(CoreConfig.rv32imzba, "RiscvCoreBA")
     gen(CoreConfig.rv64imzba, "RiscvCore64BA")
+    gen(CoreConfig.rv32imzbc, "RiscvCoreBC")
+    gen(CoreConfig.rv64imzbc, "RiscvCore64BC")
     println("Generated rtl/RiscvCore.v, RiscvCoreC.v, RiscvCore64C.v, " +
       "RiscvCoreA.v, RiscvCore64A.v, RiscvCoreF.v, RiscvCore64F.v, " +
       "RiscvCore64D.v, RiscvCoreB.v, RiscvCore64B.v, RiscvCoreBS.v, " +
-      "RiscvCore64BS.v, RiscvCoreBA.v and RiscvCore64BA.v")
+      "RiscvCore64BS.v, RiscvCoreBA.v, RiscvCore64BA.v, RiscvCoreBC.v " +
+      "and RiscvCore64BC.v")
   }
 }

@@ -1616,4 +1616,86 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV64 Zba program finished in $cycles cycles")
       }
   }
+
+  // ---- RV32B (Zbc) integration: carry-less multiply ----
+  val rv32zbcProgram: Seq[Long] = Seq[Long](
+    encI(11, 0, 0, 1, 0x13),               // addi x1, x0, 0b1011
+    encI(13, 0, 0, 2, 0x13),               // addi x2, x0, 0b1101
+    encR(0x05, 2, 1, 1, 3, 0x33),          // clmul  x3, x1, x2 -> 0x7F
+    encI(1, 0, 0, 4, 0x13),                // addi x4, x0, 1
+    encI(31, 4, 1, 4, 0x13),               // slli x4, x4, 31 -> 0x80000000
+    encI(2, 0, 0, 5, 0x13),                // addi x5, x0, 2
+    encR(0x05, 5, 4, 1, 6, 0x33),          // clmul  x6, x4, x5 -> 0
+    encR(0x05, 5, 4, 3, 7, 0x33),          // clmulh x7, x4, x5 -> 1
+    encR(0x05, 5, 4, 2, 8, 0x33),          // clmulr x8, x4, x5 -> 2
+    encI(-1, 0, 0, 9, 0x13),               // addi x9, x0, -1
+    encR(0x05, 9, 9, 1, 10, 0x33),         // clmul  x10, x9, x9 -> 0x55555555
+    encR(0x05, 9, 9, 3, 11, 0x33),         // clmulh x11, x9, x9 -> 0x55555555
+    encR(0x05, 9, 9, 2, 12, 0x33)          // clmulr x12, x9, x9 -> 0xAAAAAAAA
+  )
+
+  test("RV32B (Zbc) carry-less multiply") {
+    val cfg = CoreConfig.rv32imzbc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbcProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbcProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 12, BigInt("AAAAAAAA", 16))
+        assert(cycles < 200, "RV32 Zbc program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 0x7FL, "clmul 0b1011 * 0b1101")
+        assert(x(6) == 0, "clmul low of bit32 product")
+        assert(x(7) == 1, "clmulh bit32 product")
+        assert(x(8) == 2, "clmulr bit32 product")
+        assert(x(10) == 0x55555555L, "clmul all-ones")
+        assert(x(11) == 0x55555555L, "clmulh all-ones")
+        assert(x(12) == 0xAAAAAAAAL, "clmulr all-ones")
+        println(s"PASS: RV32 Zbc program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbc) integration: 64-bit carry-less multiply ----
+  val rv64zbcProgram: Seq[Long] = Seq[Long](
+    encI(1, 0, 0, 1, 0x13),                // addi x1, x0, 1
+    encI(63, 1, 1, 1, 0x13),               // slli x1, x1, 63 -> 0x8000000000000000
+    encI(2, 0, 0, 2, 0x13),                // addi x2, x0, 2
+    encR(0x05, 2, 1, 1, 3, 0x33),          // clmul  x3, x1, x2 -> 0
+    encR(0x05, 2, 1, 3, 4, 0x33),          // clmulh x4, x1, x2 -> 1
+    encR(0x05, 2, 1, 2, 5, 0x33),          // clmulr x5, x1, x2 -> 2
+    encI(-1, 0, 0, 6, 0x13),               // addi x6, x0, -1
+    encR(0x05, 6, 6, 1, 7, 0x33),          // clmul  x7, x6, x6 -> 0x5555...
+    encR(0x05, 6, 6, 3, 8, 0x33),          // clmulh x8, x6, x6 -> 0x5555...
+    encR(0x05, 6, 6, 2, 9, 0x33)           // clmulr x9, x6, x6 -> 0xAAAA...
+  )
+
+  test("RV64B (Zbc) carry-less multiply across the 64-bit boundary") {
+    val cfg = CoreConfig.rv64imzbc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbcProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbcProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 9, BigInt("AAAAAAAAAAAAAAAA", 16))
+        assert(cycles < 200, "RV64 Zbc program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 0, "clmul low of bit64 product")
+        assert(x(4) == 1, "clmulh bit64 product")
+        assert(x(5) == 2, "clmulr bit64 product")
+        assert(x(7) == BigInt("5555555555555555", 16), "clmul all-ones")
+        assert(x(8) == BigInt("5555555555555555", 16), "clmulh all-ones")
+        assert(x(9) == BigInt("AAAAAAAAAAAAAAAA", 16), "clmulr all-ones")
+        println(s"PASS: RV64 Zbc program finished in $cycles cycles")
+      }
+  }
 }
