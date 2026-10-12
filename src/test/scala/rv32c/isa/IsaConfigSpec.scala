@@ -135,6 +135,46 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.canonicalName == "RV64IM_Zbc_Zicsr  M/U")
   }
 
+  test("rv32imzbkb exposes Zbkb without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzbkb
+    assert(isa.hasZbkb && isa.hasMulDiv && !isa.hasZbc && !isa.hasZbkx)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbkb_Zicsr  M/U")
+  }
+
+  test("rv64imzbkb exposes Zbkb on an RV64 hart") {
+    val isa = IsaConfig.rv64imzbkb
+    assert(isa.isRV64 && isa.hasMulDiv && isa.hasZbkb)
+    assert(isa.canonicalName == "RV64IM_Zbkb_Zicsr  M/U")
+  }
+
+  test("rv32imzbkc exposes Zbkc without the full Zbc set") {
+    val isa = IsaConfig.rv32imzbkc
+    assert(isa.hasZbkc && !isa.hasZbc && !isa.hasZbkb && !isa.hasZbkx)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbkc_Zicsr  M/U")
+  }
+
+  test("rv32imzbkx exposes Zbkx without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzbkx
+    assert(isa.hasZbkx && !isa.hasZbkb && !isa.hasZbkc)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbkx_Zicsr  M/U")
+  }
+
+  test("rv32imzbk combines Zbkb, Zbkc and Zbkx") {
+    val isa = IsaConfig.rv32imzbk
+    assert(isa.hasZbkb && isa.hasZbkc && isa.hasZbkx && !isa.hasZbc)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zbkb_Zbkc_Zbkx_Zicsr  M/U")
+  }
+
+  test("rv64imzbk combines Zbkb, Zbkc and Zbkx on an RV64 hart") {
+    val isa = IsaConfig.rv64imzbk
+    assert(isa.isRV64 && isa.hasZbkb && isa.hasZbkc && isa.hasZbkx)
+    assert(isa.canonicalName == "RV64IM_Zbkb_Zbkc_Zbkx_Zicsr  M/U")
+  }
+
   test("D implies F") {
     intercept[IllegalArgumentException] {
       IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.DoubleFloat), PrivConfig.MU)
@@ -237,5 +277,17 @@ class IsaConfigSpec extends AnyFunSuite {
     val zbc = CoreConfig.rv32imzbc
     assert(zbc.hasZbc && !zbc.hasZba)
     assert(!plain.hasZbc)
+    val zbkb = CoreConfig.rv32imzbkb
+    assert(zbkb.hasZbkb && !zbkb.hasZbc && !zbkb.hasZbkx)
+    assert(!plain.hasZbkb)
+    val zbkc = CoreConfig.rv32imzbkc
+    assert(zbkc.hasZbkc && !zbkc.hasZbc)
+    assert(!plain.hasZbkc)
+    val zbkx = CoreConfig.rv32imzbkx
+    assert(zbkx.hasZbkx && !zbkx.hasZbkb)
+    assert(!plain.hasZbkx)
+    val zbk = CoreConfig.rv32imzbk
+    assert(zbk.hasZbkb && zbk.hasZbkc && zbk.hasZbkx)
+    assert(!plain.hasZbkb && !plain.hasZbkc && !plain.hasZbkx)
   }
 }

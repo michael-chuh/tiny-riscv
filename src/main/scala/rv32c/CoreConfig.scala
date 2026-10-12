@@ -50,6 +50,9 @@ case class CoreConfig(
   def hasZbs: Boolean = isa.hasZbs
   def hasZba: Boolean = isa.hasZba
   def hasZbc: Boolean = isa.hasZbc
+  def hasZbkb: Boolean = isa.hasZbkb
+  def hasZbkc: Boolean = isa.hasZbkc
+  def hasZbkx: Boolean = isa.hasZbkx
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -108,4 +111,28 @@ object CoreConfig {
 
   /** RV64IM + Zbc on the M/U stack: the carry-less multiply rv64 hart. */
   def rv64imzbc: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbc)
+
+  /** RV32IM + Zbkb on the M/U stack: the crypto bit-manipulation rv32 MCU hart. */
+  def rv32imzbkb: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbkb)
+
+  /** RV64IM + Zbkb on the M/U stack: the crypto bit-manipulation rv64 hart. */
+  def rv64imzbkb: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbkb)
+
+  /** RV32IM + Zbkc on the M/U stack: the crypto carry-less multiply rv32 MCU hart. */
+  def rv32imzbkc: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbkc)
+
+  /** RV64IM + Zbkc on the M/U stack: the crypto carry-less multiply rv64 hart. */
+  def rv64imzbkc: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbkc)
+
+  /** RV32IM + Zbkx on the M/U stack: the crossbar-permutation rv32 MCU hart. */
+  def rv32imzbkx: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbkx)
+
+  /** RV64IM + Zbkx on the M/U stack: the crossbar-permutation rv64 hart. */
+  def rv64imzbkx: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbkx)
+
+  /** RV32IM + Zbkb + Zbkc + Zbkx on the M/U stack: the combined crypto rv32 MCU hart. */
+  def rv32imzbk: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzbk)
+
+  /** RV64IM + Zbkb + Zbkc + Zbkx on the M/U stack: the combined crypto rv64 hart. */
+  def rv64imzbk: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbk)
 }

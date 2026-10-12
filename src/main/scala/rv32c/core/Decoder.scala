@@ -91,6 +91,9 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZbs: Boolean = isa.hasZbs
   private val withZba: Boolean = isa.hasZba
   private val withZbc: Boolean = isa.hasZbc
+  private val withZbkb: Boolean = isa.hasZbkb
+  private val withZbkc: Boolean = isa.hasZbkc
+  private val withZbkx: Boolean = isa.hasZbkx
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -777,6 +780,20 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           when(funct7 === M"0110101" && funct3 === M"001") { d.aluOp := AluOp.BINV }
         }
       }
+      if (withZbkb) { // Zbkb OP-IMM forms: brev8 and (RV32-only) zip/unzip
+        when(funct7 === M"0110100" && funct3 === M"101" && instr(24 downto 20) === M"00111") {
+          d.aluOp := AluOp.BREV8
+        }
+        if (!isRV64) { // on RV64 these encodings are SLLI/SRLI/SRAI
+          when(funct7 === M"0000100" && instr(24 downto 20) === M"01111") {
+            switch(funct3) {
+              is(M"001") { d.aluOp := AluOp.ZIP }
+              is(M"101") { d.aluOp := AluOp.UNZIP }
+              default {}
+            }
+          }
+        }
+      }
     }
     is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
       if (isRV64) {
@@ -873,6 +890,11 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             }
           }
         }
+        if (withZbkb) { // Zbkb RV64 word form: packw (shares the zext.h encoding)
+          when(funct7 === M"0000100" && funct3 === M"100") {
+            d.aluOp := AluOp.PACKW; d.illegal := False; d.valid := True
+          }
+        }
       } else {
         d.illegal := True
         d.valid := False
@@ -961,12 +983,30 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
         }
       }
-      if (withZbc) { // Zbc carry-less multiply (shares funct7 with Zbb min/max)
+      if (withZbkb) { // Zbkb register forms: pack/packh (share the zext.h encoding)
+        when(funct7 === M"0000100") {
+          switch(funct3) {
+            is(M"100") { d.aluOp := AluOp.PACK }
+            is(M"111") { d.aluOp := AluOp.PACKH }
+            default {}
+          }
+        }
+      }
+      if (withZbc || withZbkc) { // Zbc/Zbkc carry-less multiply (shares funct7 with Zbb min/max)
         when(funct7 === M"0000101") {
           switch(funct3) {
             is(M"001") { d.aluOp := AluOp.CLMUL }
-            is(M"010") { d.aluOp := AluOp.CLMULR }
             is(M"011") { d.aluOp := AluOp.CLMULH }
+            is(M"010") { if (withZbc) { d.aluOp := AluOp.CLMULR } } // Zbkc omits clmulr
+            default {}
+          }
+        }
+      }
+      if (withZbkx) { // Zbkx crossbar permutations (nibble/byte lookup)
+        when(funct7 === M"0010100") {
+          switch(funct3) {
+            is(M"010") { d.aluOp := AluOp.XPERM4 }
+            is(M"100") { d.aluOp := AluOp.XPERM8 }
             default {}
           }
         }

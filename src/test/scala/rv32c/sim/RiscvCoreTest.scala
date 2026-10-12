@@ -17,6 +17,14 @@ class RiscvCoreTest extends AnyFunSuite {
       ((f3 & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
   private def encU(imm: Int, rd: Int, opc: Int = 0x37): Long =
     ((imm & 0xfffff).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
+  // Materialise an arbitrary 32-bit constant into rd as `lui` + `addi` (sign-extended
+  // on RV64). The upper immediate is biased by 0x800 so the low part stays in
+  // -2048..2047 after sign extension.
+  private def load32(rd: Int, v: Long): Seq[Long] = {
+    val hi = ((v + 0x800) >> 12) & 0xfffff
+    val lo = (v - (hi << 12)).toInt
+    Seq(encU(hi.toInt, rd), encI(lo, rd, 0, rd))
+  }
   private def encS(imm: Int, rs2: Int, rs1: Int, f3: Int, opc: Int = 0x23): Long =
     (((imm >> 5) & 0x7f).toLong << 25) | ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
       ((f3 & 0x7).toLong << 12) | ((imm & 0x1f).toLong << 7) | (opc & 0x7f).toLong
@@ -1696,6 +1704,194 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(x(8) == BigInt("5555555555555555", 16), "clmulh all-ones")
         assert(x(9) == BigInt("AAAAAAAAAAAAAAAA", 16), "clmulr all-ones")
         println(s"PASS: RV64 Zbc program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zbkb) integration: crypto bit manipulation ----
+  val rv32zbkbProgram: Seq[Long] = load32(1, 0x12345678L) ++ load32(2, 0x9ABCDEF0L) ++
+    load32(8, 0x01020304L) ++ load32(10, 0xAAAAAAAAL) ++ Seq[Long](
+    encR(0x04, 2, 1, 4, 3, 0x33),          // pack  x3, x1, x2 -> 0xDEF05678
+    encR(0x04, 2, 1, 7, 4, 0x33),          // packh x4, x1, x2 -> 0xF078
+    encI(0x687, 8, 5, 5, 0x13),            // brev8 x5, x8    -> 0x8040C020
+    encI(0x08F, 10, 1, 6, 0x13),           // zip   x6, x10   -> 0xCCCCCCCC
+    encI(0x08F, 10, 5, 7, 0x13)            // unzip x7, x10   -> 0xFFFF0000
+  )
+
+  test("RV32B (Zbkb) pack, brev8, zip/unzip") {
+    val cfg = CoreConfig.rv32imzbkb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbkbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbkbProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 7, BigInt("FFFF0000", 16))
+        assert(cycles < 200, "RV32 Zbkb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == BigInt("DEF05678", 16), "pack")
+        assert(x(4) == BigInt("F078", 16), "packh")
+        assert(x(5) == BigInt("8040C020", 16), "brev8")
+        assert(x(6) == BigInt("CCCCCCCC", 16), "zip")
+        assert(x(7) == BigInt("FFFF0000", 16), "unzip")
+        println(s"PASS: RV32 Zbkb program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbkb) integration: word-size pack and 64-bit brev8 ----
+  val rv64zbkbProgram: Seq[Long] = load32(1, 0x12345678L) ++ load32(2, 0x9ABCDEF0L) ++
+    load32(8, 0x01020304L) ++ Seq[Long](
+    encR(0x04, 2, 1, 4, 3, 0x33),          // pack  x3, x1, x2 -> 0x9ABCDEF012345678
+    encR(0x04, 2, 1, 7, 4, 0x33),          // packh x4, x1, x2 -> 0xF078
+    encR(0x04, 2, 1, 4, 5, 0x3b),          // packw x5, x1, x2 -> 0xFFFFFFFFDEF05678
+    encI(0x687, 8, 5, 6, 0x13)             // brev8 x6, x8    -> 0x8040C020
+  )
+
+  test("RV64B (Zbkb) pack/packw/brev8") {
+    val cfg = CoreConfig.rv64imzbkb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbkbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbkbProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 6, BigInt("8040C020", 16))
+        assert(cycles < 200, "RV64 Zbkb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == BigInt("9ABCDEF012345678", 16), "pack full 64-bit")
+        assert(x(4) == BigInt("F078", 16), "packh")
+        assert(x(5) == BigInt("FFFFFFFFDEF05678", 16), "packw sign-extends")
+        assert(x(6) == BigInt("8040C020", 16), "brev8")
+        println(s"PASS: RV64 Zbkb program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zbkc) integration: clmul/clmulh subset of Zbc ----
+  val rv32zbkcProgram: Seq[Long] = Seq[Long](
+    encI(11, 0, 0, 1, 0x13),               // addi x1, x0, 0b1011
+    encI(13, 0, 0, 2, 0x13),               // addi x2, x0, 0b1101
+    encR(0x05, 2, 1, 1, 3, 0x33),          // clmul  x3, x1, x2 -> 0x7F
+    encI(1, 0, 0, 4, 0x13),                // addi x4, x0, 1
+    encI(31, 4, 1, 4, 0x13),               // slli x4, x4, 31 -> 0x80000000
+    encI(2, 0, 0, 5, 0x13),                // addi x5, x0, 2
+    encR(0x05, 5, 4, 3, 6, 0x33)           // clmulh x6, x4, x5 -> 1
+  )
+
+  test("RV32B (Zbkc) carry-less multiply subset") {
+    val cfg = CoreConfig.rv32imzbkc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbkcProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbkcProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 6, 1)
+        assert(cycles < 200, "RV32 Zbkc program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 0x7FL, "clmul 0b1011 * 0b1101")
+        assert(x(6) == 1, "clmulh bit32 product")
+        println(s"PASS: RV32 Zbkc program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbkc) integration: 64-bit clmul/clmulh subset ----
+  val rv64zbkcProgram: Seq[Long] = Seq[Long](
+    encI(1, 0, 0, 1, 0x13),                // addi x1, x0, 1
+    encI(63, 1, 1, 1, 0x13),               // slli x1, x1, 63 -> 0x8000000000000000
+    encI(2, 0, 0, 2, 0x13),                // addi x2, x0, 2
+    encR(0x05, 2, 1, 1, 3, 0x33),          // clmul  x3, x1, x2 -> 0
+    encR(0x05, 2, 1, 3, 4, 0x33)           // clmulh x4, x1, x2 -> 1
+  )
+
+  test("RV64B (Zbkc) carry-less multiply across the 64-bit boundary") {
+    val cfg = CoreConfig.rv64imzbkc
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbkcProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbkcProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 4, 1)
+        assert(cycles < 200, "RV64 Zbkc program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == 0, "clmul low of bit64 product")
+        assert(x(4) == 1, "clmulh bit64 product")
+        println(s"PASS: RV64 Zbkc program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zbkx) integration: nibble/byte crossbar permutations ----
+  val rv32zbkxProgram: Seq[Long] = load32(1, 0xAABBCCDDL) ++ load32(2, 0x0L) ++
+    load32(4, 0x00300201L) ++ load32(6, 0x76543210L) ++ Seq[Long](
+    encR(0x14, 2, 1, 4, 3, 0x33),          // xperm8 x3, x1, x2 -> 0xDDDDDDDD
+    encR(0x14, 4, 1, 4, 5, 0x33),          // xperm8 x5, x1, x4 -> 0xDD00BBCC
+    encR(0x14, 6, 1, 2, 7, 0x33)           // xperm4 x7, x1, x6 -> 0xAABBCCDD
+  )
+
+  test("RV32B (Zbkx) xperm4/xperm8") {
+    val cfg = CoreConfig.rv32imzbkx
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zbkxProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zbkxProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 7, BigInt("AABBCCDD", 16))
+        assert(cycles < 200, "RV32 Zbkx program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == BigInt("DDDDDDDD", 16), "xperm8 idx 0 broadcast")
+        assert(x(5) == BigInt("DD00BBCC", 16), "xperm8 mixed indices")
+        assert(x(7) == BigInt("AABBCCDD", 16), "xperm4 identity")
+        println(s"PASS: RV32 Zbkx program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zbkx) integration: 64-bit crossbar permutations ----
+  val rv64zbkxProgram: Seq[Long] = load32(1, 0x0ABBCCDDL) ++ load32(2, 0x0L) ++
+    load32(4, 0x00300201L) ++ load32(6, 0x12345678L) ++ load32(7, 0x76543210L) ++ Seq[Long](
+    encR(0x14, 2, 1, 4, 3, 0x33),          // xperm8 x3, x1, x2 -> 0xDDDDDDDDDDDDDDDD
+    encR(0x14, 4, 1, 4, 5, 0x33),          // xperm8 x5, x1, x4 -> 0xDDDDDDDDDD00BBCC
+    encR(0x14, 7, 6, 2, 8, 0x33)           // xperm4 x8, x6, x7 -> 0x8888888812345678
+  )
+
+  test("RV64B (Zbkx) xperm4/xperm8 over eight groups") {
+    val cfg = CoreConfig.rv64imzbkx
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zbkxProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zbkxProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 8, BigInt("8888888812345678", 16))
+        assert(cycles < 200, "RV64 Zbkx program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(3) == BigInt("DDDDDDDDDDDDDDDD", 16), "xperm8 idx 0 broadcast")
+        assert(x(5) == BigInt("DDDDDDDDDD00BBCC", 16), "xperm8 mixed indices")
+        assert(x(8) == BigInt("8888888812345678", 16), "xperm4 identity then zero-fill")
+        println(s"PASS: RV64 Zbkx program finished in $cycles cycles")
       }
   }
 }

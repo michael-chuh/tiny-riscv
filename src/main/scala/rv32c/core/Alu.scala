@@ -28,6 +28,12 @@ object AluOp extends SpinalEnum {
   val ADDUW, SH1ADDUW, SH2ADDUW, SH3ADDUW, SLLIUW = newElement()
   // Zbc carry-less multiply: low / high / reversed halves of the GF(2) product.
   val CLMUL, CLMULH, CLMULR = newElement()
+  // Zbkb crypto bit manipulation: pack/packh/packw, brev8, and zip/unzip
+  // (zip/unzip are RV32-only; the RV64 datapath is pruned by the decoder).
+  val PACK, PACKH, PACKW, BREV8, ZIP, UNZIP = newElement()
+  // Zbkx crossbar permutations: gather a nibble/byte from operand a using the
+  // index held in the matching group of operand b.
+  val XPERM4, XPERM8 = newElement()
   // RV64 Zbb W-suffix: 32-bit count/rotate, result sign-extended to xlen.
   val CLZW, CTZW, CPOPW, ROLW, RORW = newElement()
 }
@@ -75,6 +81,26 @@ class Alu(xlen: Int) extends Component {
       acc = acc ^ Mux(bU(i), term, U(0, (2 * xlen) bits))
     }
     acc
+  }
+
+  // Zbkx: crossbar permutation. Operand a is the lookup table of
+  // (xlen / groupBits) groups; each group i of operand b holds the index that
+  // selects the group written to group i of the result. An out-of-range index
+  // yields zero. groupBits is 4 (xperm4, index width 2) or 8 (xperm8, width 3).
+  private def xpermN(table: Bits, idxs: Bits, groupLog2: Int): Bits = {
+    val groupBits = 1 << groupLog2
+    val groups = xlen / groupBits
+    val out = Bits(xlen bits)
+    for (i <- 0 until groups) {
+      // Each index occupies a full group (nibble for xperm4, byte for xperm8) and
+      // selects the matching group of the table; out-of-range indices yield zero.
+      val idx = idxs(i * groupBits + groupBits - 1 downto i * groupBits).asUInt
+      val gathered = (0 until groups).foldLeft(B(0, groupBits bits)) { (acc, g) =>
+        Mux(idx === g, table(g * groupBits + groupBits - 1 downto g * groupBits), acc)
+      }
+      out(i * groupBits + groupBits - 1 downto i * groupBits) := gathered
+    }
+    out
   }
 
   // ----- Zbb bit-manipulation helpers -----
@@ -268,6 +294,40 @@ class Alu(xlen: Int) extends Component {
     is(AluOp.CLMUL)  { result := clmulFull(xlen - 1 downto 0).asBits }
     is(AluOp.CLMULH) { result := clmulFull(2 * xlen - 1 downto xlen).asBits }
     is(AluOp.CLMULR) { result := clmulFull(2 * xlen - 2 downto xlen - 1).asBits }
+    // ---- Zbkb: crypto bit manipulation ----
+    is(AluOp.PACK) {
+      val half = xlen / 2
+      result := ((bU(half - 1 downto 0) << half).resize(xlen) |
+        aU(half - 1 downto 0).resize(xlen)).asBits
+    }
+    is(AluOp.PACKH) {
+      result := ((bU(7 downto 0) << 8).resize(xlen) | aU(7 downto 0).resize(xlen)).asBits
+    }
+    is(AluOp.PACKW) { // RV64: pack the low 16 bits, then sign-extend to 64
+      val lo = aU(15 downto 0).resize(32)
+      val hi = (bU(15 downto 0).resize(32) << 16).resize(32)
+      result := (lo | hi).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.BREV8) { // reverse the bit order within each byte
+      val out = Bits(xlen bits)
+      for (k <- 0 until xlen / 8; j <- 0 until 8) out(8 * k + j) := io.a(8 * k + 7 - j)
+      result := out
+    }
+    is(AluOp.ZIP) { // RV32: low half -> even bit positions, high half -> odd
+      val out = Bits(xlen bits)
+      val half = xlen / 2
+      for (i <- 0 until half) { out(2 * i) := io.a(i); out(2 * i + 1) := io.a(i + half) }
+      result := out
+    }
+    is(AluOp.UNZIP) { // RV32: inverse of zip
+      val out = Bits(xlen bits)
+      val half = xlen / 2
+      for (i <- 0 until half) { out(i) := io.a(2 * i); out(i + half) := io.a(2 * i + 1) }
+      result := out
+    }
+    // ---- Zbkx: crossbar permutations ----
+    is(AluOp.XPERM4) { result := xpermN(io.a, io.b, 2) }
+    is(AluOp.XPERM8) { result := xpermN(io.a, io.b, 3) }
     // RV64 Zbb W-suffix: operate on the low 32 bits, sign-extend the result.
     is(AluOp.CLZW)  { result := clzN(io.a(31 downto 0), 32).resize(xlen).asBits }
     is(AluOp.CTZW)  { result := ctzN(io.a(31 downto 0), 32).resize(xlen).asBits }

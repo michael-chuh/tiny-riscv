@@ -51,15 +51,26 @@ object RvExtension {
   /** Zbc: carry-less multiplication (clmul/clmulh/clmulr). Implemented on both
     * RV32 and RV64. */
   case object Zbc extends RvExtension("Zbc")
+  /** Zbkb: bit manipulation for cryptography (pack/packh/packw, brev8, rev8,
+    * zip/unzip, plus the andn/orn/xnor/rol/ror family). Implemented on both RV32
+    * and RV64 (zip/unzip are RV32-only by encoding). */
+  case object Zbkb extends RvExtension("Zbkb")
+  /** Zbkc: carry-less multiply for cryptography (clmul/clmulh). A subset of Zbc
+    * without clmulr. Implemented on both RV32 and RV64. */
+  case object Zbkc extends RvExtension("Zbkc")
+  /** Zbkx: crossbar permutations (xperm4/xperm8). Implemented on both RV32 and
+    * RV64. */
+  case object Zbkx extends RvExtension("Zbkx")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba, Zbc). */
+    * Zba, Zbc, Zbkb, Zbkc, Zbkx). */
   val implemented: Set[RvExtension] =
-    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc, Zicsr, Compressed)
+    Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
+      Zbkb, Zbkc, Zbkx, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

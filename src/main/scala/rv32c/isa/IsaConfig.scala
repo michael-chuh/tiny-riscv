@@ -38,6 +38,9 @@ case class IsaConfig(
   def hasZbs: Boolean = extensions.contains(RvExtension.Zbs)
   def hasZba: Boolean = extensions.contains(RvExtension.Zba)
   def hasZbc: Boolean = extensions.contains(RvExtension.Zbc)
+  def hasZbkb: Boolean = extensions.contains(RvExtension.Zbkb)
+  def hasZbkc: Boolean = extensions.contains(RvExtension.Zbkc)
+  def hasZbkx: Boolean = extensions.contains(RvExtension.Zbkx)
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
@@ -153,6 +156,40 @@ object IsaConfig {
   /** RV64 with Zbc (RV64IM_Zbc_Zicsr, M/U): carry-less multiply rv64 hart. */
   val rv64imzbc: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbc), PrivConfig.MU)
+
+  /** RV32 with Zbkb (RV32IM_Zbkb_Zicsr, M/U): crypto bit-manipulation MCU. */
+  val rv32imzbkb: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkb), PrivConfig.MU)
+
+  /** RV64 with Zbkb (RV64IM_Zbkb_Zicsr, M/U): crypto bit-manipulation hart. */
+  val rv64imzbkb: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkb), PrivConfig.MU)
+
+  /** RV32 with Zbkc (RV32IM_Zbkc_Zicsr, M/U): crypto carry-less multiply MCU. */
+  val rv32imzbkc: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkc), PrivConfig.MU)
+
+  /** RV64 with Zbkc (RV64IM_Zbkc_Zicsr, M/U): crypto carry-less multiply hart. */
+  val rv64imzbkc: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkc), PrivConfig.MU)
+
+  /** RV32 with Zbkx (RV32IM_Zbkx_Zicsr, M/U): crossbar permutations MCU. */
+  val rv32imzbkx: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkx), PrivConfig.MU)
+
+  /** RV64 with Zbkx (RV64IM_Zbkx_Zicsr, M/U): crossbar permutations hart. */
+  val rv64imzbkx: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zbkx), PrivConfig.MU)
+
+  /** RV32IM + Zbkb + Zbkc + Zbkx (the combined Zbk crypto bit-manipulation set). */
+  val rv32imzbk: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv,
+      RvExtension.Zbkb, RvExtension.Zbkc, RvExtension.Zbkx), PrivConfig.MU)
+
+  /** RV64IM + Zbkb + Zbkc + Zbkx (the combined Zbk crypto bit-manipulation set). */
+  val rv64imzbk: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv,
+      RvExtension.Zbkb, RvExtension.Zbkc, RvExtension.Zbkx), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */
