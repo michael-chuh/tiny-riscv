@@ -7,7 +7,7 @@ rv32c 的全部可配置项集中在两层模型：**ISA 配置**（`rv32c.isa` 
 | 层 | 类型 | 职责 | 单一事实源 |
 |----|------|------|-----------|
 | ISA | `rv32c.isa.IsaConfig` | 位宽、扩展、特权栈 | misa 值、`hasMulDiv` 等能力探测、规范名 |
-| 扩展 | `rv32c.isa.RvExtension` | 命名扩展（M/A/C/F/D/Zba/Zbb/Zbs/Zbc/Zicsr/Zifencei） | `implemented`（当前 RTL 可执行）vs `reserved`（roadmap） |
+| 扩展 | `rv32c.isa.RvExtension` | 命名扩展（M/A/C/F/D/Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zicsr/Zifencei） | `implemented`（当前 RTL 可执行）vs `reserved`（roadmap） |
 | 特权 | `rv32c.isa.PrivConfig` | 特权栈形状（M/M-U/M-S-U） | `hasUser/hasSupervisor/hasHypervisor`、栈名 |
 | CSR | `rv32c.isa.CsrMap` | CSR 地址、只读性、最低特权 | `implementedFor(isa)` / `readOnlyFor(isa)`，供 CSR 读解码与 EX 合法性检查共用 |
 | 异常码 | `rv32c.isa.ExceptionCode` | `mcause` 同步异常编号 | 具名常量（2/3/4/6/8/9/11），消除 trap 通路魔法数字 |
@@ -28,7 +28,7 @@ case class IsaConfig(
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
 | `xlen` | 32 | 数据路径位宽，`isa-support` 以配置为准生成 |
-| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Atomic`（A）、`SingleFloat`（F，FLEN=32）、`DoubleFloat`（D，FLEN=64，仅 RV64 且蕴含 F）、`Compressed`（C，RV32 与 RV64 均支持）、`Zba`/`Zbb`/`Zbs`/`Zbc`（位操作，RV32 与 RV64 均支持，无 MISA 位）、`Zicsr` 为 `implemented`；`Zifencei` 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
+| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Atomic`（A）、`SingleFloat`（F，FLEN=32）、`DoubleFloat`（D，FLEN=64，仅 RV64 且蕴含 F）、`Compressed`（C，RV32 与 RV64 均支持）、`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`（位操作，RV32 与 RV64 均支持，无 MISA 位）、`Zicsr` 为 `implemented`；`Zifencei` 为 `reserved`，可命名表达 roadmap 但 `RiscvCore` 实例化时 require 拒绝 |
 | `priv` | `M/U` | 结构规则由 `PrivConfig` 强制：M 必选、S 蕴含 U、H 蕴含 S；S/H 为 RV64 专用（当前 RTL 仅实现 M/U） |
 
 ### 预设
@@ -51,10 +51,18 @@ IsaConfig.rv32imzba // RV32IM_Zba_Zicsr, M/U —— 含 Zba 地址生成扩展
 IsaConfig.rv64imzba // RV64IM_Zba_Zicsr, M/U —— RV64 含 Zba 地址生成扩展
 IsaConfig.rv32imzbc // RV32IM_Zbc_Zicsr, M/U —— 含 Zbc 无进位乘法扩展
 IsaConfig.rv64imzbc // RV64IM_Zbc_Zicsr, M/U —— RV64 含 Zbc 无进位乘法扩展
+IsaConfig.rv32imzbkb // RV32IM_Zbkb_Zicsr, M/U —— 含 Zbkb 密码学位操作扩展
+IsaConfig.rv64imzbkb // RV64IM_Zbkb_Zicsr, M/U —— RV64 含 Zbkb 密码学位操作扩展
+IsaConfig.rv32imzbkc // RV32IM_Zbkc_Zicsr, M/U —— 含 Zbkc 无进位乘法子集
+IsaConfig.rv64imzbkc // RV64IM_Zbkc_Zicsr, M/U —— RV64 含 Zbkc 无进位乘法子集
+IsaConfig.rv32imzbkx // RV32IM_Zbkx_Zicsr, M/U —— 含 Zbkx 交叉位置换扩展
+IsaConfig.rv64imzbkx // RV64IM_Zbkx_Zicsr, M/U —— RV64 含 Zbkx 交叉位置换扩展
+IsaConfig.rv32imzbk  // RV32IM_Zbkb_Zbkc_Zbkx_Zicsr, M/U —— 组合密码学位操作集
+IsaConfig.rv64imzbk  // RV64IM_Zbkb_Zbkc_Zbkx_Zicsr, M/U —— RV64 组合密码学位操作集
 IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— S 模式未实现故被拒绝；RV64I/M 请用 M/U 栈配置
 ```
 
-**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。
+**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。
 
 ## CoreConfig 字段
 
@@ -96,7 +104,7 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 生成十六个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）与 `rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+`RiscvCoreGen` 生成二十六个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）、`rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（`CoreConfig.rv32imzbkb`/`rv64imzbkb`，Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（`CoreConfig.rv32imzbkc`/`rv64imzbkc`，Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（`CoreConfig.rv32imzbkx`/`rv64imzbkx`，Zbkx）与 `rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（`CoreConfig.rv32imzbk`/`rv64imzbk`，Zbkb+Zbkc+Zbkx），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
 
 ### 启用 RV32C 压缩扩展（RV32IMC）
 
@@ -140,15 +148,16 @@ val config = CoreConfig.rv64d        // isa = IsaConfig.rv64d, FLEN=64，蕴含 
 
 D 核同时实例化 `FpUnit(8, 23)`（binary32）与 `FpUnit(11, 52)`（binary64）两个运算单元，按指令 fmt 路由：`.S` 指令走 32 位单元、`.D` 指令走 64 位单元，避免把单精度操作数宽化后再舍入造成的双重舍入。`FCVT.S.D` / `FCVT.D.S` 在 64 位单元上执行（`roundPackTo` 支持任意目标格式）。FLEN=64 下启用 NaN-boxing：单精度写回结果高 32 位置 1，非 boxed 的单精度输入按规范 NaN（`0x7FC00000`）处理。D 蕴含 F，且仅在 `xlen = 64` 时合法，RV32 配置 D 会在 `IsaConfig` 构造时被 require 拒绝。
 
-### 启用 Zba / Zbb / Zbs / Zbc 位操作扩展
+### 启用 Zba / Zbb / Zbs / Zbc 与 Zbkb / Zbkc / Zbkx 位操作扩展
 
 ```scala
 val config = CoreConfig.rv32imzbb     // isa = IsaConfig.rv32imzbb, 含 Zbb
 val config64 = CoreConfig.rv64imzba   // isa = IsaConfig.rv64imzba, 含 Zba
 val configClmul = CoreConfig.rv64imzbc // isa = IsaConfig.rv64imzbc, 含 Zbc
+val configCrypto = CoreConfig.rv32imzbk // isa = IsaConfig.rv32imzbk, 含 Zbkb+Zbkc+Zbkx
 ```
 
-四个 `Zb*` 子扩展彼此独立、按需使能，位操作通路仅在对应 `isa.hasZbb` / `hasZbs` / `hasZba` / `hasZbc` 时译码，未使能时相应编码按非法指令（cause 2）处理。Zbb 提供 `andn/orn/xnor`、`clz/ctz/cpop`、`min/minu/max/maxu`、`rol/ror/rori`、`sext.b/sext.h/zext.h`、`orc.b/rev8` 及 RV64 W 形式；Zbs 提供 `bset/bclr/binv/bext` 寄存器与立即数形式（RV32 5 位 / RV64 6 位位索引）；Zba 提供 `sh1add/sh2add/sh3add` 与 RV64 `add.uw/slli.uw/sh*add.uw`；Zbc 提供 `clmul/clmulh/clmulr` 无进位乘法。全部在 EX 段组合执行，复用现有 ALU 结果通路，无新增停顿状态。`Zba`/`Zbb`/`Zbs`/`Zbc` 均不置 MISA `B` 位，`rv32imzbb` 的 `misaValue` 与 `rv32im` 相同。
+`Zb*` 子扩展彼此独立、按需使能，位操作通路仅在对应 `isa.hasZbb` / `hasZbs` / `hasZba` / `hasZbc` / `hasZbkb` / `hasZbkc` / `hasZbkx` 时译码，未使能时相应编码按非法指令（cause 2）处理。Zbb 提供 `andn/orn/xnor`、`clz/ctz/cpop`、`min/minu/max/maxu`、`rol/ror/rori`、`sext.b/sext.h/zext.h`、`orc.b/rev8` 及 RV64 W 形式；Zbs 提供 `bset/bclr/binv/bext` 寄存器与立即数形式（RV32 5 位 / RV64 6 位位索引）；Zba 提供 `sh1add/sh2add/sh3add` 与 RV64 `add.uw/slli.uw/sh*add.uw`；Zbc 提供 `clmul/clmulh/clmulr` 无进位乘法；Zbkb 提供 `pack/packh/packw`、`brev8` 与 RV32 `zip/unzip`；Zbkc 提供 `clmul/clmulh`（Zbc 的无 `clmulr` 子集，与 Zbc 共用 `clmul/clmulh` 编码）；Zbkx 提供 `xperm4/xperm8` 交叉位置换。全部在 EX 段组合执行，复用现有 ALU 结果通路，无新增停顿状态。上述所有 `Zb*` 均不置 MISA `B` 位，`rv32imzbb` 的 `misaValue` 与 `rv32im` 相同。
 
 ### 切换到 RV64IM（M/U 栈）
 
@@ -186,7 +195,7 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc 由参数化 ALU 承载（RV64 W 形式按 `xlen` 展开）
+- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc、Zbkb、Zbkc、Zbkx；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 由参数化 ALU 承载（RV64 W 形式按 `xlen` 展开）
 - 拒绝：S/H 模式、未实现的扩展（Zifencei）、RV32 上的 D、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 

@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 71 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 83 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -50,6 +50,12 @@ graph LR
 | RV64B (Zba) word forms zero-extend rs1 | `add.uw`（rs1 bit31=1 零扩展）、`slli.uw`（6 位 shamt）、`sh*add.uw`、64 位 `sh1add` | x7==`0x80000003`、x8==`0x800000000`、x9==`0x100000003`、x10==`0x200000003`、x11==`0x400000003`、x13==`0x200000003` |
 | RV32B (Zbc) carry-less multiply | `clmul`（0b1011×0b1101）、`clmulh`/`clmulr`（跨 bit31 的积）、全 1 操作数 | x3==0x7F、x6==0、x7==1、x8==2、x10==x11==`0x55555555`、x12==`0xAAAAAAAA` |
 | RV64B (Zbc) carry-less multiply across the 64-bit boundary | `clmulh`/`clmulr`（跨 bit63 的积）、全 1 操作数 | x3==0、x4==1、x5==2、x7==x8==`0x5555555555555555`、x9==`0xAAAAAAAAAAAAAAAA` |
+| RV32B (Zbkb) pack / brev8 / zip / unzip | `pack`/`packh`（半字/字节拼接）、逐字节 `brev8`、`zip`/`unzip` 半字交织 | x3==`0xDEF05678`、x4==`0xF078`、x5==`0x8040C020`、x6==`0xCCCCCCCC`、x7==`0xFFFF0000` |
+| RV64B (Zbkb) pack / packw / brev8 | 64 位 `pack`、`packw`（32 位结果符号扩展）、逐字节 `brev8` | x3==`0x9ABCDEF012345678`、x4==`0xF078`、x5==`0xFFFFFFFFDEF05678`、x6==`0x8040C020` |
+| RV32B (Zbkc) carry-less multiply subset | `clmul`（0b1011×0b1101）、`clmulh`（跨 bit31 的积），不含 `clmulr` | x3==0x7F、x6==1 |
+| RV64B (Zbkc) carry-less multiply across the 64-bit boundary | `clmulh`（跨 bit63 的积） | x3==0、x4==1 |
+| RV32B (Zbkx) xperm4 / xperm8 | `xperm8` 索引 0 广播、混合索引、`xperm4` 恒等置换 | x3==`0xDDDDDDDD`、x5==`0xDD00BBCC`、x7==`0xAABBCCDD` |
+| RV64B (Zbkx) xperm4 / xperm8 over eight groups | 64 位 `xperm8`（8 个字节组）、`xperm4`（16 个 nibble 组，高位零填充） | x3==`0xDDDDDDDDDDDDDDDD`、x5==`0xDDDDDDDDDD00BBCC`、x8==`0x8888888812345678` |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -57,7 +63,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 36 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 42 项。
 
 ## 运行方式
 
