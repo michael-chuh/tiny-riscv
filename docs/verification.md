@@ -56,6 +56,8 @@ graph LR
 | RV64B (Zbkc) carry-less multiply across the 64-bit boundary | `clmulh`（跨 bit63 的积） | x3==0、x4==1 |
 | RV32B (Zbkx) xperm4 / xperm8 | `xperm8` 索引 0 广播、混合索引、`xperm4` 恒等置换 | x3==`0xDDDDDDDD`、x5==`0xDD00BBCC`、x7==`0xAABBCCDD` |
 | RV64B (Zbkx) xperm4 / xperm8 over eight groups | 64 位 `xperm8`（8 个字节组）、`xperm4`（16 个 nibble 组，高位零填充） | x3==`0xDDDDDDDDDDDDDDDD`、x5==`0xDDDDDDDDDD00BBCC`、x8==`0x8888888812345678` |
+| RV32B (Zknh) sha256 and sha512 split forms | `sha256sum0`/`sum1`/`sig0`/`sig1` 与 `sha512sum0r`/`sum1r`/`sig0l`/`sig0h`/`sig1l`/`sig1h` | x10==`0x66146474`、x11==`0x3561ABDA`、x12==`0xE7FCE6EE`、x13==`0xA1F78649`、x14==`0xB7C57A10`、x15==`0x77031123`、x16==`0xB192C77C`、x17==`0x6F92C77C`、x18==`0xCCA3460D`、x19==`0x70A3460D` |
+| RV64B (Zknh) full-width sha256 and sha512 | `sha256sum0`/`sum1`/`sig0`/`sig1` 与 `sha512sum0`/`sum1`/`sig0`/`sig1`（64 位） | x10==`0x66146474`、x11==`0x3561ABDA`、x12==`0xFFFFFFFFE7FCE6EE`、x13==`0xFFFFFFFFA1F78649`、x14==`0xB7C57A100C7EC1AB`、x15==`0x7703112333475567`、x16==`0x6F92C77C6C4F1AA1`、x17==`0x70A3460DBBD4317A` |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -63,7 +65,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 42 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 44 项。
 
 ## 运行方式
 
