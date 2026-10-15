@@ -25,6 +25,16 @@ class RiscvCoreTest extends AnyFunSuite {
     val lo = (v - (hi << 12)).toInt
     Seq(encU(hi.toInt, rd), encI(lo, rd, 0, rd))
   }
+  // Materialise an arbitrary 64-bit constant into rd using two 32-bit halves
+  // (RV64 only). The low half is zero-extended via slli/srli so that OR-ing the
+  // shifted high half does not leave sign-extension bits behind.
+  private def load64(rd: Int, v: BigInt, t1: Int, t2: Int): Seq[Long] =
+    load32(rd, (v & BigInt(0xffffffffL)).toLong) ++
+      Seq(encI(32, rd, 1, rd, 0x13)) ++          // slli rd, rd, 32
+      Seq(encI(32, rd, 5, rd, 0x13)) ++          // srli rd, rd, 32 (zext low)
+      load32(t2, ((v >> 32) & BigInt(0xffffffffL)).toLong) ++
+      Seq(encI(32, t2, 1, t2, 0x13)) ++          // slli t2, t2, 32
+      Seq(encR(0x00, t2, rd, 6, rd, 0x33))       // or rd, rd, t2
   private def encS(imm: Int, rs2: Int, rs1: Int, f3: Int, opc: Int = 0x23): Long =
     (((imm >> 5) & 0x7f).toLong << 25) | ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
       ((f3 & 0x7).toLong << 12) | ((imm & 0x1f).toLong << 7) | (opc & 0x7f).toLong
@@ -1892,6 +1902,90 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(x(5) == BigInt("DDDDDDDDDD00BBCC", 16), "xperm8 mixed indices")
         assert(x(8) == BigInt("8888888812345678", 16), "xperm4 identity then zero-fill")
         println(s"PASS: RV64 Zbkx program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32B (Zknh) integration: SHA-2 hash bit-manipulation ----
+  val rv32zknhProgram: Seq[Long] = load32(1, 0x12345678L) ++
+    load32(2, 0x01234567L) ++ load32(3, 0x89ABCDEFL) ++ Seq[Long](
+    encI(0x100, 1, 1, 10, 0x13),   // sha256sum0 x10, x1 -> 0x66146474
+    encI(0x101, 1, 1, 11, 0x13),   // sha256sum1 x11, x1 -> 0x3561ABDA
+    encI(0x102, 1, 1, 12, 0x13),   // sha256sig0 x12, x1 -> 0xE7FCE6EE
+    encI(0x103, 1, 1, 13, 0x13),   // sha256sig1 x13, x1 -> 0xA1F78649
+    encR(0x28, 3, 2, 0, 14, 0x33), // sha512sum0r x14, x2, x3 -> 0xB7C57A10
+    encR(0x29, 3, 2, 0, 15, 0x33), // sha512sum1r x15, x2, x3 -> 0x77031123
+    encR(0x2a, 3, 2, 0, 16, 0x33), // sha512sig0l x16, x2, x3 -> 0xB192C77C
+    encR(0x2e, 3, 2, 0, 17, 0x33), // sha512sig0h x17, x2, x3 -> 0x6F92C77C
+    encR(0x2b, 3, 2, 0, 18, 0x33), // sha512sig1l x18, x2, x3 -> 0xCCA3460D
+    encR(0x2f, 3, 2, 0, 19, 0x33)  // sha512sig1h x19, x2, x3 -> 0x70A3460D
+  )
+
+  test("RV32B (Zknh) sha256 and sha512 split forms") {
+    val cfg = CoreConfig.rv32imzknh
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zknhProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zknhProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 19, BigInt("70A3460D", 16))
+        assert(cycles < 200, "RV32 Zknh program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("66146474", 16), "sha256sum0")
+        assert(x(11) == BigInt("3561ABDA", 16), "sha256sum1")
+        assert(x(12) == BigInt("E7FCE6EE", 16), "sha256sig0")
+        assert(x(13) == BigInt("A1F78649", 16), "sha256sig1")
+        assert(x(14) == BigInt("B7C57A10", 16), "sha512sum0r")
+        assert(x(15) == BigInt("77031123", 16), "sha512sum1r")
+        assert(x(16) == BigInt("B192C77C", 16), "sha512sig0l")
+        assert(x(17) == BigInt("6F92C77C", 16), "sha512sig0h")
+        assert(x(18) == BigInt("CCA3460D", 16), "sha512sig1l")
+        assert(x(19) == BigInt("70A3460D", 16), "sha512sig1h")
+        println(s"PASS: RV32 Zknh program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64B (Zknh) integration: full-width SHA-2 hash operations ----
+  val rv64zknhProgram: Seq[Long] = load32(1, 0x12345678L) ++
+    load64(4, BigInt("0123456789ABCDEF", 16), 28, 29) ++ Seq[Long](
+    encI(0x100, 1, 1, 10, 0x13),   // sha256sum0 x10, x1 -> 0x66146474
+    encI(0x101, 1, 1, 11, 0x13),   // sha256sum1 x11, x1 -> 0x3561ABDA
+    encI(0x102, 1, 1, 12, 0x13),   // sha256sig0 x12, x1 -> 0xFFFFFFFFE7FCE6EE
+    encI(0x103, 1, 1, 13, 0x13),   // sha256sig1 x13, x1 -> 0xFFFFFFFFA1F78649
+    encI(0x104, 4, 1, 14, 0x13),   // sha512sum0 x14, x4 -> 0xB7C57A100C7EC1AB
+    encI(0x105, 4, 1, 15, 0x13),   // sha512sum1 x15, x4 -> 0x7703112333475567
+    encI(0x106, 4, 1, 16, 0x13),   // sha512sig0 x16, x4 -> 0x6F92C77C6C4F1AA1
+    encI(0x107, 4, 1, 17, 0x13)    // sha512sig1 x17, x4 -> 0x70A3460DBBD4317A
+  )
+
+  test("RV64B (Zknh) full-width sha256 and sha512") {
+    val cfg = CoreConfig.rv64imzknh
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zknhProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zknhProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 17, BigInt("70A3460DBBD4317A", 16))
+        assert(cycles < 200, "RV64 Zknh program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("66146474", 16), "sha256sum0")
+        assert(x(11) == BigInt("3561ABDA", 16), "sha256sum1")
+        assert(x(12) == BigInt("FFFFFFFFE7FCE6EE", 16), "sha256sig0 sign-extended")
+        assert(x(13) == BigInt("FFFFFFFFA1F78649", 16), "sha256sig1 sign-extended")
+        assert(x(14) == BigInt("B7C57A100C7EC1AB", 16), "sha512sum0")
+        assert(x(15) == BigInt("7703112333475567", 16), "sha512sum1")
+        assert(x(16) == BigInt("6F92C77C6C4F1AA1", 16), "sha512sig0")
+        assert(x(17) == BigInt("70A3460DBBD4317A", 16), "sha512sig1")
+        println(s"PASS: RV64 Zknh program finished in $cycles cycles")
       }
   }
 }

@@ -175,6 +175,19 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.canonicalName == "RV64IM_Zbkb_Zbkc_Zbkx_Zicsr  M/U")
   }
 
+  test("rv32imzknh exposes Zknh without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzknh
+    assert(isa.hasZknh && isa.hasMulDiv && !isa.hasZbkb && !isa.hasZbc)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zicsr_Zknh  M/U")
+  }
+
+  test("rv64imzknh exposes Zknh on an RV64 hart") {
+    val isa = IsaConfig.rv64imzknh
+    assert(isa.isRV64 && isa.hasZknh && isa.hasMulDiv)
+    assert(isa.canonicalName == "RV64IM_Zicsr_Zknh  M/U")
+  }
+
   test("D implies F") {
     intercept[IllegalArgumentException] {
       IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.DoubleFloat), PrivConfig.MU)
@@ -289,5 +302,8 @@ class IsaConfigSpec extends AnyFunSuite {
     val zbk = CoreConfig.rv32imzbk
     assert(zbk.hasZbkb && zbk.hasZbkc && zbk.hasZbkx)
     assert(!plain.hasZbkb && !plain.hasZbkc && !plain.hasZbkx)
+    val zknh = CoreConfig.rv32imzknh
+    assert(zknh.hasZknh && CoreConfig.rv64imzknh.hasZknh)
+    assert(!plain.hasZknh)
   }
 }

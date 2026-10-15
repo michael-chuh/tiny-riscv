@@ -94,6 +94,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZbkb: Boolean = isa.hasZbkb
   private val withZbkc: Boolean = isa.hasZbkc
   private val withZbkx: Boolean = isa.hasZbkx
+  private val withZknh: Boolean = isa.hasZknh
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -794,6 +795,31 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
         }
       }
+      if (withZknh) { // Zknh SHA-2 ops (funct7=0001000, funct3=001, rs2 selects)
+        when(funct7 === M"0001000" && funct3 === M"001") {
+          switch(instr(24 downto 20)) {
+            is(M"00000") { d.aluOp := AluOp.SHA256SUM0 }
+            is(M"00001") { d.aluOp := AluOp.SHA256SUM1 }
+            is(M"00010") { d.aluOp := AluOp.SHA256SIG0 }
+            is(M"00011") { d.aluOp := AluOp.SHA256SIG1 }
+            // SHA-512 64-bit forms exist only on RV64; on RV32 these are the
+            // R-type split forms and the OP-IMM encodings are reserved.
+            is(M"00100") {
+              if (isRV64) { d.aluOp := AluOp.SHA512SUM0 } else { d.illegal := True; d.valid := False }
+            }
+            is(M"00101") {
+              if (isRV64) { d.aluOp := AluOp.SHA512SUM1 } else { d.illegal := True; d.valid := False }
+            }
+            is(M"00110") {
+              if (isRV64) { d.aluOp := AluOp.SHA512SIG0 } else { d.illegal := True; d.valid := False }
+            }
+            is(M"00111") {
+              if (isRV64) { d.aluOp := AluOp.SHA512SIG1 } else { d.illegal := True; d.valid := False }
+            }
+            default { d.illegal := True; d.valid := False }
+          }
+        }
+      }
     }
     is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
       if (isRV64) {
@@ -1007,6 +1033,19 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           switch(funct3) {
             is(M"010") { d.aluOp := AluOp.XPERM4 }
             is(M"100") { d.aluOp := AluOp.XPERM8 }
+            default {}
+          }
+        }
+      }
+      if (withZknh && !isRV64) { // Zknh RV32 SHA-512 split forms (OP, funct3=000)
+        when(funct3 === M"000") {
+          switch(funct7) {
+            is(M"0101000") { d.aluOp := AluOp.SHA512SUM0R }
+            is(M"0101001") { d.aluOp := AluOp.SHA512SUM1R }
+            is(M"0101010") { d.aluOp := AluOp.SHA512SIG0L }
+            is(M"0101110") { d.aluOp := AluOp.SHA512SIG0H }
+            is(M"0101011") { d.aluOp := AluOp.SHA512SIG1L }
+            is(M"0101111") { d.aluOp := AluOp.SHA512SIG1H }
             default {}
           }
         }

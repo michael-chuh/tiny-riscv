@@ -36,6 +36,13 @@ object AluOp extends SpinalEnum {
   val XPERM4, XPERM8 = newElement()
   // RV64 Zbb W-suffix: 32-bit count/rotate, result sign-extended to xlen.
   val CLZW, CTZW, CPOPW, ROLW, RORW = newElement()
+  // Zknh SHA-2 hash bit manipulation. The sha256* and (RV32) sha512* split
+  // forms operate on the low 32 bits and sign-extend; the RV64 sha512* forms
+  // operate on the full 64-bit operand.
+  val SHA256SUM0, SHA256SUM1, SHA256SIG0, SHA256SIG1 = newElement()
+  val SHA512SUM0, SHA512SUM1, SHA512SIG0, SHA512SIG1 = newElement()
+  val SHA512SUM0R, SHA512SUM1R = newElement()
+  val SHA512SIG0L, SHA512SIG0H, SHA512SIG1L, SHA512SIG1H = newElement()
 }
 
 object BranchOp extends SpinalEnum {
@@ -146,6 +153,14 @@ class Alu(xlen: Int) extends Component {
     val left = (x << (U(w, sw bits) - sh)).resize(w)
     Mux(s === 0, x, right | left)
   }
+
+  // Byte-width-preserving shifts used by the SHA-2 hash instructions, which use
+  // constant rotate/shift amounts and truncate to the operation width (like the
+  // C `reg_t` arithmetic in the reference model). Spinal's `>>` on UInt narrows
+  // the result, so both directions are explicitly resized back to `w`.
+  private def shlW(x: UInt, n: Int, w: Int): UInt = (x << n).resize(w)
+  private def shrW(x: UInt, n: Int, w: Int): UInt = (x >> n).resize(w)
+  private def rotrW(x: UInt, n: Int, w: Int): UInt = shrW(x, n, w) | shlW(x, w - n, w)
 
   // ----- Multiplication helpers (full-width products) -----
   val mulUU = aU * bU                       // unsigned * unsigned (2*xlen bits)
@@ -334,6 +349,72 @@ class Alu(xlen: Int) extends Component {
     is(AluOp.CPOPW) { result := cpopN(io.a(31 downto 0), 32).resize(xlen).asBits }
     is(AluOp.ROLW)  { result := rotlN(aWU, shamtW, 32).asSInt.resize(xlen).asBits }
     is(AluOp.RORW)  { result := rotrN(aWU, shamtW, 32).asSInt.resize(xlen).asBits }
+    // ---- Zknh: SHA-2 hash bit manipulation ----
+    // SHA-256 forms operate on the low 32 bits and sign-extend to xlen.
+    is(AluOp.SHA256SUM0) {
+      val a = aU.resize(32)
+      result := (rotrW(a, 2, 32) ^ rotrW(a, 13, 32) ^ rotrW(a, 22, 32)).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA256SUM1) {
+      val a = aU.resize(32)
+      result := (rotrW(a, 6, 32) ^ rotrW(a, 11, 32) ^ rotrW(a, 25, 32)).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA256SIG0) {
+      val a = aU.resize(32)
+      result := (rotrW(a, 7, 32) ^ rotrW(a, 18, 32) ^ shrW(a, 3, 32)).asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA256SIG1) {
+      val a = aU.resize(32)
+      result := (rotrW(a, 17, 32) ^ rotrW(a, 19, 32) ^ shrW(a, 10, 32)).asSInt.resize(xlen).asBits
+    }
+    // RV64 SHA-512 forms operate on the full 64-bit operand.
+    is(AluOp.SHA512SUM0) {
+      val a = aU.resize(64)
+      result := (rotrW(a, 28, 64) ^ rotrW(a, 34, 64) ^ rotrW(a, 39, 64)).resize(xlen).asBits
+    }
+    is(AluOp.SHA512SUM1) {
+      val a = aU.resize(64)
+      result := (rotrW(a, 14, 64) ^ rotrW(a, 18, 64) ^ rotrW(a, 41, 64)).resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG0) {
+      val a = aU.resize(64)
+      result := (rotrW(a, 1, 64) ^ rotrW(a, 8, 64) ^ shrW(a, 7, 64)).resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG1) {
+      val a = aU.resize(64)
+      result := (rotrW(a, 19, 64) ^ rotrW(a, 61, 64) ^ shrW(a, 6, 64)).resize(xlen).asBits
+    }
+    // RV32 SHA-512 split forms: 32-bit results (sign-extended by the RV32 xlen).
+    is(AluOp.SHA512SUM0R) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shlW(a, 25, 32) ^ shlW(a, 30, 32) ^ shrW(a, 28, 32) ^ shrW(b, 7, 32) ^ shrW(b, 2, 32) ^ shlW(b, 4, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA512SUM1R) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shlW(a, 23, 32) ^ shrW(a, 14, 32) ^ shrW(a, 18, 32) ^ shrW(b, 9, 32) ^ shlW(b, 18, 32) ^ shlW(b, 14, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG0L) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shrW(a, 1, 32) ^ shrW(a, 7, 32) ^ shrW(a, 8, 32) ^ shlW(b, 31, 32) ^ shlW(b, 25, 32) ^ shlW(b, 24, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG0H) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shrW(a, 1, 32) ^ shrW(a, 7, 32) ^ shrW(a, 8, 32) ^ shlW(b, 31, 32) ^ shlW(b, 24, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG1L) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shlW(a, 3, 32) ^ shrW(a, 6, 32) ^ shrW(a, 19, 32) ^ shrW(b, 29, 32) ^ shlW(b, 26, 32) ^ shlW(b, 13, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
+    is(AluOp.SHA512SIG1H) {
+      val a = aU.resize(32); val b = bU.resize(32)
+      val r = shlW(a, 3, 32) ^ shrW(a, 6, 32) ^ shrW(a, 19, 32) ^ shrW(b, 29, 32) ^ shlW(b, 13, 32)
+      result := r.asSInt.resize(xlen).asBits
+    }
   }
   io.result := result
 }

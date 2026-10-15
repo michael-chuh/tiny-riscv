@@ -41,6 +41,7 @@ case class IsaConfig(
   def hasZbkb: Boolean = extensions.contains(RvExtension.Zbkb)
   def hasZbkc: Boolean = extensions.contains(RvExtension.Zbkc)
   def hasZbkx: Boolean = extensions.contains(RvExtension.Zbkx)
+  def hasZknh: Boolean = extensions.contains(RvExtension.Zknh)
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
@@ -190,6 +191,14 @@ object IsaConfig {
   val rv64imzbk: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv,
       RvExtension.Zbkb, RvExtension.Zbkc, RvExtension.Zbkx), PrivConfig.MU)
+
+  /** RV32 with Zknh (RV32IM_Zicsr_Zknh, M/U): SHA-2 hash bit manipulation MCU. */
+  val rv32imzknh: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zknh), PrivConfig.MU)
+
+  /** RV64 with Zknh (RV64IM_Zicsr_Zknh, M/U): SHA-2 hash bit-manipulation hart. */
+  val rv64imzknh: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zknh), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */

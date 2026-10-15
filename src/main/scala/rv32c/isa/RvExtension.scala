@@ -61,16 +61,20 @@ object RvExtension {
   /** Zbkx: crossbar permutations (xperm4/xperm8). Implemented on both RV32 and
     * RV64. */
   case object Zbkx extends RvExtension("Zbkx")
+  /** Zknh: SHA-2 hash bit manipulation (sha256sum0/1, sha256sig0/1 and, on RV64,
+    * sha512sum0/1, sha512sig0/1; on RV32 the sha512sum0r/sum1r and
+    * sha512sig0l/h/sig1l/h split forms). Implemented on both RV32 and RV64. */
+  case object Zknh extends RvExtension("Zknh")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba, Zbc, Zbkb, Zbkc, Zbkx). */
+    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
-      Zbkb, Zbkc, Zbkx, Zicsr, Compressed)
+      Zbkb, Zbkc, Zbkx, Zknh, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

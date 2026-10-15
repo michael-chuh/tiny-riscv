@@ -53,6 +53,7 @@ case class CoreConfig(
   def hasZbkb: Boolean = isa.hasZbkb
   def hasZbkc: Boolean = isa.hasZbkc
   def hasZbkx: Boolean = isa.hasZbkx
+  def hasZknh: Boolean = isa.hasZknh
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -135,4 +136,10 @@ object CoreConfig {
 
   /** RV64IM + Zbkb + Zbkc + Zbkx on the M/U stack: the combined crypto rv64 hart. */
   def rv64imzbk: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzbk)
+
+  /** RV32IM + Zknh on the M/U stack: SHA-2 hash bit-manipulation rv32 MCU hart. */
+  def rv32imzknh: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzknh)
+
+  /** RV64IM + Zknh on the M/U stack: SHA-2 hash bit-manipulation rv64 hart. */
+  def rv64imzknh: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzknh)
 }
