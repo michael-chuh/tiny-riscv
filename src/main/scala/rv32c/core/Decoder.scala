@@ -63,6 +63,7 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val rs2 = UInt(5 bits)
   val rd = UInt(5 bits)
   val imm = SInt(xlen bits)
+  val bs = UInt(2 bits)        // Zksed SM4 byte-select (instr[31:30])
   // --- Zicsr / exception fields ---
   val illegal = Bool()         // unrecognized / unsupported instruction
   val csrOp = CsrOp()          // NONE for non-CSR
@@ -95,6 +96,8 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZbkc: Boolean = isa.hasZbkc
   private val withZbkx: Boolean = isa.hasZbkx
   private val withZknh: Boolean = isa.hasZknh
+  private val withZksh: Boolean = isa.hasZksh
+  private val withZksed: Boolean = isa.hasZksed
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -144,6 +147,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   d.rs2 := instr(24 downto 20).asUInt
   d.rd := rdNum
   d.imm := immI
+  d.bs := U(0, 2 bits)
   d.illegal := False
   d.csrOp := CsrOp.NONE
   d.csrAddr := U(0, 12 bits)
@@ -820,6 +824,18 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
         }
       }
+      if (withZksh) { // Zksh SM3 ops share the Zknh OP-IMM encoding (funct7=0001000, funct3=001)
+        when(funct7 === M"0001000" && funct3 === M"001") {
+          switch(instr(24 downto 20)) {
+            is(M"01000") { d.aluOp := AluOp.SM3P0; d.illegal := False; d.valid := True }
+            is(M"01001") { d.aluOp := AluOp.SM3P1; d.illegal := False; d.valid := True }
+            default {
+              // Selectors 0..7 belong to Zknh; only illegal when it is disabled.
+              if (!withZknh) { d.illegal := True; d.valid := False }
+            }
+          }
+        }
+      }
     }
     is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
       if (isRV64) {
@@ -1046,6 +1062,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             is(M"0101110") { d.aluOp := AluOp.SHA512SIG0H }
             is(M"0101011") { d.aluOp := AluOp.SHA512SIG1L }
             is(M"0101111") { d.aluOp := AluOp.SHA512SIG1H }
+            default {}
+          }
+        }
+      }
+      if (withZksed) { // Zksed SM4 ops: funct3=000, funct5=instr[29:25], bs=instr[31:30]
+        when(funct3 === M"000") {
+          switch(instr(29 downto 25)) {
+            is(M"11000") { d.aluOp := AluOp.SM4ED; d.bs := instr(31 downto 30).asUInt; d.illegal := False; d.valid := True }
+            is(M"11010") { d.aluOp := AluOp.SM4KS; d.bs := instr(31 downto 30).asUInt; d.illegal := False; d.valid := True }
             default {}
           }
         }

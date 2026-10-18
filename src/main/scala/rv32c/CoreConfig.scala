@@ -54,6 +54,8 @@ case class CoreConfig(
   def hasZbkc: Boolean = isa.hasZbkc
   def hasZbkx: Boolean = isa.hasZbkx
   def hasZknh: Boolean = isa.hasZknh
+  def hasZksh: Boolean = isa.hasZksh
+  def hasZksed: Boolean = isa.hasZksed
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -142,4 +144,22 @@ object CoreConfig {
 
   /** RV64IM + Zknh on the M/U stack: SHA-2 hash bit-manipulation rv64 hart. */
   def rv64imzknh: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzknh)
+
+  /** RV32IM + Zksh on the M/U stack: SM3 hash bit-manipulation rv32 MCU hart. */
+  def rv32imzksh: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzksh)
+
+  /** RV64IM + Zksh on the M/U stack: SM3 hash bit-manipulation rv64 hart. */
+  def rv64imzksh: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzksh)
+
+  /** RV32IM + Zksed on the M/U stack: SM4 S-box transform rv32 MCU hart. */
+  def rv32imzksed: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzksed)
+
+  /** RV64IM + Zksed on the M/U stack: SM4 S-box transform rv64 hart. */
+  def rv64imzksed: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzksed)
+
+  /** RV32IM + full Zks (SM3 + SM4) on the M/U stack. */
+  def rv32imzks: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzks)
+
+  /** RV64IM + full Zks (SM3 + SM4) on the M/U stack. */
+  def rv64imzks: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzks)
 }

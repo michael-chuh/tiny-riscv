@@ -1988,4 +1988,84 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV64 Zknh program finished in $cycles cycles")
       }
   }
+
+  // ---- RV32 (Zks) integration: SM3 hash bit-ops + SM4 S-box transforms ----
+  val rv32zksProgram: Seq[Long] = load32(1, 0xA5A5A5A5L) ++
+    load32(2, 0x12345678L) ++ load32(3, 0x12345678L) ++ Seq[Long](
+    encI(0x108, 3, 1, 10, 0x13),    // sm3p0 x10, x3 -> 0xD6688234
+    encI(0x109, 3, 1, 11, 0x13),    // sm3p1 x11, x3 -> 0x05014549
+    encR(0x18, 2, 1, 0, 12, 0x33),  // sm4ed x12, x1, x2 (bs=0) -> 0x9494E8D9
+    encR(0x38, 2, 1, 0, 13, 0x33),  // sm4ed x13, x1, x2 (bs=1) -> 0xCE7C17CE
+    encR(0x58, 2, 1, 0, 14, 0x33),  // sm4ed x14, x1, x2 (bs=2) -> 0x6F488282
+    encR(0x78, 2, 1, 0, 15, 0x33),  // sm4ed x15, x1, x2 (bs=3) -> 0x57CFCF3D
+    encR(0x1a, 2, 1, 0, 16, 0x33),  // sm4ks x16, x1, x2 (bs=0) -> 0x25AC83E9
+    encR(0x3a, 2, 1, 0, 17, 0x33),  // sm4ks x17, x1, x2 (bs=1) -> 0xBEC87FE5
+    encR(0x5a, 2, 1, 0, 18, 0x33),  // sm4ks x18, x1, x2 (bs=2) -> 0xC16C853C
+    encR(0x7a, 2, 1, 0, 19, 0x33)   // sm4ks x19, x1, x2 (bs=3) -> 0x3FE5B6E8
+  )
+
+  test("RV32 (Zks) sm3p0/sm3p1 and sm4ed/sm4ks") {
+    val cfg = CoreConfig.rv32imzks
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zksProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zksProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 19, BigInt("3FE5B6E8", 16))
+        assert(cycles < 200, "RV32 Zks program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("D6688234", 16), "sm3p0")
+        assert(x(11) == BigInt("05014549", 16), "sm3p1")
+        assert(x(12) == BigInt("9494E8D9", 16), "sm4ed bs=0")
+        assert(x(13) == BigInt("CE7C17CE", 16), "sm4ed bs=1")
+        assert(x(14) == BigInt("6F488282", 16), "sm4ed bs=2")
+        assert(x(15) == BigInt("57CFCF3D", 16), "sm4ed bs=3")
+        assert(x(16) == BigInt("25AC83E9", 16), "sm4ks bs=0")
+        assert(x(17) == BigInt("BEC87FE5", 16), "sm4ks bs=1")
+        assert(x(18) == BigInt("C16C853C", 16), "sm4ks bs=2")
+        assert(x(19) == BigInt("3FE5B6E8", 16), "sm4ks bs=3")
+        println(s"PASS: RV32 Zks program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64 (Zks) integration: 32-bit results sign-extended to 64 bits ----
+  val rv64zksProgram: Seq[Long] = load32(1, 0xA5A5A5A5L) ++
+    load32(2, 0x12345678L) ++ load32(3, 0x12345678L) ++ Seq[Long](
+    encI(0x108, 3, 1, 10, 0x13),    // sm3p0 x10, x3 -> 0xFFFFFFFFD6688234
+    encI(0x109, 3, 1, 11, 0x13),    // sm3p1 x11, x3 -> 0x0000000005014549
+    encR(0x18, 2, 1, 0, 12, 0x33),  // sm4ed x12, x1, x2 (bs=0) -> 0xFFFFFFFF9494E8D9
+    encR(0x58, 2, 1, 0, 14, 0x33),  // sm4ed x14, x1, x2 (bs=2) -> 0x000000006F488282
+    encR(0x3a, 2, 1, 0, 17, 0x33),  // sm4ks x17, x1, x2 (bs=1) -> 0xFFFFFFFFBEC87FE5
+    encR(0x7a, 2, 1, 0, 19, 0x33)   // sm4ks x19, x1, x2 (bs=3) -> 0x000000003FE5B6E8
+  )
+
+  test("RV64 (Zks) 32-bit hash ops sign-extended") {
+    val cfg = CoreConfig.rv64imzks
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zksProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zksProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 19, BigInt("3FE5B6E8", 16))
+        assert(cycles < 200, "RV64 Zks program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("FFFFFFFFD6688234", 16), "sm3p0 sign-extended")
+        assert(x(11) == BigInt("0000000005014549", 16), "sm3p1")
+        assert(x(12) == BigInt("FFFFFFFF9494E8D9", 16), "sm4ed bs=0 sign-extended")
+        assert(x(14) == BigInt("000000006F488282", 16), "sm4ed bs=2")
+        assert(x(17) == BigInt("FFFFFFFFBEC87FE5", 16), "sm4ks bs=1 sign-extended")
+        assert(x(19) == BigInt("000000003FE5B6E8", 16), "sm4ks bs=3")
+        println(s"PASS: RV64 Zks program finished in $cycles cycles")
+      }
+  }
 }

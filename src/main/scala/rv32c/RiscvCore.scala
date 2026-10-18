@@ -59,6 +59,7 @@ class IdExBundle(xlen: Int) extends Bundle {
   val rs3 = UInt(5 bits)
   val rd = UInt(5 bits)
   val imm = SInt(xlen bits)
+  val bs = UInt(2 bits)        // Zksed SM4 byte-select
   // --- Zicsr / exception control ---
   val illegal = Bool()         // statically illegal instruction (decoder)
   val csrOp = CsrOp()          // NONE unless this is a CSR access
@@ -103,6 +104,7 @@ object IdExBundle {
     b.rs3 := U(0, 5 bits)
     b.rd := U(0, 5 bits)
     b.imm := S(0, xlen bits)
+    b.bs := U(0, 2 bits)
     b.illegal := False
     b.csrOp := CsrOp.NONE
     b.csrImm := False
@@ -451,6 +453,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   alu.io.a := aluA
   alu.io.b := aluB
   alu.io.op := idEx.aluOp
+  alu.io.bs := idEx.bs
 
   // Instruction length of the instruction in EX; compressed instructions link
   // to pc+2 instead of pc+4.
@@ -1008,6 +1011,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.rs3 := dec.rs3
     idEx.rd := dec.rd
     idEx.imm := dec.imm
+    idEx.bs := dec.bs
     idEx.illegal := dec.illegal
     idEx.csrOp := dec.csrOp
     idEx.csrImm := dec.csrImm
