@@ -71,16 +71,24 @@ object RvExtension {
   /** Zksed: SM4 block-cipher S-box transforms (sm4ed/sm4ks). Implemented on both
     * RV32 and RV64. */
   case object Zksed extends RvExtension("Zksed")
+  /** Zkne: AES encryption round primitives (aes32esi/aes32esmi on RV32,
+    * aes64es/aes64esm/aes64ks1i/aes64ks2 on RV64). Implemented on both RV32 and
+    * RV64. */
+  case object Zkne extends RvExtension("Zkne")
+  /** Zknd: AES decryption round primitives (aes32dsi/aes32dsmi on RV32,
+    * aes64ds/aes64dsm/aes64im/aes64ks1i/aes64ks2 on RV64). Implemented on both
+    * RV32 and RV64. */
+  case object Zknd extends RvExtension("Zknd")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed). */
+    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
-      Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zicsr, Compressed)
+      Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicsr, Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

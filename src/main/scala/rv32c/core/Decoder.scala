@@ -63,7 +63,8 @@ class DecodeOutput(xlen: Int) extends Bundle {
   val rs2 = UInt(5 bits)
   val rd = UInt(5 bits)
   val imm = SInt(xlen bits)
-  val bs = UInt(2 bits)        // Zksed SM4 byte-select (instr[31:30])
+  val bs = UInt(2 bits)        // Zksed/Zkne/Zknd byte-select (instr[31:30])
+  val rcon = UInt(4 bits)      // Zkne/Zknd aes64ks1i round constant (instr[23:20])
   // --- Zicsr / exception fields ---
   val illegal = Bool()         // unrecognized / unsupported instruction
   val csrOp = CsrOp()          // NONE for non-CSR
@@ -98,6 +99,8 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZknh: Boolean = isa.hasZknh
   private val withZksh: Boolean = isa.hasZksh
   private val withZksed: Boolean = isa.hasZksed
+  private val withZkne: Boolean = isa.hasZkne
+  private val withZknd: Boolean = isa.hasZknd
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -148,6 +151,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   d.rd := rdNum
   d.imm := immI
   d.bs := U(0, 2 bits)
+  d.rcon := U(0, 4 bits)
   d.illegal := False
   d.csrOp := CsrOp.NONE
   d.csrAddr := U(0, 12 bits)
@@ -836,6 +840,19 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
           }
         }
       }
+      if (isRV64 && withZknd) { // aes64im: imm[11:0] = 0x300, funct3=001
+        when(funct3 === M"001" && instr(31 downto 20) === M"001100000000") {
+          d.aluOp := AluOp.AES64IM; d.illegal := False; d.valid := True
+        }
+      }
+      if (isRV64 && (withZkne || withZknd)) { // aes64ks1i: imm[11:4]=0x31, rcon=imm[3:0]
+        when(funct3 === M"001" && instr(31 downto 24) === M"00110001") {
+          d.aluOp := AluOp.AES64KS1I
+          d.rcon := instr(23 downto 20).asUInt
+          when(instr(23 downto 20).asUInt > U(10, 4 bits)) { d.illegal := True; d.valid := False }
+            .otherwise { d.illegal := False; d.valid := True }
+        }
+      }
     }
     is(M"0011011") { // OP-IMM-32 (RV64): ADDIW/SLLIW/SRLIW/SRAIW
       if (isRV64) {
@@ -1073,6 +1090,47 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             is(M"11010") { d.aluOp := AluOp.SM4KS; d.bs := instr(31 downto 30).asUInt; d.illegal := False; d.valid := True }
             default {}
           }
+        }
+      }
+      if (!isRV64 && withZkne) { // Zkne aes32*: funct3=000, funct5=instr[29:25], bs=instr[31:30]
+        when(funct3 === M"000") {
+          switch(instr(29 downto 25)) {
+            is(M"10001") { d.aluOp := AluOp.AES32ESI; d.bs := instr(31 downto 30).asUInt; d.regWrite := True; d.illegal := False; d.valid := True }
+            is(M"10011") { d.aluOp := AluOp.AES32ESMI; d.bs := instr(31 downto 30).asUInt; d.regWrite := True; d.illegal := False; d.valid := True }
+            default {}
+          }
+        }
+      }
+      if (!isRV64 && withZknd) { // Zknd aes32*: funct3=000, funct5=instr[29:25], bs=instr[31:30]
+        when(funct3 === M"000") {
+          switch(instr(29 downto 25)) {
+            is(M"10101") { d.aluOp := AluOp.AES32DSI; d.bs := instr(31 downto 30).asUInt; d.regWrite := True; d.illegal := False; d.valid := True }
+            is(M"10111") { d.aluOp := AluOp.AES32DSMI; d.bs := instr(31 downto 30).asUInt; d.regWrite := True; d.illegal := False; d.valid := True }
+            default {}
+          }
+        }
+      }
+      if (isRV64 && withZkne) { // Zkne aes64es/aes64esm (funct3=000, funct7 selects)
+        when(funct3 === M"000") {
+          switch(funct7) {
+            is(M"0011001") { d.aluOp := AluOp.AES64ES; d.regWrite := True; d.illegal := False; d.valid := True }
+            is(M"0011011") { d.aluOp := AluOp.AES64ESM; d.regWrite := True; d.illegal := False; d.valid := True }
+            default {}
+          }
+        }
+      }
+      if (isRV64 && withZknd) { // Zknd aes64ds/aes64dsm (funct3=000, funct7 selects)
+        when(funct3 === M"000") {
+          switch(funct7) {
+            is(M"0011101") { d.aluOp := AluOp.AES64DS; d.regWrite := True; d.illegal := False; d.valid := True }
+            is(M"0011111") { d.aluOp := AluOp.AES64DSM; d.regWrite := True; d.illegal := False; d.valid := True }
+            default {}
+          }
+        }
+      }
+      if (isRV64 && (withZkne || withZknd)) { // aes64ks2 is shared by Zkne/Zknd
+        when(funct3 === M"000" && funct7 === M"0111111") {
+          d.aluOp := AluOp.AES64KS2; d.regWrite := True; d.illegal := False; d.valid := True
         }
       }
     }

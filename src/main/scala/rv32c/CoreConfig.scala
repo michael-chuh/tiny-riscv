@@ -56,6 +56,8 @@ case class CoreConfig(
   def hasZknh: Boolean = isa.hasZknh
   def hasZksh: Boolean = isa.hasZksh
   def hasZksed: Boolean = isa.hasZksed
+  def hasZkne: Boolean = isa.hasZkne
+  def hasZknd: Boolean = isa.hasZknd
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -162,4 +164,22 @@ object CoreConfig {
 
   /** RV64IM + full Zks (SM3 + SM4) on the M/U stack. */
   def rv64imzks: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzks)
+
+  /** RV32IM + Zkne on the M/U stack: AES encryption round rv32 MCU hart. */
+  def rv32imzkne: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzkne)
+
+  /** RV64IM + Zkne on the M/U stack: AES encryption round rv64 hart. */
+  def rv64imzkne: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzkne)
+
+  /** RV32IM + Zknd on the M/U stack: AES decryption round rv32 MCU hart. */
+  def rv32imzknd: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzknd)
+
+  /** RV64IM + Zknd on the M/U stack: AES decryption round rv64 hart. */
+  def rv64imzknd: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzknd)
+
+  /** RV32IM + full Zkn (AES enc + dec) on the M/U stack. */
+  def rv32imzkn: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzkn)
+
+  /** RV64IM + full Zkn (AES enc + dec) on the M/U stack. */
+  def rv64imzkn: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzkn)
 }

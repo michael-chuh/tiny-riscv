@@ -44,6 +44,8 @@ case class IsaConfig(
   def hasZknh: Boolean = extensions.contains(RvExtension.Zknh)
   def hasZksh: Boolean = extensions.contains(RvExtension.Zksh)
   def hasZksed: Boolean = extensions.contains(RvExtension.Zksed)
+  def hasZkne: Boolean = extensions.contains(RvExtension.Zkne)
+  def hasZknd: Boolean = extensions.contains(RvExtension.Zknd)
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
@@ -225,6 +227,30 @@ object IsaConfig {
   /** RV64 with the full Zks set (RV64IM_Zicsr_Zksh_Zksed, M/U): SM3 + SM4. */
   val rv64imzks: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zksh, RvExtension.Zksed), PrivConfig.MU)
+
+  /** RV32 with Zkne (RV32IM_Zicsr_Zkne, M/U): AES encryption round MCU. */
+  val rv32imzkne: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zkne), PrivConfig.MU)
+
+  /** RV64 with Zkne (RV64IM_Zicsr_Zkne, M/U): AES encryption round hart. */
+  val rv64imzkne: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zkne), PrivConfig.MU)
+
+  /** RV32 with Zknd (RV32IM_Zicsr_Zknd, M/U): AES decryption round MCU. */
+  val rv32imzknd: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zknd), PrivConfig.MU)
+
+  /** RV64 with Zknd (RV64IM_Zicsr_Zknd, M/U): AES decryption round hart. */
+  val rv64imzknd: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zknd), PrivConfig.MU)
+
+  /** RV32 with the full Zkn set (RV32IM_Zicsr_Zknd_Zkne, M/U): AES enc + dec. */
+  val rv32imzkn: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zkne, RvExtension.Zknd), PrivConfig.MU)
+
+  /** RV64 with the full Zkn set (RV64IM_Zicsr_Zknd_Zkne, M/U): AES enc + dec. */
+  val rv64imzkn: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zkne, RvExtension.Zknd), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */

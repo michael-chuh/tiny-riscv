@@ -219,6 +219,43 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.canonicalName == "RV64IM_Zicsr_Zksed_Zksh  M/U")
   }
 
+  test("rv32imzkne exposes Zkne without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzkne
+    assert(isa.hasZkne && isa.hasMulDiv && !isa.hasZknd && !isa.hasZksed)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zicsr_Zkne  M/U")
+  }
+
+  test("rv64imzkne exposes Zkne on an RV64 hart") {
+    val isa = IsaConfig.rv64imzkne
+    assert(isa.isRV64 && isa.hasZkne && isa.hasMulDiv)
+    assert(isa.canonicalName == "RV64IM_Zicsr_Zkne  M/U")
+  }
+
+  test("rv32imzknd exposes Zknd without a reserved misa B bit") {
+    val isa = IsaConfig.rv32imzknd
+    assert(isa.hasZknd && isa.hasMulDiv && !isa.hasZkne)
+    assert(isa.canonicalName == "RV32IM_Zicsr_Zknd  M/U")
+  }
+
+  test("rv64imzknd exposes Zknd on an RV64 hart") {
+    val isa = IsaConfig.rv64imzknd
+    assert(isa.isRV64 && isa.hasZknd && isa.hasMulDiv)
+    assert(isa.canonicalName == "RV64IM_Zicsr_Zknd  M/U")
+  }
+
+  test("rv32imzkn combines Zkne and Zknd") {
+    val isa = IsaConfig.rv32imzkn
+    assert(isa.hasZkne && isa.hasZknd && !isa.hasZksed)
+    assert(isa.canonicalName == "RV32IM_Zicsr_Zknd_Zkne  M/U")
+  }
+
+  test("rv64imzkn combines Zkne and Zknd on an RV64 hart") {
+    val isa = IsaConfig.rv64imzkn
+    assert(isa.isRV64 && isa.hasZkne && isa.hasZknd)
+    assert(isa.canonicalName == "RV64IM_Zicsr_Zknd_Zkne  M/U")
+  }
+
   test("D implies F") {
     intercept[IllegalArgumentException] {
       IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.DoubleFloat), PrivConfig.MU)
@@ -336,5 +373,14 @@ class IsaConfigSpec extends AnyFunSuite {
     val zknh = CoreConfig.rv32imzknh
     assert(zknh.hasZknh && CoreConfig.rv64imzknh.hasZknh)
     assert(!plain.hasZknh)
+    val zkne = CoreConfig.rv32imzkne
+    assert(zkne.hasZkne && CoreConfig.rv64imzkne.hasZkne && !zkne.hasZknd)
+    assert(!plain.hasZkne)
+    val zknd = CoreConfig.rv32imzknd
+    assert(zknd.hasZknd && CoreConfig.rv64imzknd.hasZknd && !zknd.hasZkne)
+    assert(!plain.hasZknd)
+    val zkn = CoreConfig.rv32imzkn
+    assert(zkn.hasZkne && zkn.hasZknd)
+    assert(!plain.hasZkne && !plain.hasZknd)
   }
 }

@@ -2068,4 +2068,86 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV64 Zks program finished in $cycles cycles")
       }
   }
+
+  // ---- RV32 (Zkn) integration: AES encryption/decryption round ops ----
+  val rv32zknProgram: Seq[Long] = load32(1, 0x12345678L) ++
+    load32(2, 0x9ABCDEF0L) ++ Seq[Long](
+    encR(0x11, 2, 1, 0, 10, 0x33), // aes32esi  x10, x1, x2 (bs=0) -> 0x123456F4
+    encR(0x31, 2, 1, 0, 11, 0x33), // aes32esi  x11, x1, x2 (bs=1) -> 0x12344B78
+    encR(0x13, 2, 1, 0, 12, 0x33), // aes32esmi x12, x1, x2 (bs=0) -> 0x9DB8DA7B
+    encR(0x33, 2, 1, 0, 13, 0x33), // aes32esmi x13, x1, x2 (bs=1) -> 0x0F296C5F
+    encR(0x15, 2, 1, 0, 14, 0x33), // aes32dsi  x14, x1, x2 (bs=0) -> 0x1234566F
+    encR(0x35, 2, 1, 0, 15, 0x33), // aes32dsi  x15, x1, x2 (bs=1) -> 0x1234CA78
+    encR(0x17, 2, 1, 0, 16, 0x33), // aes32dsmi x16, x1, x2 (bs=0) -> 0x93C7F9B2
+    encR(0x37, 2, 1, 0, 17, 0x33)  // aes32dsmi x17, x1, x2 (bs=1) -> 0x4424BF4B
+  )
+
+  test("RV32 (Zkn) aes32 round and mix-column ops") {
+    val cfg = CoreConfig.rv32imzkn
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zknProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zknProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 17, BigInt("4424BF4B", 16))
+        assert(cycles < 200, "RV32 Zkn program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("123456F4", 16), "aes32esi bs=0")
+        assert(x(11) == BigInt("12344B78", 16), "aes32esi bs=1")
+        assert(x(12) == BigInt("9DB8DA7B", 16), "aes32esmi bs=0")
+        assert(x(13) == BigInt("0F296C5F", 16), "aes32esmi bs=1")
+        assert(x(14) == BigInt("1234566F", 16), "aes32dsi bs=0")
+        assert(x(15) == BigInt("1234CA78", 16), "aes32dsi bs=1")
+        assert(x(16) == BigInt("93C7F9B2", 16), "aes32dsmi bs=0")
+        assert(x(17) == BigInt("4424BF4B", 16), "aes32dsmi bs=1")
+        println(s"PASS: RV32 Zkn program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64 (Zkn) integration: AES 64-bit round and key-schedule ops ----
+  val rv64zknProgram: Seq[Long] = load64(4, BigInt("0123456789ABCDEF", 16), 28, 29) ++
+    load64(5, BigInt("FEDCBA9876543210", 16), 28, 29) ++ Seq[Long](
+    encR(0x19, 5, 4, 0, 10, 0x33), // aes64es    x10, x4, x5 -> 0xA7862385BB206EDF
+    encR(0x1b, 5, 4, 0, 11, 0x33), // aes64esm   x11, x4, x5 -> 0x6443F5555927D88C
+    encR(0x1d, 5, 4, 0, 12, 0x33), // aes64ds    x12, x4, x5 -> 0x0F93800A09FDC061
+    encR(0x1f, 5, 4, 0, 13, 0x33), // aes64dsm   x13, x4, x5 -> 0xA9440AF11B8378B5
+    encI(0x300, 4, 1, 14, 0x13),   // aes64im    x14, x4    -> 0xC66C82284EE40AA0
+    encI(0x310, 4, 1, 15, 0x13),   // aes64ks1i  x15, x4 (rcon=0)  -> 0x857C266F857C266F
+    encI(0x313, 4, 1, 16, 0x13),   // aes64ks1i  x16, x4 (rcon=3)  -> 0x857C2666857C2666
+    encI(0x31a, 4, 1, 17, 0x13),   // aes64ks1i  x17, x4 (rcon=10) -> 0x7C266E857C266E85
+    encR(0x3f, 5, 4, 0, 18, 0x33)  // aes64ks2   x18, x4, x5 -> 0x89ABCDEF77777777
+  )
+
+  test("RV64 (Zkn) aes64 round, mix-column and key-schedule ops") {
+    val cfg = CoreConfig.rv64imzkn
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zknProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zknProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 18, BigInt("89ABCDEF77777777", 16))
+        assert(cycles < 200, "RV64 Zkn program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt("A7862385BB206EDF", 16), "aes64es")
+        assert(x(11) == BigInt("6443F5555927D88C", 16), "aes64esm")
+        assert(x(12) == BigInt("0F93800A09FDC061", 16), "aes64ds")
+        assert(x(13) == BigInt("A9440AF11B8378B5", 16), "aes64dsm")
+        assert(x(14) == BigInt("C66C82284EE40AA0", 16), "aes64im")
+        assert(x(15) == BigInt("857C266F857C266F", 16), "aes64ks1i rcon=0")
+        assert(x(16) == BigInt("857C2666857C2666", 16), "aes64ks1i rcon=3")
+        assert(x(17) == BigInt("7C266E857C266E85", 16), "aes64ks1i rcon=10")
+        assert(x(18) == BigInt("89ABCDEF77777777", 16), "aes64ks2")
+        println(s"PASS: RV64 Zkn program finished in $cycles cycles")
+      }
+  }
 }
