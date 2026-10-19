@@ -29,13 +29,14 @@ graph LR
 - **RV32F / RV64F / RV64D（`isa.hasFpu`）**：opcode `0000111`/`0100111` 译为 FLW/FSW（FLD/FSD 仅 D），opcode `1010011` 按 `funct6`/`funct3` 展开 FADD/FSUB/FMUL/FDIV/FSQRT/FSGNJ/FMIN/FMAX/FCMP/FCLASS/FMV/FCVT 控制域（`fpWrite/fpOp/fpRm/fpFmt`），其中 funct6 `010000` 展开 `FCVT.S.D`/`FCVT.D.S`（仅 D），opcode `1000011/1000111/1001011/1001111` 展开四种 FMA；无 D 的 F 核上 fmt=01（D）编码置 `illegal`。FP CSR 的合法性在 EX 结合 `mstatus.FS` 判定
 - **Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx（`isa.hasZbb/hasZbs/hasZba/hasZbc/hasZbkb/hasZbkc/hasZbkx`）**：在 OP / OP-IMM / OP-32 / OP-IMM-32 的基础译码之后追加覆盖（SpinalHDL 末次连接语义），分别展开基础位操作、单比特操作、地址生成、无进位乘法以及密码学位操作控制域；覆盖默认非法的 OP-32 编码时复位 `valid`/`illegal`，未使能的 `Zb*` 编码保持 cause 2。`Zbkc` 与 `Zbc` 共用 `funct7=0000101` 的 `clmul/clmulh` 编码，`clmulr` 仅在使能 `Zbc` 时译码
 - **Zknh（`isa.hasZknh`）**：在 OP-IMM / OP 的基础译码之后追加覆盖，展开 SHA-2 哈希位操作控制域；SHA-256/512 变换编码为 OP-IMM（`funct7=0001000`、`funct3=001`，`rs2` 位段选择 8 种操作），RV32 的 SHA-512 拆分形式编码为 OP（`funct3=000`，`funct7` 区分）；RV64 上 `sha512*` 为 64 位形式、RV32 上为拆分形式，未使能时编码保持 cause 2
+- **Zksh / Zksed（`isa.hasZksh/hasZksed`）**：`Zksh` 的 `sm3p0/sm3p1` 复用 `Zknh` 的 OP-IMM 编码（`funct7=0001000`、`funct3=001`，选择子 8/9），在 `Zknh` 覆盖层之后复位 `valid`/`illegal` 以启用；`Zksed` 的 `sm4ed/sm4ks` 编码为 OP（`funct3=000`），由 `instr[29:25]` 选择操作、`instr[31:30]` 给出字节选择 `bs`，`bs` 经 ID/EX 寄存器送入 ALU；未使能时对应编码保持 cause 2
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
 
 - 旁路单元根据 EX/MEM 与 MEM/WB 的结果优先选择操作数；未被旁路覆盖的操作数在 EX 段**组合读寄存器堆**取得（读地址即本指令 rs1/rs2），因此总能观察到已提交的架构值
 - ALU 完成算术/逻辑/移位/比较运算；乘法在 ALU 内组合完成（RV32M）
-- **位操作执行（`isa.hasZbb/hasZbs/hasZba/hasZbc/hasZbkb/hasZbkc/hasZbkx/hasZknh`）**：全部 `Zb*`/`Zknh` 指令在 ALU 内组合完成，复用现有结果通路，无新增停顿状态；Zbb 的计数（`clz/ctz/cpop`）与旋转、Zbs 的单比特掩码（`bset/bclr/binv/bext`，位索引取操作数低位）、Zba 的 `(rs1<<k)+rs2`、Zbc 与 Zbkc 的无进位乘法（对 `rs2` 每个置位 `i` 异或 `(rs1<<i)` 得到 2*XLEN 位积后按位段选择）、Zbkb 的 `pack/packh/packw`（`packw` 符号扩展 32 位结果）、逐字节 `brev8` 与 RV32 `zip/unzip`、Zbkx 的 `xperm4/xperm8`（按 nibble/字节索引在操作数内交叉取位）、Zknh 的 SHA-2 变换（定宽 `ROR`/`SHR` 组合，SHA-256 与 RV32 拆分形式为 32 位并符号扩展、RV64 SHA-512 为 64 位）均在单周期内算出，RV64 W 形式只取低 32 位并符号扩展
+- **位操作执行（`isa.hasZbb/hasZbs/hasZba/hasZbc/hasZbkb/hasZbkc/hasZbkx/hasZknh/hasZksh/hasZksed`）**：全部 `Zb*`/`Zknh`/`Zks*` 指令在 ALU 内组合完成，复用现有结果通路，无新增停顿状态；Zbb 的计数（`clz/ctz/cpop`）与旋转、Zbs 的单比特掩码（`bset/bclr/binv/bext`，位索引取操作数低位）、Zba 的 `(rs1<<k)+rs2`、Zbc 与 Zbkc 的无进位乘法（对 `rs2` 每个置位 `i` 异或 `(rs1<<i)` 得到 2*XLEN 位积后按位段选择）、Zbkb 的 `pack/packh/packw`（`packw` 符号扩展 32 位结果）、逐字节 `brev8` 与 RV32 `zip/unzip`、Zbkx 的 `xperm4/xperm8`（按 nibble/字节索引在操作数内交叉取位）、Zknh 的 SHA-2 变换（定宽 `ROR`/`SHR` 组合，SHA-256 与 RV32 拆分形式为 32 位并符号扩展、RV64 SHA-512 为 64 位）、Zksh 的 SM3 变换与 Zksed 的 SM4 S-box 变换（32 位并符号扩展，`bs` 选择字节与旋转量）均在单周期内算出，RV64 W 形式只取低 32 位并符号扩展
 - **分支与跳转在 EX 阶段提前判定**，条件跳转直接消耗转发后的操作数，避免等到 MEM 阶段，将错误预测代价从 3 拍降到 2 拍
 - JALR 目标 = `rs1 + imm` 并强制按 2 字节对齐（清 LSB）
 - 异常（`ecall/ebreak/非法指令/mret 违例`）在 EX 段判定并提交 trap（见「CSR 与异常/中断通路」）
@@ -191,10 +192,11 @@ FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻�
 | RV32F / RV64F / RV64D 浮点 | EX 段参数化组合 FPU + 单冻结周期；独立浮点寄存器堆；FP 结果仅 WB 转发；D 核实例化 binary32 + binary64 两个单元并按 fmt 路由 | 复用统一 `freezeAll` 与停滞框架；`expw/sigw` 参数化 + `roundPackTo` 支持格式转换；双单元避免双重舍入；F 关闭时 FPU/FP 寄存器堆整体剪除 |
 | Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx 位操作 | EX 段组合 ALU 结果选择，复用现有结果通路与转发网络 | 无新增流水线状态或停顿；未使能的 `Zb*` 分支在 elaboration 期被剪除 |
 | Zknh SHA-2 哈希位操作 | EX 段组合 ALU 结果选择（定宽 `ROR`/`SHR`），复用现有结果通路与转发网络 | 无新增流水线状态或停顿；未使能时编码保持 cause 2 |
+| Zksh / Zksed SM3/SM4 位操作 | EX 段组合 ALU 结果选择（SM3 定宽 `ROL`；SM4 S-box 查表 + 线性变换 + `bs` 旋转移位） | 新增 2 位 `bs` 随 ID/EX 传递；无新增停顿；未使能时编码保持 cause 2 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2 哈希位操作（W 形式按 `xlen` 展开）已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2、Zksh SM3、Zksed SM4 哈希/密码位操作（W 形式按 `xlen` 展开）已实现；S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合
