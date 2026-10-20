@@ -53,6 +53,9 @@ object AluOp extends SpinalEnum {
   val AES32ESI, AES32ESMI, AES32DSI, AES32DSMI = newElement()
   val AES64ES, AES64ESM, AES64DS, AES64DSM = newElement()
   val AES64IM, AES64KS1I, AES64KS2 = newElement()
+  // Zicond: rd = (rs2 == 0) ? 0 : rs1 (czero.eqz) and the inverse test for
+  // czero.nez.
+  val CZEROEQZ, CZERONEZ = newElement()
 }
 
 object BranchOp extends SpinalEnum {
@@ -562,6 +565,13 @@ class Alu(xlen: Int) extends Component {
       val lo = r1Hi ^ r2Lo
       val hi = r1Hi ^ r2Lo ^ r2Hi
       result := Cat(hi, lo).resize(xlen).asBits
+    }
+    // ---- Zicond: conditional zero ----
+    is(AluOp.CZEROEQZ) {
+      result := Mux(bU === U(0, xlen bits), U(0, xlen bits), aU).asBits
+    }
+    is(AluOp.CZERONEZ) {
+      result := Mux(bU === U(0, xlen bits), aU, U(0, xlen bits)).asBits
     }
   }
   io.result := result

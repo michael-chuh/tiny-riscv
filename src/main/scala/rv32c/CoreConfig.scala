@@ -58,6 +58,7 @@ case class CoreConfig(
   def hasZksed: Boolean = isa.hasZksed
   def hasZkne: Boolean = isa.hasZkne
   def hasZknd: Boolean = isa.hasZknd
+  def hasZicond: Boolean = isa.hasZicond
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -182,4 +183,10 @@ object CoreConfig {
 
   /** RV64IM + full Zkn (AES enc + dec) on the M/U stack. */
   def rv64imzkn: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzkn)
+
+  /** RV32IM + Zicond on the M/U stack: conditional zero rv32 MCU hart. */
+  def rv32imzicond: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzicond)
+
+  /** RV64IM + Zicond on the M/U stack: conditional zero rv64 hart. */
+  def rv64imzicond: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzicond)
 }

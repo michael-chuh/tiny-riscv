@@ -2150,4 +2150,75 @@ class RiscvCoreTest extends AnyFunSuite {
         println(s"PASS: RV64 Zkn program finished in $cycles cycles")
       }
   }
+
+  // ---- RV32 (Zicond) integration: conditional zero and zero-inverse ----
+  val rv32zicondProgram: Seq[Long] = load32(1, 0x12345678L) ++
+    load32(2, 0x0L) ++
+    load32(4, 0x1L) ++
+    load32(5, 0xFFFFFFFFL) ++ Seq[Long](
+    encR(0x07, 2, 1, 5, 10, 0x33), // czero.eqz x10, x1, x2 (rs2=0) -> 0
+    encR(0x07, 4, 1, 5, 11, 0x33), // czero.eqz x11, x1, x4 (rs2=1) -> 0x12345678
+    encR(0x07, 2, 1, 7, 12, 0x33), // czero.nez x12, x1, x2 (rs2=0) -> 0x12345678
+    encR(0x07, 4, 1, 7, 13, 0x33), // czero.nez x13, x1, x4 (rs2=1) -> 0
+    encR(0x07, 4, 5, 5, 14, 0x33), // czero.eqz x14, x5, x4 (rs2=1) -> 0xFFFFFFFF
+    encR(0x07, 4, 5, 7, 15, 0x33)  // czero.nez x15, x5, x4 (rs2=1) -> 0
+  )
+
+  test("RV32 (Zicond) czero.eqz and czero.nez") {
+    val cfg = CoreConfig.rv32imzicond
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zicondProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv32zicondProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 15, BigInt(0))
+        assert(cycles < 200, "RV32 Zicond program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt(0), "czero.eqz with rs2=0")
+        assert(x(11) == BigInt("12345678", 16), "czero.eqz with rs2!=0")
+        assert(x(12) == BigInt("12345678", 16), "czero.nez with rs2=0")
+        assert(x(13) == BigInt(0), "czero.nez with rs2!=0")
+        assert(x(14) == BigInt("FFFFFFFF", 16), "czero.eqz negative operand")
+        assert(x(15) == BigInt(0), "czero.nez negative operand")
+        println(s"PASS: RV32 Zicond program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64 (Zicond) integration: full-width conditional zero ----
+  val rv64zicondProgram: Seq[Long] = load64(4, BigInt("0123456789ABCDEF", 16), 28, 29) ++
+    load64(5, BigInt(0), 28, 29) ++
+    load64(6, BigInt(1), 28, 29) ++ Seq[Long](
+    encR(0x07, 5, 4, 5, 10, 0x33), // czero.eqz x10, x4, x5 (rs2=0) -> 0
+    encR(0x07, 6, 4, 5, 11, 0x33), // czero.eqz x11, x4, x6 (rs2=1) -> 0x0123456789ABCDEF
+    encR(0x07, 5, 4, 7, 12, 0x33), // czero.nez x12, x4, x5 (rs2=0) -> 0x0123456789ABCDEF
+    encR(0x07, 6, 4, 7, 13, 0x33)  // czero.nez x13, x4, x6 (rs2=1) -> 0
+  )
+
+  test("RV64 (Zicond) czero.eqz and czero.nez") {
+    val cfg = CoreConfig.rv64imzicond
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zicondProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val lastPc = 4 * (rv64zicondProgram.length - 1)
+        val cycles = runUntil(dut, 200, lastPc, 13, BigInt(0))
+        assert(cycles < 200, "RV64 Zicond program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(10) == BigInt(0), "czero.eqz with rs2=0")
+        assert(x(11) == BigInt("0123456789ABCDEF", 16), "czero.eqz with rs2!=0")
+        assert(x(12) == BigInt("0123456789ABCDEF", 16), "czero.nez with rs2=0")
+        assert(x(13) == BigInt(0), "czero.nez with rs2!=0")
+        println(s"PASS: RV64 Zicond program finished in $cycles cycles")
+      }
+  }
 }

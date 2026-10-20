@@ -101,6 +101,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZksed: Boolean = isa.hasZksed
   private val withZkne: Boolean = isa.hasZkne
   private val withZknd: Boolean = isa.hasZknd
+  private val withZicond: Boolean = isa.hasZicond
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -1131,6 +1132,15 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
       if (isRV64 && (withZkne || withZknd)) { // aes64ks2 is shared by Zkne/Zknd
         when(funct3 === M"000" && funct7 === M"0111111") {
           d.aluOp := AluOp.AES64KS2; d.regWrite := True; d.illegal := False; d.valid := True
+        }
+      }
+      if (withZicond) { // Zicond conditional zero (funct7=0000111)
+        when(funct7 === M"0000111") {
+          switch(funct3) {
+            is(M"101") { d.aluOp := AluOp.CZEROEQZ; d.regWrite := True; d.illegal := False; d.valid := True }
+            is(M"111") { d.aluOp := AluOp.CZERONEZ; d.regWrite := True; d.illegal := False; d.valid := True }
+            default { d.illegal := True; d.valid := False }
+          }
         }
       }
     }
