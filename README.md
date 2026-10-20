@@ -21,6 +21,7 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 - Zknh 哈希位操作扩展：提供 SHA-2 变换 `sha256sum0/sha256sum1/sha256sig0/sha256sig1`，RV64 提供 `sha512sum0/sha512sum1/sha512sig0/sha512sig1`，RV32 提供拆分形式 `sha512sum0r/sha512sum1r/sha512sig0l/sha512sig0h/sha512sig1l/sha512sig1h`，同样在 EX 段组合执行
 - Zksh/Zksed 密码位操作扩展：Zksh 提供 SM3 变换 `sm3p0/sm3p1`；Zksed 提供 SM4 变换 `sm4ed/sm4ks`（4 位字节选择 `bs`），均按 32 位计算并符号扩展，在 EX 段组合执行
 - Zknd/Zkne AES 密码位操作扩展：Zkne 提供加密轮变换 `aes32esi/aes32esmi`（RV32）与 `aes64es/aes64esm`（RV64）；Zknd 提供解密轮变换 `aes32dsi/aes32dsmi`（RV32）与 `aes64ds/aes64dsm/aes64im`（RV64）；密钥调度 `aes64ks1i/aes64ks2`（RV64，Zknd/Zkne 共用）。轮变换包含 ShiftRows/InvShiftRows、SubBytes 与可选 MixColumns/InvMixColumns，在 EX 段组合执行
+- Zicond 条件运算扩展：`czero.eqz` / `czero.nez` 依据 rs2 是否为零选择 rs1 或零，全部在 EX 段组合执行
 - 数据冒险全旁路（EX/MEM → EX、MEM/WB → EX）
 - load-use 冒险：硬件停顿 1 拍
 - 分支在 EX 阶段判定，跳过 2 条错误取指指令
@@ -33,8 +34,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 
 - RV32I 定向测试通过：数据冒险旁路、load-use 停顿、分支跳过、访存读写均验证正确
 - RV32M 定向测试通过：乘法（高位/有符号×无符号/无符号）、有符号与无符号除法/余数、负数运算、除零、MIN/-1 溢出回绕、除法结果旁路均验证正确
-- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D / Zbb / Zbs / Zba / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne 定向测试通过，`sbt test` 共 102 项
-- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D）、`rtl/RiscvCoreB.v`（RV32IM+Zbb）、`rtl/RiscvCore64B.v`（RV64IM+Zbb）、`rtl/RiscvCoreBS.v`（RV32IM+Zbs）、`rtl/RiscvCore64BS.v`（RV64IM+Zbs）、`rtl/RiscvCoreBA.v`（RV32IM+Zba）、`rtl/RiscvCore64BA.v`（RV64IM+Zba）、`rtl/RiscvCoreBC.v`（RV32IM+Zbc）、`rtl/RiscvCore64BC.v`（RV64IM+Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（RV32/RV64IM+Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（RV32/RV64IM+Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（RV32/RV64IM+Zbkx）与 `rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（RV32/RV64IM+Zbkb+Zbkc+Zbkx）以及 `rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（RV32/RV64IM+Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（RV32/RV64IM+Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（RV32/RV64IM+Zksed）与 `rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（RV32/RV64IM+Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（RV32/RV64IM+Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（RV32/RV64IM+Zknd）与 `rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（RV32/RV64IM+Zknd+Zkne），异步复位、标准 Verilog
+- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D / Zbb / Zbs / Zba / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond 定向测试通过，`sbt test` 共 106 项
+- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D）、`rtl/RiscvCoreB.v`（RV32IM+Zbb）、`rtl/RiscvCore64B.v`（RV64IM+Zbb）、`rtl/RiscvCoreBS.v`（RV32IM+Zbs）、`rtl/RiscvCore64BS.v`（RV64IM+Zbs）、`rtl/RiscvCoreBA.v`（RV32IM+Zba）、`rtl/RiscvCore64BA.v`（RV64IM+Zba）、`rtl/RiscvCoreBC.v`（RV32IM+Zbc）、`rtl/RiscvCore64BC.v`（RV64IM+Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（RV32/RV64IM+Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（RV32/RV64IM+Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（RV32/RV64IM+Zbkx）与 `rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（RV32/RV64IM+Zbkb+Zbkc+Zbkx）以及 `rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（RV32/RV64IM+Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（RV32/RV64IM+Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（RV32/RV64IM+Zksed）与 `rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（RV32/RV64IM+Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（RV32/RV64IM+Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（RV32/RV64IM+Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（RV32/RV64IM+Zknd+Zkne）与 `rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（RV32/RV64IM+Zicond），异步复位、标准 Verilog
 
 ## 快速开始
 
@@ -89,6 +90,7 @@ rtl/                        # 生成的 Verilog（可选）
 - [x] Zknh SHA-2 哈希位操作扩展（`RvExtension.Zknh` 配置，RV32/RV64 位宽均支持，RV32 提供 SHA-512 拆分形式）
 - [x] Zksh/Zksed SM3/SM4 密码位操作扩展（`RvExtension.Zksh/Zksed` 配置，以及组合 `Zksh+Zksed`，RV32/RV64 位宽均支持）
 - [x] Zknd/Zkne AES 密码位操作扩展（`RvExtension.Zknd/Zkne` 配置，以及组合 `Zknd+Zkne`，RV32/RV64 位宽均支持）
+- [x] Zicond 条件运算扩展（`RvExtension.Zicond` 配置，RV32/RV64 位宽均支持）
 - [ ] 分支预测器（BHT/gshare 插件化）
 - [ ] I/D 缓存、AXI4 总线桥
 - [ ] 多核（`numCores` 参数 + 互联总线）

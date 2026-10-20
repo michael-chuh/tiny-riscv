@@ -193,7 +193,7 @@ FP 扩展使用独立的浮点寄存器堆（`f0`–`f31`，无硬连线零寄�
 >
 > **CSR 与状态**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 仅在 FPU 使能时实现；提交任意 FP 算术指令会累积 NV/DZ/OF/UF/NX 异常标志到 `fflags`，并将 `mstatus.FS` 置 Dirty(11)。`frm` 为 WARL，仅接受 0–4。`mstatus.FS` 为 WARL（`FS=Off` 时 FP 指令与 FP CSR 访问均非法）。
 
-### 位操作指令（Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne，分别由对应 `RvExtension.*` 使能）
+### 位操作指令（Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond，分别由对应 `RvExtension.*` 使能）
 
 所有 `Zb*`、`Zknh` 与 `Zk*` 均为无 MISA 位的命名扩展（单字母 `B` 位保留），仅当对应 `RvExtension` 使能时其编码合法，否则按非法指令（cause 2）处理。所有位操作在 EX 段组合完成，复用现有 ALU 结果通路，不引入新的停顿状态。
 
@@ -366,6 +366,15 @@ RV64 使用 `aes64ds`/`aes64dsm`/`aes64im`，编码为 OP（`funct3=000`，`func
 
 > `aes64ks1i` 的 `rcon` 取值范围为 0..10，`rcon>10` 按非法指令处理。AES 指令的 ShiftRows/SubBytes/MixColumns 均为组合逻辑（加密与解密各一张 256 项 S-box），在 EX 段单周期完成；RV32 形式结果符号扩展，RV64 形式使用完整 64 位操作数。
 
+**Zicond（条件运算，由 `RvExtension.Zicond` 使能）**
+
+| 编码 | 指令 | 语义 |
+|------|------|------|
+| OP funct7=0000111, funct3=101 | CZERO.EQZ | `rd = (rs2 == 0) ? 0 : rs1` |
+| OP funct7=0000111, funct3=111 | CZERO.NEZ | `rd = (rs2 != 0) ? 0 : rs1` |
+
+> 两条指令在 EX 段组合完成，RV32 与 RV64 均按完整 `xlen` 比较 `rs2`，未使能时编码按非法指令处理。
+
 ### 分支（BRANCH, 1100011）
 
 | 指令 | funct3 | 实现状态 |
@@ -446,4 +455,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
 - **F/D**：RV32F / RV64F 单精度（FLEN=32）与 RV64D 双精度（FLEN=64，含 `FCVT.S.D`/`FCVT.D.S` 与 NaN-boxing）均已实现并有定向测试与 RTL 生成
 - **Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zv*` 等未实现
+- **Zicond**：`czero.eqz`/`czero.nez` 条件运算（RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）

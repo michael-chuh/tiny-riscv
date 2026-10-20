@@ -31,6 +31,7 @@ graph LR
 - **Zknh（`isa.hasZknh`）**：在 OP-IMM / OP 的基础译码之后追加覆盖，展开 SHA-2 哈希位操作控制域；SHA-256/512 变换编码为 OP-IMM（`funct7=0001000`、`funct3=001`，`rs2` 位段选择 8 种操作），RV32 的 SHA-512 拆分形式编码为 OP（`funct3=000`，`funct7` 区分）；RV64 上 `sha512*` 为 64 位形式、RV32 上为拆分形式，未使能时编码保持 cause 2
 - **Zksh / Zksed（`isa.hasZksh/hasZksed`）**：`Zksh` 的 `sm3p0/sm3p1` 复用 `Zknh` 的 OP-IMM 编码（`funct7=0001000`、`funct3=001`，选择子 8/9），在 `Zknh` 覆盖层之后复位 `valid`/`illegal` 以启用；`Zksed` 的 `sm4ed/sm4ks` 编码为 OP（`funct3=000`），由 `instr[29:25]` 选择操作、`instr[31:30]` 给出字节选择 `bs`，`bs` 经 ID/EX 寄存器送入 ALU；未使能时对应编码保持 cause 2
 - **Zknd / Zkne（`isa.hasZknd/hasZkne`）**：RV32 的 `aes32{es,esm,ds,dsm}i` 编码为 OP（`funct3=000`），由 `instr[29:25]` 选择操作、`instr[31:30]` 给出 `bs`；RV64 的 `aes64{es,esm,ds,dsm}`/`aes64ks2` 编码为 OP（`funct3=000`，`funct7` 区分），`aes64im` 与 `aes64ks1i` 编码为 OP-IMM（`imm[11:4]` 固定、`rcon` 取 `instr[23:20]`，经新增 4 位 `rcon` 随 ID/EX 送入 ALU）；`aes64ks1i` 的 `rcon>10` 在译码级判为 cause 2；未使能时对应编码保持 cause 2
+- **Zicond（`isa.hasZicond`）**：`czero.eqz/czero.nez` 编码为 OP（`funct3=101`/`111`），以 `funct7=0000111` 与基础 RV32I 的 `srl/sra/and` 区分；覆盖层在 OP 分支末尾生效，未使能时编码保持 cause 2
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 
 ### EX（执行）
@@ -195,10 +196,11 @@ FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻�
 | Zknh SHA-2 哈希位操作 | EX 段组合 ALU 结果选择（定宽 `ROR`/`SHR`），复用现有结果通路与转发网络 | 无新增流水线状态或停顿；未使能时编码保持 cause 2 |
 | Zksh / Zksed SM3/SM4 位操作 | EX 段组合 ALU 结果选择（SM3 定宽 `ROL`；SM4 S-box 查表 + 线性变换 + `bs` 旋转移位） | 新增 2 位 `bs` 随 ID/EX 传递；无新增停顿；未使能时编码保持 cause 2 |
 | Zknd / Zkne AES 位操作 | EX 段组合 ALU 结果选择（ShiftRows/InvShiftRows + 加密/解密 S-box + MixColumns/InvMixColumns + 密钥调度） | 复用 2 位 `bs`，新增 4 位 `rcon` 随 ID/EX 传递；无新增停顿；未使能时编码保持 cause 2 |
+| Zicond 条件运算 | EX 段组合 ALU 结果选择（`rs2 == 0` 判定后选择 `rs1` 或零） | 无新增流水线状态或停顿；未使能时编码保持 cause 2 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2、Zksh SM3、Zksed SM4、Zknd/Zkne AES 密码位操作（W 形式按 `xlen` 展开）已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2、Zksh SM3、Zksed SM4、Zknd/Zkne AES 密码位操作与 Zicond 条件运算（W 形式按 `xlen` 展开）已实现；S 模式待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合

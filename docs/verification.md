@@ -62,6 +62,8 @@ graph LR
 | RV64 (Zks) 32-bit hash ops sign-extended | `sm3p0`/`sm3p1`、`sm4ed`/`sm4ks` 的 32 位结果符号扩展到 64 位 | x10==`0xFFFFFFFFD6688234`、x11==`0x0000000005014549`、x12==`0xFFFFFFFF9494E8D9`、x14==`0x000000006F488282`、x17==`0xFFFFFFFFBEC87FE5`、x19==`0x000000003FE5B6E8` |
 | RV32 (Zkn) aes32 round and mix-column ops | `aes32esi`/`aes32esmi`/`aes32dsi`/`aes32dsmi`（`bs`=0/1） | x10==`0x123456F4`、x11==`0x12344B78`、x12==`0x9DB8DA7B`、x13==`0x0F296C5F`、x14==`0x1234566F`、x15==`0x1234CA78`、x16==`0x93C7F9B2`、x17==`0x4424BF4B` |
 | RV64 (Zkn) aes64 round, mix-column and key-schedule ops | `aes64es`/`esm`/`ds`/`dsm`/`im`、`aes64ks1i`（`rcon`=0/3/10）、`aes64ks2` | x10==`0xA7862385BB206EDF`、x11==`0x6443F5555927D88C`、x12==`0x0F93800A09FDC061`、x13==`0xA9440AF11B8378B5`、x14==`0xC66C82284EE40AA0`、x15==`0x857C266F857C266F`、x16==`0x857C2666857C2666`、x17==`0x7C266E857C266E85`、x18==`0x89ABCDEF77777777` |
+| RV32 (Zicond) conditional zero | `czero.eqz`/`czero.nez`（rs2 为零与非零，含负数操作数） | x10==`0x00000000`、x11==`0x12345678`、x12==`0x12345678`、x13==`0x00000000`、x14==`0xFFFFFFFF`、x15==`0x00000000` |
+| RV64 (Zicond) full-width conditional zero | `czero.eqz`/`czero.nez`（64 位操作数） | x10==`0x0000000000000000`、x11==`0x0123456789ABCDEF`、x12==`0x0123456789ABCDEF`、x13==`0x0000000000000000` |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -69,7 +71,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 55 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 57 项。
 
 ## 运行方式
 
