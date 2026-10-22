@@ -82,16 +82,22 @@ object RvExtension {
   /** Zicond: integer conditional operations (czero.eqz/czero.nez). Implemented
     * on both RV32 and RV64. */
   case object Zicond extends RvExtension("Zicond")
+  /** Zcb: additional compressed instructions (c.lbu/c.lhu/c.lh/c.sb/c.sh,
+    * c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul). Implemented on
+    * both RV32 and RV64; individual encodings also require their source
+    * extensions (Zbb for the sign/zero extends, Zba for c.zext.w, M for c.mul). */
+  case object Zcb extends RvExtension("Zcb")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
   /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond). */
+    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
-      Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zicsr, Compressed)
+      Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb, Zicsr,
+      Compressed)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] =
     Set(Zifencei)

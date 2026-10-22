@@ -47,6 +47,7 @@ case class IsaConfig(
   def hasZkne: Boolean = extensions.contains(RvExtension.Zkne)
   def hasZknd: Boolean = extensions.contains(RvExtension.Zknd)
   def hasZicond: Boolean = extensions.contains(RvExtension.Zicond)
+  def hasZcb: Boolean = extensions.contains(RvExtension.Zcb)
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
@@ -260,6 +261,16 @@ object IsaConfig {
   /** RV64 with Zicond (RV64IM_Zicond_Zicsr, M/U): conditional zero hart. */
   val rv64imzicond: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicond), PrivConfig.MU)
+
+  /** RV32 with Zcb on the compressed base (RV32IMC_Zbb_Zcb, M/U). */
+  val rv32imzcb: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed,
+      RvExtension.Zbb, RvExtension.Zcb), PrivConfig.MU)
+
+  /** RV64 with Zcb on the compressed base (RV64IMC_Zba_Zbb_Zcb, M/U). */
+  val rv64imzcb: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed,
+      RvExtension.Zba, RvExtension.Zbb, RvExtension.Zcb), PrivConfig.MU)
 
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */

@@ -58,6 +58,57 @@ class RiscvCoreTest extends AnyFunSuite {
       ((rs2 & 0x1f).toLong << 20) | ((rs1 & 0x1f).toLong << 15) |
       ((rm & 0x7).toLong << 12) | ((rd & 0x1f).toLong << 7) | (opc & 0x7f).toLong
 
+  // Zcb (16-bit) encodings. Operands use the compressed x8..x15 register set;
+  // uimm is a byte offset (2 bits for the byte forms, bit 0 always clear for the
+  // halfword forms).
+  private def cLbu(rd: Int, rs1: Int, uimm: Int): Long =
+    ((rd - 8).toLong << 2) | (((uimm >> 1) & 1).toLong << 5) | ((uimm & 1).toLong << 6) |
+      ((rs1 - 8).toLong << 7) | (0x4L << 13)
+  private def cLhu(rd: Int, rs1: Int, uimm: Int): Long =
+    ((rd - 8).toLong << 2) | (((uimm >> 1) & 1).toLong << 5) |
+      ((rs1 - 8).toLong << 7) | (0x1L << 10) | (0x4L << 13)
+  private def cLh(rd: Int, rs1: Int, uimm: Int): Long = cLhu(rd, rs1, uimm) | (1L << 6)
+  private def cSb(rs2: Int, rs1: Int, uimm: Int): Long =
+    ((rs2 - 8).toLong << 2) | (((uimm >> 1) & 1).toLong << 5) | ((uimm & 1).toLong << 6) |
+      ((rs1 - 8).toLong << 7) | (0x2L << 10) | (0x4L << 13)
+  private def cSh(rs2: Int, rs1: Int, uimm: Int): Long =
+    ((rs2 - 8).toLong << 2) | (((uimm >> 1) & 1).toLong << 5) |
+      ((rs1 - 8).toLong << 7) | (0x3L << 10) | (0x4L << 13)
+  private def cRegOp(op: Int, rsd: Int): Long =
+    0x1L | ((rsd - 8).toLong << 7) | (0x3L << 5) | ((op & 0x7).toLong << 2) |
+      (0x7L << 10) | (0x4L << 13)
+  private def cMul(rd: Int, rs2: Int): Long =
+    0x1L | ((rd - 8).toLong << 7) | (0x2L << 5) | ((rs2 - 8).toLong << 2) |
+      (0x7L << 10) | (0x4L << 13)
+  // Pack a sequence of (encoding, byteWidth) items into 32-bit instruction
+  // words. Compressed instructions occupy one halfword, and a 32-bit
+  // instruction that starts at an odd halfword is split across two words (the
+  // core splices it from pc[1]=1). Returns the words plus the start PC of the
+  // last item.
+  private def assemble(items: Seq[(Long, Int)]): (Seq[Long], BigInt) = {
+    val words = scala.collection.mutable.ArrayBuffer[Long]()
+    var pending = 0L
+    var half = 0 // 0 = next halfword starts a word, 1 = low half already filled
+    var pc = BigInt(0)
+    var lastPc = BigInt(0)
+    for ((enc, width) <- items) {
+      lastPc = pc
+      pc += width
+      if (width == 2) {
+        if (half == 0) { pending = enc & 0xffffL; half = 1 }
+        else { words += (pending | ((enc & 0xffffL) << 16)); pending = 0; half = 0 }
+      } else if (half == 0) {
+        words += (enc & 0xffffffffL)
+      } else {
+        words += (pending | ((enc & 0xffffL) << 16))
+        pending = (enc >>> 16) & 0xffffL
+        half = 1
+      }
+    }
+    if (half == 1) words += pending
+    (words.toSeq, lastPc)
+  }
+
   // ---- RV32C (16-bit) encoders ----
   // Each helper takes logical operands and places them in the RVC bit fields as
   // extracted by Decoder.scala. Register-prime operands are the 3-bit index
@@ -2219,6 +2270,125 @@ class RiscvCoreTest extends AnyFunSuite {
         assert(x(12) == BigInt("0123456789ABCDEF", 16), "czero.nez with rs2=0")
         assert(x(13) == BigInt(0), "czero.nez with rs2!=0")
         println(s"PASS: RV64 Zicond program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV32 (Zcb) integration: compressed byte/half loads, stores and ALU ops ----
+  // Compressed loads and stores can only address x8-x15, so x8 is kept as a
+  // zero base register while x9-x15 hold the loaded values.
+  private val rv32zcbItems: Seq[(Long, Int)] =
+    load32(1, 0x12345678L).map(w => (w, 4)) ++ Seq(
+    (encS(0, 1, 0, 2), 4),          // sw x1,0(x0)        mem[0..3]=78 56 34 12
+    (cLbu(9, 8, 0), 2),             // c.lbu  x9,0(x8)    0x00000078
+    (encR(0x00, 9, 0, 0, 16, 0x33), 4),  // add x16,x9,x0
+    (cLbu(10, 8, 2), 2),            // c.lbu  x10,2(x8)   0x00000034
+    (encR(0x00, 10, 0, 0, 17, 0x33), 4), // add x17,x10,x0
+    (cLhu(11, 8, 0), 2),            // c.lhu  x11,0(x8)   0x00005678
+    (encR(0x00, 11, 0, 0, 18, 0x33), 4), // add x18,x11,x0
+    (cLh(12, 8, 2), 2),             // c.lh   x12,2(x8)   0x00001234
+    (encR(0x00, 12, 0, 0, 19, 0x33), 4), // add x19,x12,x0
+    (encI(-128, 0, 0, 9), 4),       // addi x9,x0,-128
+    (cSb(9, 8, 1), 2),              // c.sb x9,1(x8)      mem[1]=0x80
+    (cLbu(13, 8, 1), 2),            // c.lbu  x13,1(x8)   0x00000080
+    (encR(0x00, 13, 0, 0, 20, 0x33), 4), // add x20,x13,x0
+    ) ++ load32(10, 0x8000L).map(w => (w, 4)) ++ Seq(
+    (cSh(10, 8, 2), 2),             // c.sh x10,2(x8)     mem[2..3]=00 80
+    (cLhu(14, 8, 2), 2),            // c.lhu  x14,2(x8)   0x00008000
+    (encR(0x00, 14, 0, 0, 21, 0x33), 4), // add x21,x14,x0
+    (cLh(15, 8, 2), 2),             // c.lh   x15,2(x8)   0xFFFF8000
+    (encR(0x00, 15, 0, 0, 22, 0x33), 4), // add x22,x15,x0
+    (encI(-1, 0, 0, 9), 4),         // addi x9,x0,-1
+    (cRegOp(0, 9), 2),              // c.zext.b x9        0x000000FF
+    (encI(-128, 0, 0, 10), 4),      // addi x10,x0,-128
+    (cRegOp(1, 10), 2),             // c.sext.b x10       0xFFFFFF80
+    (encI(-128, 0, 0, 11), 4),      // addi x11,x0,-128
+    (cRegOp(2, 11), 2),             // c.zext.h x11       0x0000FF80
+    (encI(-128, 0, 0, 12), 4),      // addi x12,x0,-128
+    (cRegOp(3, 12), 2),             // c.sext.h x12       0xFFFFFF80
+    (encI(-128, 0, 0, 13), 4),      // addi x13,x0,-128
+    (cRegOp(5, 13), 2),             // c.not x13          0x0000007F
+    (encI(7, 0, 0, 14), 4),         // addi x14,x0,7
+    (encI(9, 0, 0, 15), 4),         // addi x15,x0,9
+    (cMul(14, 15), 2),              // c.mul x14,x15      63
+    (0x0000006FL, 4)                // jal x0,0 (self-loop)
+  )
+  private val (rv32zcbProgram, rv32zcbLastPc) = assemble(rv32zcbItems)
+
+  test("RV32 (Zcb) compressed byte/half accesses and ALU ops") {
+    val cfg = CoreConfig.rv32imzcb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv32zcbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val cycles = runUntil(dut, 400, rv32zcbLastPc, 14, BigInt(63))
+        assert(cycles < 400, "RV32 Zcb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(16) == BigInt("00000078", 16), "c.lbu offset 0")
+        assert(x(17) == BigInt("00000034", 16), "c.lbu offset 2")
+        assert(x(18) == BigInt("00005678", 16), "c.lhu")
+        assert(x(19) == BigInt("00001234", 16), "c.lh positive")
+        assert(x(20) == BigInt("00000080", 16), "c.lbu after c.sb")
+        assert(x(21) == BigInt("00008000", 16), "c.lhu after c.sh")
+        assert(x(22) == BigInt("FFFF8000", 16), "c.lh negative")
+        assert(x(9) == BigInt("000000FF", 16), "c.zext.b")
+        assert(x(10) == BigInt("FFFFFF80", 16), "c.sext.b")
+        assert(x(11) == BigInt("0000FF80", 16), "c.zext.h")
+        assert(x(12) == BigInt("FFFFFF80", 16), "c.sext.h")
+        assert(x(13) == BigInt("0000007F", 16), "c.not")
+        assert(x(14) == BigInt(63), "c.mul")
+        println(s"PASS: RV32 Zcb program finished in $cycles cycles")
+      }
+  }
+
+  // ---- RV64 (Zcb) integration: c.zext.w and 64-bit sign extension ----
+  private val rv64zcbItems: Seq[(Long, Int)] =
+    load32(1, 0x12345678L).map(w => (w, 4)) ++ Seq(
+    (encS(0, 1, 0, 2), 4),          // sw x1,0(x0)        mem[0..3]=78 56 34 12
+    (cLbu(9, 8, 0), 2),             // c.lbu  x9,0(x8)    0x78
+    (encR(0x00, 9, 0, 0, 16, 0x33), 4),  // add x16,x9,x0
+    (cLhu(10, 8, 0), 2),            // c.lhu  x10,0(x8)   0x5678
+    (encR(0x00, 10, 0, 0, 17, 0x33), 4), // add x17,x10,x0
+    (cLh(11, 8, 2), 2),             // c.lh   x11,2(x8)   0x1234
+    (encR(0x00, 11, 0, 0, 18, 0x33), 4), // add x18,x11,x0
+    ) ++ load32(9, 0x8000L).map(w => (w, 4)) ++ Seq(
+    (cSh(9, 8, 2), 2),              // c.sh x9,2(x8)      mem[2..3]=00 80
+    (cLh(12, 8, 2), 2),             // c.lh   x12,2(x8)   0xFFFFFFFFFFFF8000
+    (encR(0x00, 12, 0, 0, 19, 0x33), 4), // add x19,x12,x0
+    (encI(-1, 0, 0, 13), 4),        // addi x13,x0,-1
+    (cRegOp(4, 13), 2),             // c.zext.w x13       0x00000000FFFFFFFF
+    (encI(7, 0, 0, 14), 4),         // addi x14,x0,7
+    (encI(9, 0, 0, 15), 4),         // addi x15,x0,9
+    (cMul(14, 15), 2),              // c.mul x14,x15      63
+    (0x0000006FL, 4)                // jal x0,0 (self-loop)
+  )
+  private val (rv64zcbProgram, rv64zcbLastPc) = assemble(rv64zcbItems)
+
+  test("RV64 (Zcb) c.zext.w and compressed memory ops") {
+    val cfg = CoreConfig.rv64imzcb
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, rv64zcbProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+
+        val cycles = runUntil(dut, 400, rv64zcbLastPc, 14, BigInt(63))
+        assert(cycles < 400, "RV64 Zcb program did not finish")
+        dut.clockDomain.waitSampling(5)
+
+        def x(reg: Int): BigInt = dut.io.debugRegs(reg).toBigInt
+        assert(x(16) == BigInt("0000000000000078", 16), "c.lbu zero-extended")
+        assert(x(17) == BigInt("0000000000005678", 16), "c.lhu zero-extended")
+        assert(x(18) == BigInt("0000000000001234", 16), "c.lh positive")
+        assert(x(19) == BigInt("FFFFFFFFFFFF8000", 16), "c.lh sign-extended")
+        assert(x(13) == BigInt("00000000FFFFFFFF", 16), "c.zext.w")
+        assert(x(14) == BigInt(63), "c.mul")
+        println(s"PASS: RV64 Zcb program finished in $cycles cycles")
       }
   }
 }

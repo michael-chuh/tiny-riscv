@@ -102,6 +102,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZkne: Boolean = isa.hasZkne
   private val withZknd: Boolean = isa.hasZknd
   private val withZicond: Boolean = isa.hasZicond
+  private val withZcb: Boolean = isa.hasZcb
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -242,6 +243,38 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
               d.illegal := True; d.valid := False
             }
           }
+          is(B"100") { // Zcb byte/halfword loads and stores
+            if (withZcb) {
+              switch(instr(12 downto 10)) {
+                is(B"000") { // C.LBU rd', uimm[1:0](rs1')
+                  d.regWrite := True; d.memRead := True; d.memSize := U(0, 2 bits)
+                  d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
+                  d.rs1 := crs1p; d.rd := crdp
+                  d.imm := Cat(instr(5), instr(6)).resize(xlen).asSInt
+                }
+                is(B"001") { // C.LHU (inst[6]=0) / C.LH (inst[6]=1), uimm[1](rs1')
+                  d.regWrite := True; d.memRead := True; d.memSize := U(1, 2 bits)
+                  d.wbSel := WbSel.MEM; d.aluOp := AluOp.ADD; d.aluSrc := True
+                  d.rs1 := crs1p; d.rd := crdp
+                  d.imm := Cat(instr(5), B"0").resize(xlen).asSInt
+                  when(instr(6)) { d.memSign := True }
+                }
+                is(B"010") { // C.SB rs2', uimm[1:0](rs1')
+                  d.memWrite := True; d.memSize := U(0, 2 bits)
+                  d.aluOp := AluOp.ADD; d.aluSrc := True
+                  d.rs1 := crs1p; d.rs2 := crs2p
+                  d.imm := Cat(instr(5), instr(6)).resize(xlen).asSInt
+                }
+                is(B"011") { // C.SH rs2', uimm[1](rs1')
+                  d.memWrite := True; d.memSize := U(1, 2 bits)
+                  d.aluOp := AluOp.ADD; d.aluSrc := True
+                  d.rs1 := crs1p; d.rs2 := crs2p
+                  d.imm := Cat(instr(5), B"0").resize(xlen).asSInt
+                }
+                default { d.illegal := True; d.valid := False }
+              }
+            }
+          }
           default { d.illegal := True; d.valid := False }
         }
       }
@@ -334,6 +367,70 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
                     Mux(instr(5), AluOp.AND, AluOp.OR),
                     Mux(instr(5), AluOp.XOR, AluOp.SUB))
                   d.rs1 := crs1p; d.rs2 := crs2p; d.rd := crs1p
+                }
+              }
+            }
+            if (withZcb) { // Zcb register ops share the instr[12:10]=111 space
+              when(instr(12 downto 10) === B"111") {
+                switch(instr(6 downto 5)) {
+                  is(B"11") { // C.ZEXT.B/SEXT.B/ZEXT.H/SEXT.H/ZEXT.W/NOT
+                    switch(instr(4 downto 2)) {
+                      is(B"000") { // C.ZEXT.B
+                        d.regWrite := True; d.aluOp := AluOp.AND; d.aluSrc := True
+                        d.rs1 := crs1p; d.rd := crs1p
+                        d.imm := S(0xff).resize(xlen); d.illegal := False; d.valid := True
+                      }
+                      is(B"001") { // C.SEXT.B (requires Zbb)
+                        if (withZbb) {
+                          d.regWrite := True; d.aluOp := AluOp.SEXTB
+                          d.rs1 := crs1p; d.rd := crs1p; d.illegal := False; d.valid := True
+                        } else {
+                          d.illegal := True; d.valid := False
+                        }
+                      }
+                      is(B"010") { // C.ZEXT.H (requires Zbb)
+                        if (withZbb) {
+                          d.regWrite := True; d.aluOp := AluOp.ZEXTH
+                          d.rs1 := crs1p; d.rd := crs1p; d.illegal := False; d.valid := True
+                        } else {
+                          d.illegal := True; d.valid := False
+                        }
+                      }
+                      is(B"011") { // C.SEXT.H (requires Zbb)
+                        if (withZbb) {
+                          d.regWrite := True; d.aluOp := AluOp.SEXTH
+                          d.rs1 := crs1p; d.rd := crs1p; d.illegal := False; d.valid := True
+                        } else {
+                          d.illegal := True; d.valid := False
+                        }
+                      }
+                      is(B"100") { // C.ZEXT.W (RV64 only, requires Zba)
+                        if (isRV64 && withZba) {
+                          d.regWrite := True; d.aluOp := AluOp.ADDUW
+                          d.rs1 := crs1p; d.rs2 := U(0, 5 bits); d.rd := crs1p
+                          d.illegal := False; d.valid := True
+                        } else {
+                          d.illegal := True; d.valid := False
+                        }
+                      }
+                      is(B"101") { // C.NOT
+                        d.regWrite := True; d.aluOp := AluOp.XOR; d.aluSrc := True
+                        d.rs1 := crs1p; d.rd := crs1p
+                        d.imm := S(-1).resize(xlen); d.illegal := False; d.valid := True
+                      }
+                      default { d.illegal := True; d.valid := False } // 110/111 reserved
+                    }
+                  }
+                  is(B"10") { // C.MUL (requires M)
+                    if (withMulDiv) {
+                      d.regWrite := True; d.aluOp := AluOp.MUL
+                      d.rs1 := crs1p; d.rs2 := crs2p; d.rd := crs1p
+                      d.illegal := False; d.valid := True
+                    } else {
+                      d.illegal := True; d.valid := False
+                    }
+                  }
+                  default {} // instr[6:5]=00/01 keep the base C.SUB/C.XOR/C.OR/C.AND
                 }
               }
             }

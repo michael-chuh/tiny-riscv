@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCore64KNE
-// Git hash  : 9849a116ac36760e437419e3cb9ee741c6bb113d
+// Git hash  : 53f8058f7c6bf637650ada26a945997ef313d52f
 
 `timescale 1ns/1ps
 
@@ -22873,7 +22873,7 @@ module Decoder (
   wire       [63:0]   immU;
   wire       [63:0]   immJ;
   reg                 csrWrite;
-  wire                when_Decoder_l168;
+  wire                when_Decoder_l169;
   wire                isComp;
   wire       [2:0]    cfunct3;
   wire       [4:0]    crd;
@@ -22894,34 +22894,34 @@ module Decoder (
   wire       [7:0]    cLdImm;
   wire       [8:0]    cLdspImm;
   wire       [8:0]    cSdspImm;
-  wire       [1:0]    switch_Decoder_l205;
-  wire                when_Decoder_l209;
-  wire                when_Decoder_l256;
-  wire                when_Decoder_l272;
-  wire                when_Decoder_l277;
-  wire       [1:0]    switch_Decoder_l287;
-  wire                when_Decoder_l315;
-  wire       [1:0]    switch_Decoder_l317;
+  wire       [1:0]    switch_Decoder_l206;
+  wire                when_Decoder_l210;
+  wire                when_Decoder_l289;
+  wire                when_Decoder_l305;
+  wire                when_Decoder_l310;
+  wire       [1:0]    switch_Decoder_l320;
+  wire                when_Decoder_l348;
+  wire       [1:0]    switch_Decoder_l350;
   wire       [6:0]    _zz_io_output_aluOp;
   wire       [6:0]    _zz_io_output_aluOp_1;
   wire       [6:0]    _zz_io_output_aluOp_2;
-  wire                when_Decoder_l369;
-  wire                when_Decoder_l377;
-  wire                when_Decoder_l387;
-  wire                when_Decoder_l388;
-  wire                when_Decoder_l389;
-  wire                when_Decoder_l400;
-  wire                when_Decoder_l401;
+  wire                when_Decoder_l466;
+  wire                when_Decoder_l474;
+  wire                when_Decoder_l484;
+  wire                when_Decoder_l485;
+  wire                when_Decoder_l486;
+  wire                when_Decoder_l497;
+  wire                when_Decoder_l498;
   wire       [6:0]    _zz_io_output_aluOp_3;
-  wire                when_Decoder_l850;
-  wire                when_Decoder_l853;
+  wire                when_Decoder_l947;
+  wire                when_Decoder_l950;
   wire       [6:0]    _zz_io_output_aluOp_4;
-  wire                when_Decoder_l964;
+  wire                when_Decoder_l1061;
   wire       [6:0]    _zz_io_output_aluOp_5;
   wire       [6:0]    _zz_io_output_aluOp_6;
-  wire                when_Decoder_l1115;
-  wire                when_Decoder_l1133;
-  wire       [11:0]   switch_Decoder_l1196;
+  wire                when_Decoder_l1212;
+  wire                when_Decoder_l1230;
+  wire       [11:0]   switch_Decoder_l1293;
   `ifndef SYNTHESIS
   reg [87:0] io_output_aluOp_string;
   reg [31:0] io_output_branchType_string;
@@ -23891,11 +23891,11 @@ module Decoder (
   always @(*) begin
     io_output_regWrite = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_regWrite = 1'b1;
               end
             end
@@ -23909,6 +23909,8 @@ module Decoder (
             end
             3'b111 : begin
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -23919,7 +23921,7 @@ module Decoder (
               io_output_regWrite = 1'b1;
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_regWrite = 1'b1;
               end
             end
@@ -23927,16 +23929,16 @@ module Decoder (
               io_output_regWrite = 1'b1;
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_regWrite = 1'b1;
               end else begin
-                if(!when_Decoder_l277) begin
+                if(!when_Decoder_l310) begin
                   io_output_regWrite = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_regWrite = 1'b1;
                 end
@@ -23947,8 +23949,8 @@ module Decoder (
                   io_output_regWrite = 1'b1;
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                         io_output_regWrite = 1'b1;
                       end
@@ -23978,23 +23980,23 @@ module Decoder (
               io_output_regWrite = 1'b1;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_regWrite = 1'b1;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_regWrite = 1'b1;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(!when_Decoder_l388) begin
+              if(when_Decoder_l484) begin
+                if(!when_Decoder_l485) begin
                   io_output_regWrite = 1'b1;
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_regWrite = 1'b1;
                   end
                 end else begin
@@ -24060,12 +24062,12 @@ module Decoder (
           io_output_regWrite = 1'b1;
         end
         7'b0110011 : begin
-          if(when_Decoder_l964) begin
+          if(when_Decoder_l1061) begin
             io_output_regWrite = 1'b1;
           end else begin
             io_output_regWrite = 1'b1;
           end
-          if(when_Decoder_l1115) begin
+          if(when_Decoder_l1212) begin
             casez(funct7)
               7'b0011001 : begin
                 io_output_regWrite = 1'b1;
@@ -24077,7 +24079,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1133) begin
+          if(when_Decoder_l1230) begin
             io_output_regWrite = 1'b1;
           end
         end
@@ -24118,11 +24120,11 @@ module Decoder (
   always @(*) begin
     io_output_aluSrc = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_aluSrc = 1'b1;
               end
             end
@@ -24138,6 +24140,8 @@ module Decoder (
             3'b111 : begin
               io_output_aluSrc = 1'b1;
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -24148,7 +24152,7 @@ module Decoder (
               io_output_aluSrc = 1'b1;
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_aluSrc = 1'b1;
               end
             end
@@ -24156,16 +24160,16 @@ module Decoder (
               io_output_aluSrc = 1'b1;
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_aluSrc = 1'b1;
               end else begin
-                if(!when_Decoder_l277) begin
+                if(!when_Decoder_l310) begin
                   io_output_aluSrc = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_aluSrc = 1'b1;
                 end
@@ -24193,25 +24197,25 @@ module Decoder (
               io_output_aluSrc = 1'b1;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_aluSrc = 1'b1;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_aluSrc = 1'b1;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_aluSrc = 1'b1;
                   end
                 end
@@ -24290,7 +24294,7 @@ module Decoder (
   always @(*) begin
     io_output_wbSel = 3'b000;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -24304,6 +24308,8 @@ module Decoder (
             3'b110 : begin
             end
             3'b111 : begin
+            end
+            3'b100 : begin
             end
             default : begin
             end
@@ -24335,25 +24341,25 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_wbSel = 3'b001;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_wbSel = 3'b001;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_wbSel = 3'b010;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_wbSel = 3'b010;
                   end
                 end
@@ -24450,7 +24456,7 @@ module Decoder (
   always @(*) begin
     io_output_branch = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -24534,7 +24540,7 @@ module Decoder (
   always @(*) begin
     io_output_jump = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -24567,15 +24573,15 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_jump = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_jump = 1'b1;
                   end
                 end
@@ -24647,7 +24653,7 @@ module Decoder (
   always @(*) begin
     io_output_jalr = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -24661,15 +24667,15 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_jalr = 1'b1;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_jalr = 1'b1;
                   end
                 end
@@ -24740,11 +24746,11 @@ module Decoder (
   always @(*) begin
     io_output_aluOp = AluOp_ADD;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_aluOp = AluOp_ADD;
               end
             end
@@ -24760,6 +24766,8 @@ module Decoder (
             3'b111 : begin
               io_output_aluOp = AluOp_ADD;
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -24770,7 +24778,7 @@ module Decoder (
               io_output_aluOp = AluOp_ADD;
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_aluOp = AluOp_ADDW;
               end
             end
@@ -24778,16 +24786,16 @@ module Decoder (
               io_output_aluOp = AluOp_ADD;
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_aluOp = AluOp_ADD;
               end else begin
-                if(!when_Decoder_l277) begin
+                if(!when_Decoder_l310) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_aluOp = AluOp_SRL_1;
                 end
@@ -24798,8 +24806,8 @@ module Decoder (
                   io_output_aluOp = AluOp_AND_1;
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                         io_output_aluOp = AluOp_SUBW;
                       end
@@ -24829,22 +24837,22 @@ module Decoder (
               io_output_aluOp = AluOp_SLL_1;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_aluOp = AluOp_ADD;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_aluOp = AluOp_ADD;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(!when_Decoder_l388) begin
+              if(when_Decoder_l484) begin
+                if(!when_Decoder_l485) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end else begin
-                if(!when_Decoder_l400) begin
+                if(!when_Decoder_l497) begin
                   io_output_aluOp = AluOp_ADD;
                 end
               end
@@ -24923,7 +24931,7 @@ module Decoder (
             default : begin
             end
           endcase
-          if(when_Decoder_l850) begin
+          if(when_Decoder_l947) begin
             io_output_aluOp = AluOp_AES64KS1I;
           end
         end
@@ -24997,7 +25005,7 @@ module Decoder (
           endcase
         end
         7'b0110011 : begin
-          if(when_Decoder_l964) begin
+          if(when_Decoder_l1061) begin
             casez(funct3)
               3'b000 : begin
                 io_output_aluOp = AluOp_MUL;
@@ -25056,7 +25064,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1115) begin
+          if(when_Decoder_l1212) begin
             casez(funct7)
               7'b0011001 : begin
                 io_output_aluOp = AluOp_AES64ES;
@@ -25068,7 +25076,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1133) begin
+          if(when_Decoder_l1230) begin
             io_output_aluOp = AluOp_AES64KS2;
           end
         end
@@ -25085,7 +25093,7 @@ module Decoder (
   always @(*) begin
     io_output_branchType = BranchOp_NONE;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -25190,7 +25198,7 @@ module Decoder (
   always @(*) begin
     io_output_aluASrc = 2'b00;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -25202,8 +25210,8 @@ module Decoder (
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l272) begin
-                if(!when_Decoder_l277) begin
+              if(!when_Decoder_l305) begin
+                if(!when_Decoder_l310) begin
                   io_output_aluASrc = 2'b10;
                 end
               end
@@ -25227,8 +25235,8 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(!when_Decoder_l388) begin
+              if(when_Decoder_l484) begin
+                if(!when_Decoder_l485) begin
                   io_output_aluASrc = 2'b10;
                 end
               end
@@ -25299,7 +25307,7 @@ module Decoder (
   always @(*) begin
     io_output_memRead = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -25314,6 +25322,8 @@ module Decoder (
             end
             3'b111 : begin
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -25325,12 +25335,12 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_memRead = 1'b1;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_memRead = 1'b1;
               end
             end
@@ -25401,7 +25411,7 @@ module Decoder (
   always @(*) begin
     io_output_memWrite = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -25415,6 +25425,8 @@ module Decoder (
             end
             3'b111 : begin
               io_output_memWrite = 1'b1;
+            end
+            3'b100 : begin
             end
             default : begin
             end
@@ -25499,7 +25511,7 @@ module Decoder (
   always @(*) begin
     io_output_memSize = 2'b10;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -25516,6 +25528,8 @@ module Decoder (
             3'b111 : begin
               io_output_memSize = 2'b11;
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -25527,12 +25541,12 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_memSize = 2'b10;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_memSize = 2'b11;
               end
             end
@@ -25731,11 +25745,11 @@ module Decoder (
   always @(*) begin
     io_output_rs1 = rs1Num;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_rs1 = 5'h02;
               end
             end
@@ -25751,6 +25765,8 @@ module Decoder (
             3'b111 : begin
               io_output_rs1 = crs1p;
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -25761,7 +25777,7 @@ module Decoder (
               io_output_rs1 = crd;
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_rs1 = crd;
               end
             end
@@ -25769,12 +25785,12 @@ module Decoder (
               io_output_rs1 = 5'h0;
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_rs1 = 5'h02;
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_rs1 = crs1p;
                 end
@@ -25785,8 +25801,8 @@ module Decoder (
                   io_output_rs1 = crs1p;
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                         io_output_rs1 = crs1p;
                       end
@@ -25818,25 +25834,25 @@ module Decoder (
               io_output_rs1 = crd;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_rs1 = 5'h02;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_rs1 = 5'h02;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_rs1 = crd;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_rs1 = crd;
                   end
                 end else begin
@@ -25863,7 +25879,7 @@ module Decoder (
   always @(*) begin
     io_output_rs2 = io_instruction[24 : 20];
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
@@ -25877,6 +25893,8 @@ module Decoder (
             end
             3'b111 : begin
               io_output_rs2 = crs2p;
+            end
+            3'b100 : begin
             end
             default : begin
             end
@@ -25893,7 +25911,7 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                 end
                 2'b01 : begin
@@ -25901,8 +25919,8 @@ module Decoder (
                 2'b10 : begin
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                         io_output_rs2 = crs2p;
                       end
@@ -25937,12 +25955,12 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(!when_Decoder_l388) begin
+              if(when_Decoder_l484) begin
+                if(!when_Decoder_l485) begin
                   io_output_rs2 = crs2;
                 end
               end else begin
-                if(!when_Decoder_l400) begin
+                if(!when_Decoder_l497) begin
                   io_output_rs2 = crs2;
                 end
               end
@@ -25966,11 +25984,11 @@ module Decoder (
   always @(*) begin
     io_output_rd = rdNum;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_rd = crdp;
               end
             end
@@ -25984,6 +26002,8 @@ module Decoder (
             end
             3'b111 : begin
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -25994,7 +26014,7 @@ module Decoder (
               io_output_rd = crd;
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_rd = crd;
               end
             end
@@ -26002,16 +26022,16 @@ module Decoder (
               io_output_rd = crd;
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_rd = 5'h02;
               end else begin
-                if(!when_Decoder_l277) begin
+                if(!when_Decoder_l310) begin
                   io_output_rd = crd;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_rd = crs1p;
                 end
@@ -26022,8 +26042,8 @@ module Decoder (
                   io_output_rd = crs1p;
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                         io_output_rd = crs1p;
                       end
@@ -26054,23 +26074,23 @@ module Decoder (
               io_output_rd = crd;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_rd = crd;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_rd = crd;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(!when_Decoder_l388) begin
+              if(when_Decoder_l484) begin
+                if(!when_Decoder_l485) begin
                   io_output_rd = crd;
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_rd = 5'h01;
                   end
                 end else begin
@@ -26095,11 +26115,11 @@ module Decoder (
   always @(*) begin
     io_output_imm = immI;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(!when_Decoder_l209) begin
+              if(!when_Decoder_l210) begin
                 io_output_imm = _zz_io_output_imm;
               end
             end
@@ -26115,6 +26135,8 @@ module Decoder (
             3'b111 : begin
               io_output_imm = {{56{cLdImm[7]}}, cLdImm};
             end
+            3'b100 : begin
+            end
             default : begin
             end
           endcase
@@ -26125,7 +26147,7 @@ module Decoder (
               io_output_imm = {{58{c6S[5]}}, c6S};
             end
             3'b001 : begin
-              if(!when_Decoder_l256) begin
+              if(!when_Decoder_l289) begin
                 io_output_imm = {{58{c6S[5]}}, c6S};
               end
             end
@@ -26133,16 +26155,16 @@ module Decoder (
               io_output_imm = {{58{c6S[5]}}, c6S};
             end
             3'b011 : begin
-              if(when_Decoder_l272) begin
+              if(when_Decoder_l305) begin
                 io_output_imm = {{54{cAddi16sp[9]}}, cAddi16sp};
               end else begin
-                if(!when_Decoder_l277) begin
+                if(!when_Decoder_l310) begin
                   io_output_imm = {{46{_zz_io_output_imm_3[17]}}, _zz_io_output_imm_3};
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                   io_output_imm = cShamt;
                 end
@@ -26173,25 +26195,25 @@ module Decoder (
               io_output_imm = cShamt;
             end
             3'b010 : begin
-              if(!when_Decoder_l369) begin
+              if(!when_Decoder_l466) begin
                 io_output_imm = _zz_io_output_imm_4;
               end
             end
             3'b011 : begin
-              if(!when_Decoder_l377) begin
+              if(!when_Decoder_l474) begin
                 io_output_imm = {{55{cLdspImm[8]}}, cLdspImm};
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(!when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(!when_Decoder_l486) begin
                     io_output_imm = 64'h0;
                   end
                 end
               end else begin
-                if(when_Decoder_l400) begin
-                  if(!when_Decoder_l401) begin
+                if(when_Decoder_l497) begin
+                  if(!when_Decoder_l498) begin
                     io_output_imm = 64'h0;
                   end
                 end
@@ -26302,7 +26324,7 @@ module Decoder (
         7'b0101111 : begin
         end
         7'b0010011 : begin
-          if(when_Decoder_l850) begin
+          if(when_Decoder_l947) begin
             io_output_rcon = io_instruction[23 : 20];
           end
         end
@@ -26325,11 +26347,11 @@ module Decoder (
   always @(*) begin
     io_output_illegal = 1'b0;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l209) begin
+              if(when_Decoder_l210) begin
                 io_output_illegal = 1'b1;
               end
             end
@@ -26341,6 +26363,8 @@ module Decoder (
             end
             3'b111 : begin
             end
+            3'b100 : begin
+            end
             default : begin
               io_output_illegal = 1'b1;
             end
@@ -26351,21 +26375,21 @@ module Decoder (
             3'b000 : begin
             end
             3'b001 : begin
-              if(when_Decoder_l256) begin
+              if(when_Decoder_l289) begin
                 io_output_illegal = 1'b1;
               end
             end
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l272) begin
-                if(when_Decoder_l277) begin
+              if(!when_Decoder_l305) begin
+                if(when_Decoder_l310) begin
                   io_output_illegal = 1'b1;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                 end
                 2'b01 : begin
@@ -26373,8 +26397,8 @@ module Decoder (
                 2'b10 : begin
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                       end
                       2'b01 : begin
@@ -26400,19 +26424,19 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(when_Decoder_l369) begin
+              if(when_Decoder_l466) begin
                 io_output_illegal = 1'b1;
               end
             end
             3'b011 : begin
-              if(when_Decoder_l377) begin
+              if(when_Decoder_l474) begin
                 io_output_illegal = 1'b1;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(when_Decoder_l486) begin
                     io_output_illegal = 1'b1;
                   end
                 end
@@ -26542,8 +26566,8 @@ module Decoder (
               io_output_illegal = 1'b1;
             end
           endcase
-          if(when_Decoder_l850) begin
-            if(when_Decoder_l853) begin
+          if(when_Decoder_l947) begin
+            if(when_Decoder_l950) begin
               io_output_illegal = 1'b1;
             end else begin
               io_output_illegal = 1'b0;
@@ -26612,7 +26636,7 @@ module Decoder (
           endcase
         end
         7'b0110011 : begin
-          if(when_Decoder_l964) begin
+          if(when_Decoder_l1061) begin
             casez(funct3)
               3'b000 : begin
               end
@@ -26657,7 +26681,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1115) begin
+          if(when_Decoder_l1212) begin
             casez(funct7)
               7'b0011001 : begin
                 io_output_illegal = 1'b0;
@@ -26669,7 +26693,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1133) begin
+          if(when_Decoder_l1230) begin
             io_output_illegal = 1'b0;
           end
         end
@@ -26993,7 +27017,7 @@ module Decoder (
   always @(*) begin
     io_output_sysOp = SysOp_NONE;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
         end
         2'b01 : begin
@@ -27007,9 +27031,9 @@ module Decoder (
             3'b011 : begin
             end
             3'b100 : begin
-              if(!when_Decoder_l387) begin
-                if(when_Decoder_l400) begin
-                  if(when_Decoder_l401) begin
+              if(!when_Decoder_l484) begin
+                if(when_Decoder_l497) begin
+                  if(when_Decoder_l498) begin
                     io_output_sysOp = SysOp_EBREAK;
                   end
                 end
@@ -27083,7 +27107,7 @@ module Decoder (
             3'b111 : begin
             end
             3'b000 : begin
-              casez(switch_Decoder_l1196)
+              casez(switch_Decoder_l1293)
                 12'b000000000000 : begin
                   io_output_sysOp = SysOp_ECALL;
                 end
@@ -27114,11 +27138,11 @@ module Decoder (
   always @(*) begin
     io_output_valid = 1'b1;
     if(isComp) begin
-      case(switch_Decoder_l205)
+      case(switch_Decoder_l206)
         2'b00 : begin
           case(cfunct3)
             3'b000 : begin
-              if(when_Decoder_l209) begin
+              if(when_Decoder_l210) begin
                 io_output_valid = 1'b0;
               end
             end
@@ -27130,6 +27154,8 @@ module Decoder (
             end
             3'b111 : begin
             end
+            3'b100 : begin
+            end
             default : begin
               io_output_valid = 1'b0;
             end
@@ -27140,21 +27166,21 @@ module Decoder (
             3'b000 : begin
             end
             3'b001 : begin
-              if(when_Decoder_l256) begin
+              if(when_Decoder_l289) begin
                 io_output_valid = 1'b0;
               end
             end
             3'b010 : begin
             end
             3'b011 : begin
-              if(!when_Decoder_l272) begin
-                if(when_Decoder_l277) begin
+              if(!when_Decoder_l305) begin
+                if(when_Decoder_l310) begin
                   io_output_valid = 1'b0;
                 end
               end
             end
             3'b100 : begin
-              case(switch_Decoder_l287)
+              case(switch_Decoder_l320)
                 2'b00 : begin
                 end
                 2'b01 : begin
@@ -27162,8 +27188,8 @@ module Decoder (
                 2'b10 : begin
                 end
                 default : begin
-                  if(when_Decoder_l315) begin
-                    case(switch_Decoder_l317)
+                  if(when_Decoder_l348) begin
+                    case(switch_Decoder_l350)
                       2'b00 : begin
                       end
                       2'b01 : begin
@@ -27189,19 +27215,19 @@ module Decoder (
             3'b000 : begin
             end
             3'b010 : begin
-              if(when_Decoder_l369) begin
+              if(when_Decoder_l466) begin
                 io_output_valid = 1'b0;
               end
             end
             3'b011 : begin
-              if(when_Decoder_l377) begin
+              if(when_Decoder_l474) begin
                 io_output_valid = 1'b0;
               end
             end
             3'b100 : begin
-              if(when_Decoder_l387) begin
-                if(when_Decoder_l388) begin
-                  if(when_Decoder_l389) begin
+              if(when_Decoder_l484) begin
+                if(when_Decoder_l485) begin
+                  if(when_Decoder_l486) begin
                     io_output_valid = 1'b0;
                   end
                 end
@@ -27331,8 +27357,8 @@ module Decoder (
               io_output_valid = 1'b0;
             end
           endcase
-          if(when_Decoder_l850) begin
-            if(when_Decoder_l853) begin
+          if(when_Decoder_l947) begin
+            if(when_Decoder_l950) begin
               io_output_valid = 1'b0;
             end else begin
               io_output_valid = 1'b1;
@@ -27401,7 +27427,7 @@ module Decoder (
           endcase
         end
         7'b0110011 : begin
-          if(when_Decoder_l964) begin
+          if(when_Decoder_l1061) begin
             casez(funct3)
               3'b000 : begin
               end
@@ -27446,7 +27472,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1115) begin
+          if(when_Decoder_l1212) begin
             casez(funct7)
               7'b0011001 : begin
                 io_output_valid = 1'b1;
@@ -27458,7 +27484,7 @@ module Decoder (
               end
             endcase
           end
-          if(when_Decoder_l1133) begin
+          if(when_Decoder_l1230) begin
             io_output_valid = 1'b1;
           end
         end
@@ -27488,7 +27514,7 @@ module Decoder (
             3'b111 : begin
             end
             3'b000 : begin
-              casez(switch_Decoder_l1196)
+              casez(switch_Decoder_l1293)
                 12'b000000000000 : begin
                 end
                 12'b000000000001 : begin
@@ -27514,9 +27540,9 @@ module Decoder (
     end
   end
 
-  assign when_Decoder_l168 = (io_output_csrOp == CsrOp_WRITE);
+  assign when_Decoder_l169 = (io_output_csrOp == CsrOp_WRITE);
   always @(*) begin
-    if(when_Decoder_l168) begin
+    if(when_Decoder_l169) begin
       csrWrite = (io_output_csrImm ? 1'b1 : (rs1Num != 5'h0));
     end else begin
       csrWrite = (rs1Num != 5'h0);
@@ -27543,33 +27569,33 @@ module Decoder (
   assign cLdImm = _zz_cLdImm;
   assign cLdspImm = _zz_cLdspImm;
   assign cSdspImm = _zz_cSdspImm;
-  assign switch_Decoder_l205 = io_instruction[1 : 0];
-  assign when_Decoder_l209 = (cAddi4spn == 10'h0);
-  assign when_Decoder_l256 = (crd == 5'h0);
-  assign when_Decoder_l272 = (crd == 5'h02);
-  assign when_Decoder_l277 = ((crd == 5'h0) || (c6 == 6'h0));
-  assign switch_Decoder_l287 = io_instruction[11 : 10];
-  assign when_Decoder_l315 = io_instruction[12];
-  assign switch_Decoder_l317 = io_instruction[6 : 5];
+  assign switch_Decoder_l206 = io_instruction[1 : 0];
+  assign when_Decoder_l210 = (cAddi4spn == 10'h0);
+  assign when_Decoder_l289 = (crd == 5'h0);
+  assign when_Decoder_l305 = (crd == 5'h02);
+  assign when_Decoder_l310 = ((crd == 5'h0) || (c6 == 6'h0));
+  assign switch_Decoder_l320 = io_instruction[11 : 10];
+  assign when_Decoder_l348 = io_instruction[12];
+  assign switch_Decoder_l350 = io_instruction[6 : 5];
   assign _zz_io_output_aluOp = (io_instruction[5] ? AluOp_AND_1 : AluOp_OR_1);
   assign _zz_io_output_aluOp_1 = (io_instruction[5] ? AluOp_XOR_1 : AluOp_SUB);
   assign _zz_io_output_aluOp_2 = (io_instruction[6] ? _zz_io_output_aluOp : _zz_io_output_aluOp_1);
-  assign when_Decoder_l369 = (crd == 5'h0);
-  assign when_Decoder_l377 = (crd == 5'h0);
-  assign when_Decoder_l387 = (io_instruction[12] == 1'b0);
-  assign when_Decoder_l388 = (crs2 == 5'h0);
-  assign when_Decoder_l389 = (crd == 5'h0);
-  assign when_Decoder_l400 = (crs2 == 5'h0);
-  assign when_Decoder_l401 = (crd == 5'h0);
+  assign when_Decoder_l466 = (crd == 5'h0);
+  assign when_Decoder_l474 = (crd == 5'h0);
+  assign when_Decoder_l484 = (io_instruction[12] == 1'b0);
+  assign when_Decoder_l485 = (crs2 == 5'h0);
+  assign when_Decoder_l486 = (crd == 5'h0);
+  assign when_Decoder_l497 = (crs2 == 5'h0);
+  assign when_Decoder_l498 = (crd == 5'h0);
   assign _zz_io_output_aluOp_3 = (io_instruction[30] ? AluOp_SRA_1 : AluOp_SRL_1);
-  assign when_Decoder_l850 = (((funct3 & 3'b111) == 3'b001) && ((io_instruction[31 : 24] & 8'hff) == 8'h31));
-  assign when_Decoder_l853 = (4'b1010 < io_instruction[23 : 20]);
+  assign when_Decoder_l947 = (((funct3 & 3'b111) == 3'b001) && ((io_instruction[31 : 24] & 8'hff) == 8'h31));
+  assign when_Decoder_l950 = (4'b1010 < io_instruction[23 : 20]);
   assign _zz_io_output_aluOp_4 = (io_instruction[30] ? AluOp_SRAW : AluOp_SRLW);
-  assign when_Decoder_l964 = ((funct7 & 7'h7f) == 7'h01);
+  assign when_Decoder_l1061 = ((funct7 & 7'h7f) == 7'h01);
   assign _zz_io_output_aluOp_5 = (io_instruction[30] ? AluOp_SUB : AluOp_ADD);
   assign _zz_io_output_aluOp_6 = (io_instruction[30] ? AluOp_SRA_1 : AluOp_SRL_1);
-  assign when_Decoder_l1115 = ((funct3 & 3'b111) == 3'b000);
-  assign when_Decoder_l1133 = (((funct3 & 3'b111) == 3'b000) && ((funct7 & 7'h7f) == 7'h3f));
-  assign switch_Decoder_l1196 = io_instruction[31 : 20];
+  assign when_Decoder_l1212 = ((funct3 & 3'b111) == 3'b000);
+  assign when_Decoder_l1230 = (((funct3 & 3'b111) == 3'b000) && ((funct7 & 7'h7f) == 7'h3f));
+  assign switch_Decoder_l1293 = io_instruction[31 : 20];
 
 endmodule

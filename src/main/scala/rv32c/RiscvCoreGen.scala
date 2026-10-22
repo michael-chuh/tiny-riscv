@@ -57,6 +57,8 @@ object RiscvCoreGen {
     gen(CoreConfig.rv64imzkn, "RiscvCore64KN")
     gen(CoreConfig.rv32imzicond, "RiscvCoreZICOND")
     gen(CoreConfig.rv64imzicond, "RiscvCore64ZICOND")
+    gen(CoreConfig.rv32imzcb, "RiscvCoreZCB")
+    gen(CoreConfig.rv64imzcb, "RiscvCore64ZCB")
     println("Generated rtl/RiscvCore.v, RiscvCoreC.v, RiscvCore64C.v, " +
       "RiscvCoreA.v, RiscvCore64A.v, RiscvCoreF.v, RiscvCore64F.v, " +
       "RiscvCore64D.v, RiscvCoreB.v, RiscvCore64B.v, RiscvCoreBS.v, " +
@@ -66,7 +68,7 @@ object RiscvCoreGen {
       "RiscvCore64BK.v, RiscvCoreKNH.v, RiscvCore64KNH.v, RiscvCoreKSH.v, " +
       "RiscvCore64KSH.v, RiscvCoreKSED.v, RiscvCore64KSED.v, RiscvCoreKS.v, " +
       "RiscvCore64KS.v, RiscvCoreKNE.v, RiscvCore64KNE.v, RiscvCoreKND.v, " +
-      "RiscvCore64KND.v, RiscvCoreKN.v, RiscvCore64KN.v, RiscvCoreZICOND.v " +
-      "and RiscvCore64ZICOND.v")
+      "RiscvCore64KND.v, RiscvCoreKN.v, RiscvCore64KN.v, RiscvCoreZICOND.v, " +
+      "RiscvCore64ZICOND.v, RiscvCoreZCB.v and RiscvCore64ZCB.v")
   }
 }
