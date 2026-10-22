@@ -296,6 +296,69 @@ class ZicsrTrapTest extends AnyFunSuite {
   }
 
   // =====================================================================
+  // Zifencei: fence.i is a legal NOP with the extension enabled and traps as
+  // an illegal instruction when it is absent.
+  // =====================================================================
+  private def fenceIProgram: Seq[Long] = {
+    val a = new TAsm
+    a.addi(30, 0, 0)
+    a.label("main_mtvec")
+    a.addi(5, 0, 0)            // patched to the handler address
+    a.csrrw(0, MTVEC, 5)
+    a.raw(0x0000100FL)         // fence.i
+    a.addi(10, 0, 7)           // only reached when fence.i is legal
+    a.li(30, 0x1234)
+    a.j("loop")
+    a.label("loop")
+    a.j("loop")
+
+    a.label("handler")
+    a.csrrs(11, MCAUSE, 0)     // x11 = cause
+    a.csrrs(12, MEPC, 0)       // x12 = trapping pc
+    a.addi(13, 13, 1)          // trap count
+    a.li(30, 0x1234)
+    a.j("loop")
+
+    val prog = a.build
+    val handlerIdx = a.indexOf("handler")
+    val mainMtvecIdx = a.indexOf("main_mtvec")
+    prog.zipWithIndex.map {
+      case (_, i) if i == mainMtvecIdx => TAsm.encI(handlerIdx * 4, 0, 0, 5, 0x13)
+      case (w, _)                       => w
+    }
+  }
+
+  private def runFenceI(cfg: CoreConfig)(check: CpuTb => Unit): Unit = {
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(cfg, fenceIProgram))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 400, 30, 0x1234L)
+        assert(cyc < 400, "fence.i program did not finish")
+        dut.clockDomain.waitSampling(4)
+        check(dut)
+      }
+  }
+
+  test("fence.i is a NOP when Zifencei is enabled") {
+    runFenceI(CoreConfig.rv32imzifencei) { dut =>
+      assert(u32(dut.io.debugRegs(10).toBigInt) == 7, "instruction after fence.i ran")
+      assert(u32(dut.io.debugRegs(13).toBigInt) == 0, "no trap taken")
+    }
+  }
+
+  test("fence.i traps as illegal without Zifencei") {
+    runFenceI(CoreConfig()) { dut =>
+      assert(u32(dut.io.debugRegs(13).toBigInt) == 1, "one trap taken")
+      assert(u32(dut.io.debugRegs(11).toBigInt) == 2, "cause 2 (illegal instruction)")
+      assert(u32(dut.io.debugRegs(12).toBigInt) == 0x0C, "mepc points at fence.i")
+      assert(u32(dut.io.debugRegs(10).toBigInt) == 0, "instruction after fence.i skipped")
+    }
+  }
+
+  // =====================================================================
   // Timer interrupt: enable MTIE+MIE, raise the line, check the handler is
   // entered (cause 0x80000007), MRET resumes at the interrupted pc.
   // =====================================================================

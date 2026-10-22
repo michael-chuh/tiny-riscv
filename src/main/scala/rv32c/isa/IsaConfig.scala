@@ -272,6 +272,14 @@ object IsaConfig {
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed,
       RvExtension.Zba, RvExtension.Zbb, RvExtension.Zcb), PrivConfig.MU)
 
+  /** RV32 with Zifencei (RV32IM_Zicsr_Zifencei, M/U): instruction fence MCU. */
+  val rv32imzifencei: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zifencei), PrivConfig.MU)
+
+  /** RV64 with Zifencei (RV64IM_Zicsr_Zifencei, M/U): instruction fence hart. */
+  val rv64imzifencei: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zifencei), PrivConfig.MU)
+
   /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
     * work; constructing this now yields an RV64 hart the current RTL rejects. */
   val rv64: IsaConfig =

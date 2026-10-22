@@ -89,18 +89,20 @@ object RvExtension {
   case object Zcb extends RvExtension("Zcb")
   /** Zicsr: CSR instructions. Implemented (always enabled by default). */
   case object Zicsr extends RvExtension("Zicsr")
-  /** Zifencei: instruction-fence. Reserved (fence.i handled as NOP today). */
+  /** Zifencei: instruction-fence (fence.i). Implemented as a pipeline
+    * instruction-sequence flush point on both RV32 and RV64; the memory system
+    * is not cached, so no additional state is required. */
   case object Zifencei extends RvExtension("Zifencei")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
-    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb). */
+    * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb,
+    * Zifencei). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
       Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb, Zicsr,
-      Compressed)
+      Compressed, Zifencei)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
-  val reserved: Set[RvExtension] =
-    Set(Zifencei)
+  val reserved: Set[RvExtension] = Set.empty
 
   private val byName: Map[String, RvExtension] =
     (implemented ++ reserved).map(e => e.name -> e).toMap

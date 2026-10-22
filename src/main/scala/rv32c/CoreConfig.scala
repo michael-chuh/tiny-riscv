@@ -60,6 +60,7 @@ case class CoreConfig(
   def hasZknd: Boolean = isa.hasZknd
   def hasZicond: Boolean = isa.hasZicond
   def hasZcb: Boolean = isa.hasZcb
+  def hasZifencei: Boolean = isa.hasZifencei
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -196,4 +197,10 @@ object CoreConfig {
 
   /** RV64IMC + Zba + Zbb + Zcb on the M/U stack: compressed Zcb hart. */
   def rv64imzcb: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzcb)
+
+  /** RV32IM + Zifencei on the M/U stack: instruction-fence MCU hart. */
+  def rv32imzifencei: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzifencei)
+
+  /** RV64IM + Zifencei on the M/U stack: instruction-fence rv64 hart. */
+  def rv64imzifencei: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzifencei)
 }

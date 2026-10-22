@@ -103,6 +103,7 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
   private val withZknd: Boolean = isa.hasZknd
   private val withZicond: Boolean = isa.hasZicond
   private val withZcb: Boolean = isa.hasZcb
+  private val withZifencei: Boolean = isa.hasZifencei
 
   val instr = io.instruction
   val opcode = instr(6 downto 0)
@@ -1241,10 +1242,12 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
         }
       }
     }
-    is(M"0001111") { // FENCE / FENCE.I: treated as NOP
+    is(M"0001111") { // FENCE / FENCE.I
       switch(funct3) {
-        is(M"000") {}
-        is(M"001") {}
+        is(M"000") {} // FENCE: no caches, no ordering state
+        is(M"001") { // FENCE.I
+          if (!withZifencei) { d.illegal := True; d.valid := False }
+        }
         default { d.illegal := True; d.valid := False }
       }
     }

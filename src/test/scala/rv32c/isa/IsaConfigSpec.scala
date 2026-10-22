@@ -277,6 +277,24 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.canonicalName == "RV32IMC_Zbb_Zcb_Zicsr  M/U")
   }
 
+  test("rv32imzifencei exposes Zifencei without a reserved misa bit") {
+    val isa = IsaConfig.rv32imzifencei
+    assert(isa.hasZifencei && isa.hasMulDiv && !isa.hasZicond)
+    assert(isa.misaValue == IsaConfig.rv32im.misaValue)
+    assert(isa.canonicalName == "RV32IM_Zicsr_Zifencei  M/U")
+  }
+
+  test("rv64imzifencei exposes Zifencei on an RV64 hart") {
+    val isa = IsaConfig.rv64imzifencei
+    assert(isa.isRV64 && isa.hasZifencei && isa.hasMulDiv)
+    assert(isa.canonicalName == "RV64IM_Zicsr_Zifencei  M/U")
+  }
+
+  test("no extension is left in the reserved set") {
+    assert(RvExtension.reserved.isEmpty)
+    assert(RvExtension.implemented.contains(RvExtension.Zifencei))
+  }
+
   test("rv64imzcb adds Zcb with Zba and Zbb on an RV64 hart") {
     val isa = IsaConfig.rv64imzcb
     assert(isa.isRV64 && isa.hasZcb && isa.hasCompressed && isa.hasZba && isa.hasZbb)
@@ -414,5 +432,7 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(!plain.hasZicond)
     assert(CoreConfig.rv32imzcb.hasZcb && CoreConfig.rv64imzcb.hasZcb)
     assert(!plain.hasZcb)
+    assert(CoreConfig.rv32imzifencei.hasZifencei && CoreConfig.rv64imzifencei.hasZifencei)
+    assert(!plain.hasZifencei)
   }
 }
