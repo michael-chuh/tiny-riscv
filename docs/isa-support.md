@@ -419,6 +419,7 @@ RV64 使用 `aes64ds`/`aes64dsm`/`aes64im`，编码为 OP（`funct3=000`，`func
 | 指令 | opcode | 实现状态 |
 |------|--------|----------|
 | FENCE | 0001111 | 当作 NOP 处理（单核无一致性需求） |
+| FENCE.I | 0001111 | 使能 Zifencei 时作为合法提交点（无 I 缓存，无额外状态）；未使能时按非法指令处理 |
 | ECALL / EBREAK | 1110011 | 已实现（M 模式 cause 11 / 3，U 模式 cause 8 / 3，见下文） |
 | MRET | 1110011 | 已实现（M 模式恢复 mstatus/模式并跳转 mepc） |
 | WFI | 1110011 | 当作 NOP 处理 |
@@ -476,4 +477,4 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - **Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zv*` 等未实现
 - **Zicond**：`czero.eqz`/`czero.nez` 条件运算（RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zcb**：附加压缩访存与寄存器运算（`c.lbu/c.lhu/c.lh/c.sb/c.sh/c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul`，RV32 与 RV64）已实现并有定向测试与 RTL 生成
-- **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）
+- **Zifencei**：`fence.i` 指令流同步（RV32 与 RV64）已实现并有定向测试与 RTL 生成
