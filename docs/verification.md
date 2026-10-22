@@ -64,6 +64,8 @@ graph LR
 | RV64 (Zkn) aes64 round, mix-column and key-schedule ops | `aes64es`/`esm`/`ds`/`dsm`/`im`、`aes64ks1i`（`rcon`=0/3/10）、`aes64ks2` | x10==`0xA7862385BB206EDF`、x11==`0x6443F5555927D88C`、x12==`0x0F93800A09FDC061`、x13==`0xA9440AF11B8378B5`、x14==`0xC66C82284EE40AA0`、x15==`0x857C266F857C266F`、x16==`0x857C2666857C2666`、x17==`0x7C266E857C266E85`、x18==`0x89ABCDEF77777777` |
 | RV32 (Zicond) conditional zero | `czero.eqz`/`czero.nez`（rs2 为零与非零，含负数操作数） | x10==`0x00000000`、x11==`0x12345678`、x12==`0x12345678`、x13==`0x00000000`、x14==`0xFFFFFFFF`、x15==`0x00000000` |
 | RV64 (Zicond) full-width conditional zero | `czero.eqz`/`czero.nez`（64 位操作数） | x10==`0x0000000000000000`、x11==`0x0123456789ABCDEF`、x12==`0x0123456789ABCDEF`、x13==`0x0000000000000000` |
+| RV32 (Zcb) compressed memory and ALU | `c.lbu/c.lhu/c.lh/c.sb/c.sh/c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.not/c.mul`（uimm 0..3 字节 / 0、2 半字） | x16==`0x00000078`、x17==`0x00000034`、x18==`0x00005678`、x19==`0x00001234`、x20==`0x00000080`、x21==`0x00008000`、x22==`0xFFFF8000`、x9==`0x000000FF`、x10==`0xFFFFFF80`、x11==`0x0000FF80`、x12==`0xFFFFFF80`、x13==`0x0000007F`、x14==63 |
+| RV64 (Zcb) c.zext.w and compressed memory | `c.lbu/c.lhu/c.lh/c.sh/c.zext.w/c.mul`（64 位符号扩展） | x16==`0x0000000000000078`、x17==`0x0000000000005678`、x18==`0x0000000000001234`、x19==`0xFFFFFFFFFFFF8000`、x13==`0x00000000FFFFFFFF`、x14==63 |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
 
@@ -71,7 +73,7 @@ CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 57 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb 结构规则与命名）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 59 项。
 
 ## 运行方式
 

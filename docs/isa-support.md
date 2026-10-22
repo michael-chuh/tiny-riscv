@@ -193,7 +193,7 @@ FP 扩展使用独立的浮点寄存器堆（`f0`–`f31`，无硬连线零寄�
 >
 > **CSR 与状态**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 仅在 FPU 使能时实现；提交任意 FP 算术指令会累积 NV/DZ/OF/UF/NX 异常标志到 `fflags`，并将 `mstatus.FS` 置 Dirty(11)。`frm` 为 WARL，仅接受 0–4。`mstatus.FS` 为 WARL（`FS=Off` 时 FP 指令与 FP CSR 访问均非法）。
 
-### 位操作指令（Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond，分别由对应 `RvExtension.*` 使能）
+### 位操作指令（Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond / Zcb，分别由对应 `RvExtension.*` 使能）
 
 所有 `Zb*`、`Zknh` 与 `Zk*` 均为无 MISA 位的命名扩展（单字母 `B` 位保留），仅当对应 `RvExtension` 使能时其编码合法，否则按非法指令（cause 2）处理。所有位操作在 EX 段组合完成，复用现有 ALU 结果通路，不引入新的停顿状态。
 
@@ -375,6 +375,25 @@ RV64 使用 `aes64ds`/`aes64dsm`/`aes64im`，编码为 OP（`funct3=000`，`func
 
 > 两条指令在 EX 段组合完成，RV32 与 RV64 均按完整 `xlen` 比较 `rs2`，未使能时编码按非法指令处理。
 
+**Zcb（附加压缩指令，由 `RvExtension.Zcb` 使能，需同时使能 C）**
+
+| 编码 | 指令 | 语义 | 前置扩展 |
+|------|------|------|----------|
+| Q0 cfunct3=100, instr[12:10]=000 | C.LBU | `rd' = zext8(mem8[rs1'+uimm])` | 无 |
+| Q0 cfunct3=100, instr[12:10]=001, instr[6]=0 | C.LHU | `rd' = zext16(mem16[rs1'+uimm])` | 无 |
+| Q0 cfunct3=100, instr[12:10]=001, instr[6]=1 | C.LH | `rd' = sext16(mem16[rs1'+uimm])` | 无 |
+| Q0 cfunct3=100, instr[12:10]=010 | C.SB | `mem8[rs1'+uimm] = rs2'[7:0]` | 无 |
+| Q0 cfunct3=100, instr[12:10]=011 | C.SH | `mem16[rs1'+uimm] = rs2'[15:0]` | 无 |
+| Q1 cfunct3=100, instr[12:10]=111, instr[6:5]=11, instr[4:2]=000 | C.ZEXT.B | `rsd' = zext8(rsd')` | 无 |
+| Q1 …, instr[4:2]=001 | C.SEXT.B | `rsd' = sext8(rsd')` | Zbb |
+| Q1 …, instr[4:2]=010 | C.ZEXT.H | `rsd' = zext16(rsd')` | Zbb |
+| Q1 …, instr[4:2]=011 | C.SEXT.H | `rsd' = sext16(rsd')` | Zbb |
+| Q1 …, instr[4:2]=100 | C.ZEXT.W | `rsd' = zext32(rsd')` | RV64 + Zba |
+| Q1 …, instr[4:2]=101 | C.NOT | `rsd' = ~rsd'` | 无 |
+| Q1 cfunct3=100, instr[12:10]=111, instr[6:5]=10 | C.MUL | `rd' = rs1' * rs2'`（低 `xlen` 位） | M 或 Zmmul |
+
+> 压缩访存立即数只有 2 位（字节形式 `{instr[5],instr[6]}`，半字形式 `{instr[5],0}`），且 `rd'`/`rs1'`/`rs2'` 限定在 `x8`–`x15`。C.ZEXT.B/C.NOT 通过 ALU 的 `AND 0xFF` / `XOR -1` 实现；C.SEXT.B/C.ZEXT.H/C.SEXT.H/C.ZEXT.W 复用 Zbb/Zba 的 ALU 操作。当对应前置扩展未使能时，该编码按非法指令处理。
+
 ### 分支（BRANCH, 1100011）
 
 | 指令 | funct3 | 实现状态 |
@@ -456,4 +475,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - **F/D**：RV32F / RV64F 单精度（FLEN=32）与 RV64D 双精度（FLEN=64，含 `FCVT.S.D`/`FCVT.D.S` 与 NaN-boxing）均已实现并有定向测试与 RTL 生成
 - **Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zv*` 等未实现
 - **Zicond**：`czero.eqz`/`czero.nez` 条件运算（RV32 与 RV64）已实现并有定向测试与 RTL 生成
+- **Zcb**：附加压缩访存与寄存器运算（`c.lbu/c.lhu/c.lh/c.sb/c.sh/c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul`，RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zifencei**：指令流同步（`RvExtension` 的 `reserved` 集合）
