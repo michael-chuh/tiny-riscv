@@ -142,33 +142,36 @@ FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻�
 
 ### CSR 文件（`CsrFile`）
 
-- 内部 CSR：`mstatus/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）；`misa` 为只读常量，值由 `IsaConfig.misaValue`（MXL + I + 扩展字母位 + U/S 位）推导
+- 内部 CSR：`mstatus/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid/medeleg/mideleg`，复位全 0；另有内部寄存器 `curMode` 复位为 **M**（2'b11）；`misa` 为只读常量，值由 `IsaConfig.misaValue`（MXL + I + 扩展字母位 + U/S 位）推导
+- S 模式（`isa.priv.hasSupervisor`）：`sstatus/sie/stvec/sscratch/sepc/scause/stval/sip/satp` 由 `CsrMap` 在 S 栈下纳入；`sstatus` 是 `mstatus` 的字段视图（共享存储，仅在 `SIE/SPIE/SPP/FS/SUM/MXR/UXL` 位可见），`sie` 是 `mie` 在 S 中断位上的投影，`sip` 为只读投影；`satp` 为 WARL，MODE 域强制 BARE、ASID/PPN 原样保存
 - **位掩码写**：仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读，写入在 EX 判非法
 - 已实现地址集与只读地址集由 ISA 层的 `CsrMap` 派生（`implementedFor/readOnlyFor`），EX 合法性检查与 `CsrFile` 读通路共用同一事实源；异常号为 `ExceptionCode` 具名常量
 - `mip.MTIP` 直接由顶层输入 `timerInterrupt` 电平组合反映，不经写口
-- 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/cause/epc/tval`）、`mretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
+- 写口（WB 同步提交）：CSR 普通写 `csrWe/csrWrData/csrAddr`、trap 提交写口（`trapEna/trapToS/cause/epc/tval`）、`mretEna`/`sretEna` 状态写口——同一拍至多一条指令写 CSR，单写端口语义与寄存器堆一致
 - 读口：WB 读口（返回写前旧值，作为 `csrr*` 的 rd 源）、EX 控制读口（`mtvec/mepc/mstatus` 域、`curMode`，供 trap 重定向与非法复核）
-- `mstatus` 可写域：`MIE(bit3)/MPIE(bit7)/MPP(bit12:11)/FS`；`mie` 可写域：`MTIE(bit7)`
+- `mstatus` 可写域：`MIE(3)/MPIE(7)/MPP(12:11)/SIE(1)/SPIE(5)/SPP(8)/FS(14:13)/SUM(18)/MXR(19)`；`mie` 可写域：`MTIE(7)/STIE(5)/SSIE(1)/SEIE(9)`；`medeleg` 仅接受已实现的同步异常位，`mideleg` 仅接受定时器中断位（bit7）
 - **浮点 CSR（`isa.hasFpu`）**：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)` 由 `CsrMap.implementedFor` 在 F 使能时纳入；提交 FP 指令时 `fpFlagsWe/fpFlags` 累积异常标志到 `fflags`（与 WB 写口同拍 OR 合并），`fpDirty` 把 `mstatus.FS` 置 Dirty；`fcsr` 高 5 位即 `frm`、低 5 位即 `fflags`
 
 ### 同步异常（EX 级判定并提交）
 
-- `ecall`：cause 由 `ecallCause(curMode)` 派生（U→8、S→9、M→11）。`ebreak`：cause 3。非法指令/CSR 访问违例：cause 2，`mtval`=违例 CSR 地址或指令字；`MPP` 不属于配置特权栈的 `mret`：cause 2
-- 模式合法性由 `PrivConfig.supportedEncodings` 驱动：`mppSupported` 判断 `MPP` 是否为已实现模式，`privAtLeast(minPriv)` 按 CSR 最低特权判定访问权限（当前 M/U 栈下即"U 不可访问任何 CSR"）；扩展到 M/S/U 时无需改判定结构
-- 判定所需 CSR 域（写只读、`mtvec.MODE≠0`、当前模式低于 CSR 最低特权、MRET 目标模式非法等）由 EX 控制读口实时读取，避免对 1-2 槽前未提交写敏感
-- 提交 = 复用 `ctrlFlush` 重定向：该拍不产生 WB 副作用，PC ← `{mtvec.BASE, 2'b00}`（容忍 `mtvec.MODE≠0` 时的非对齐陷阱，此处固定按 MODE=0 取），同时写 `mepc/mcause/mtval` 并更新 `mstatus`（`MPIE←MIE, MIE←0, MPP←curMode`）、`curMode←M`
+- `ecall`：cause 由 `ecallCause(curMode)` 派生（U→8、S→9、M→11）。`ebreak`：cause 3。非法指令/CSR 访问违例：cause 2，`mtval`=违例 CSR 地址或指令字；`MPP`/`SPP` 不属于配置特权栈的 `mret`/`sret`：cause 2
+- 模式合法性由 `PrivConfig.supportedEncodings` 驱动：`mppSupported`/`sppSupported` 判断返回目标是否为已实现模式；CSR 权限按**被访问地址**的 `minPriv` 判定（`privAtLeast`），S 模式可访问 S 级与非特权 CSR，M 级 CSR 仍为 M 专属
+- 判定所需 CSR 域（写只读、`mtvec/stvec.MODE≠0`、当前模式低于 CSR 最低特权、MRET/SRET 目标模式非法等）由 EX 控制读口实时读取，避免对 1-2 槽前未提交写敏感
+- **委托**：trap 在 M 下发生时始终进入 M；在 S/U 下发生且 `medeleg[cause]=1` 时进入 S（`trapToS`）。提交目标为 `Mux(trapToS, stvec.BASE, mtvec.BASE)`（固定 MODE=0 取址）
+- 提交 = 复用 `ctrlFlush` 重定向：该拍不产生 WB 副作用；进入 M 时写 `mepc/mcause/mtval` 并更新 `mstatus`（`MPIE←MIE, MIE←0, MPP←curMode`）、`curMode←M`；进入 S 时写 `sepc/scause/stval` 并更新 `mstatus`（`SPIE←SIE, SIE←0, SPP←curMode`）、`curMode←S`
 
-### 机器定时器中断（取指边界接受）
+### 定时器中断（取指边界接受）
 
-- 接受条件：`timerInterrupt && mie.MTIE && mstatus.MIE && curMode==M`，且当前拍无 EX trap、无分支/跳转/trap flush、无 `mret`、无 load/CSR 停顿、流水线无冻结
-- `mepc` = 被中断指令地址（EX 有合法指令取其 pc，否则取 ID 的 pc，管线排空情形取取指地址）；cause = `0x80000007`，`mtval=0`
+- 机器级接受条件：`timerInterrupt && mie.MTIE && !mideleg[7] && (curMode≠M || mstatus.MIE)`；S 级接受条件：`timerInterrupt && mie.STIE && mideleg[7] && (curMode==U || (curMode==S && mstatus.SIE))`。两者都要求当前拍无 EX trap、无分支/跳转/trap flush、无 `mret`/`sret`、无 load/CSR 停顿、流水线无冻结
+- `mepc`/`sepc` = 被中断指令地址（EX 有合法指令取其 pc，否则取 ID 的 pc，管线排空情形取取指地址）；M 级 cause=`0x80000007`，S 级 cause=`0x80000005`，`mtval/stval=0`
 - 同步异常优先级高于中断（EX trap 一拍内先提交）
 
-### MRET（EX 级，M 模式）
+### MRET / SRET（EX 级）
 
-- `pc←mepc`，`mstatus` 恢复：`MIE←MPIE, MPIE←1, MPP←U(0)`，`curMode←原 MPP`；写回/旁路不受影响
-- `mret` 与 1-2 槽内未提交的 `mepc/mstatus` CSR 写之间停顿防冒险
-- 若 `MPP` 编码不属于配置特权栈（如当前 M/U 栈下的 1/2），或 `curMode≠M`，则判非法（cause 2）而非执行
+- `mret`：`pc←mepc`，`mstatus` 恢复 `MIE←MPIE, MPIE←1, MPP←M`，`curMode←原 MPP`（M/S/U 栈下可为 M 或 S）；写回/旁路不受影响
+- `sret`：仅 S 模式合法，`pc←sepc`，`mstatus` 恢复 `SIE←SPIE, SPIE←1, SPP←U`，`curMode←原 SPP`
+- 两者都与其 1-2 槽内未提交的 `mepc/sepc/mstatus/sstatus` CSR 写之间停顿防冒险（`csrXretStall`）
+- 若 `MPP`/`SPP` 编码不属于配置特权栈，或 `mret` 不在 M、`sret` 不在 S，则判非法（cause 2）而非执行
 
 ## 总线接口
 
@@ -201,10 +204,11 @@ FP 结果仅经 WB 一条路径写回，因此无需 EX/MEM 级 FP 旁路，逻�
 | Zicond 条件运算 | EX 段组合 ALU 结果选择（`rs2 == 0` 判定后选择 `rs1` 或零） | 无新增流水线状态或停顿；未使能时编码保持 cause 2 |
 | Zifencei 指令流同步 | `fence.i` 作为合法提交点（无缓存失效动作） | 无新增状态；未使能时为 cause 2 |
 | Zcb 压缩访存与运算 | 16 位压缩编码复用 32 位译码字段，访存走统一 LSU，寄存器运算复用 ALU（`AND 0xFF`/`XOR -1`/Zbb/Zba 操作） | 无新增状态；前置扩展缺失时该编码为 cause 2 |
+| S 模式（M/S/U） | S 级 CSR 与 `mstatus` 共享存储；`medeleg/mideleg` 决定 trap 目标（`stvec`/`mtvec`）；`SRET` 与 `MRET` 对称；`satp` 仅 BARE | 复用既有 EX trap 提交与 flush 通路；无 MMU/TLB 状态，S 级中断经委托复用同一接受逻辑 |
 
 ## 未来演进（对应参数化预留）
 
-- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2、Zksh SM3、Zksed SM4、Zknd/Zkne AES 密码位操作、Zicond 条件运算、Zcb 附加压缩指令与 Zifencei 指令流同步（W 形式按 `xlen` 展开）已实现；S 模式待补
+- **RV64**：RV64I、RV64M（`*W` 后缀，复用按 `xlen` 参数化的 ALU/除法器）、RV64C 压缩编码、RV64A 原子（`.W`/`.D`）、RV64F/RV64D 浮点（参数化 FPU）与 RV64 Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx 位操作及 Zknh SHA-2、Zksh SM3、Zksed SM4、Zknd/Zkne AES 密码位操作、Zicond 条件运算、Zcb 附加压缩指令、Zifencei 指令流同步（W 形式按 `xlen` 展开）与 S 模式（M/S/U 特权栈、S 级 CSR、异常/中断委托、SRET）已实现；SV39 MMU 待补
 - **分支预测**：`BranchPredictorConfig` 已预留，可插入 BHT/gshare
 - **缓存**：`withICache/withDCache` 配置项已定义，后续在总线接口后挂接
 - **多核**：`numCores` 参数化，互联核外组合

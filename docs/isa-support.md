@@ -420,10 +420,11 @@ RV64 使用 `aes64ds`/`aes64dsm`/`aes64im`，编码为 OP（`funct3=000`，`func
 |------|--------|----------|
 | FENCE | 0001111 | 当作 NOP 处理（单核无一致性需求） |
 | FENCE.I | 0001111 | 使能 Zifencei 时作为合法提交点（无 I 缓存，无额外状态）；未使能时按非法指令处理 |
-| ECALL / EBREAK | 1110011 | 已实现（M 模式 cause 11 / 3，U 模式 cause 8 / 3，见下文） |
+| ECALL / EBREAK | 1110011 | 已实现（M/S/U 模式 cause 11/9/8 与 3，见下文） |
 | MRET | 1110011 | 已实现（M 模式恢复 mstatus/模式并跳转 mepc） |
+| SRET | 1110011 | 已实现（S 模式恢复 sstatus/模式并跳转 sepc；非 S 模式为非法指令） |
 | WFI | 1110011 | 当作 NOP 处理 |
-| SRET / URET | 1110011 | 译码为非法指令（cause 2） |
+| URET / 其他 SYSTEM funct12 | 1110011 | 译码为非法指令（cause 2） |
 
 ## Zicsr：CSR 访问指令（SYSTEM, 1110011）
 
@@ -442,15 +443,17 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 ## 特权模式、异常与中断
 
-- 支持 **M/U 两种特权模式**，复位进入 M；通过 `mret`（MPP=0 时）或异常委托路径进入 U，U 内非法/`ecall` 回到 M
-- 内置 CSR（全部 32 位）：`mstatus/misa/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`
-  - 仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid` 只读：CSRRW/I 写入触发 cause 2，CSRRS/CSRRC 命中只读位按读处理
+- 支持 **M/U**（`rv32im` 等）与 **M/S/U**（`rv32imsu`/`rv64imsu`）两种特权栈，复位进入 M；`mret` 按 MPP 进入 S 或 U，`sret` 按 SPP 在 S/U 间返回
+- 内置 CSR（全部 32 位）：`mstatus/misa/mie/mtvec/mscratch/mepc/mcause/mtval/mip/mhartid`；S 栈额外实现 `medeleg/mideleg` 与 `sstatus/sie/stvec/sscratch/sepc/scause/stval/sip/satp`
+  - 仅实现位可写，保留位读 0 写忽略；`misa/mip/mhartid/sip` 只读：CSRRW/I 写入触发 cause 2，CSRRS/CSRRC 命中只读位按读处理
+  - S 级访问受 `minPriv` 约束：S 模式可读 S 级与非特权 CSR，访问 M 级 CSR 触发 cause 2；`mtvec/stvec` 仅接受 MODE=0，`satp` 的 MODE 强制 BARE
   - `mtvec` 的 MODE 域写入非 0 值触发 cause 2；trap 重定向恒按 direct 模式取 `{mtvec.BASE,2'b00}`
   - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
-  - `mstatus` 可写域：`MIE/MPIE/MPP(3)/FS`；`mie.MTIE` 是唯一可写中断使能位
+  - `mstatus` 可写域：`MIE/MPIE/MPP/SIE/SPIE/SPP/FS/SUM/MXR`；`mie` 可写 `MTIE/STIE/SSIE/SEIE`；`medeleg/mideleg` 按已实现异常/中断位掩码写入
 - 浮点 CSR（仅 `RvExtension.SingleFloat` 使能时）：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)`；`frm` 为 WARL 仅接受 0–4，提交 FP 指令累积 `fflags` 并把 `mstatus.FS` 置 Dirty
-- 同步异常 cause：ECALL(M)=11、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP` 不在配置特权栈的 MRET=2
-- 机器定时器中断：`mip.MTIP && mie.MTIE && mstatus.MIE && curMode=M` 时在取指边界接受，cause=0x80000007，`mtval=0`
+- 同步异常 cause：ECALL(M)=11、ECALL(S)=9、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP`/`SPP` 不在配置特权栈的 MRET/SRET=2
+- 异常委托：M 下 trap 始终进入 M；S/U 下 `medeleg[cause]=1` 时进入 S（`sepc/scause/stval` + `SPP/SPIE/SIE`）
+- 定时器中断：M 级在 `MTIE && !mideleg[7] && (curMode≠M || MIE)` 时接受（cause=0x80000007）；S 级在 `STIE && mideleg[7] && (curMode==U || (curMode==S && SIE))` 时接受（cause=0x80000005），`mtval/stval=0`
 - 复位 `debugPc` 回到 `resetVector`，内部 CSR/模式全部清零/复位为 M
 
 ## 立即数编码
@@ -472,7 +475,7 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 
 ## 后续扩展计划
 
-- **S 模式**：S 级 CSR（`sstatus/stvec/sepc/scause/stval` 等）、异常委托、`SRET` 与 SV39 MMU
+- **SV39 MMU**：`satp` 地址翻译、TLB 与页错误异常（S 模式 CSR、异常委托与 `SRET` 已实现，`satp` 当前仅 BARE）
 - **F/D**：RV32F / RV64F 单精度（FLEN=32）与 RV64D 双精度（FLEN=64，含 `FCVT.S.D`/`FCVT.D.S` 与 NaN-boxing）均已实现并有定向测试与 RTL 生成
 - **Zba / Zbb / Zbs / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne**：位操作扩展（RV32 与 RV64）已实现并有定向测试与 RTL 生成；`Zv*` 等未实现
 - **Zicond**：`czero.eqz`/`czero.nez` 条件运算（RV32 与 RV64）已实现并有定向测试与 RTL 生成

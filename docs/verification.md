@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 83 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 122 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -73,9 +73,17 @@ graph LR
 
 CSR 读写与 WARL、M 模式同步异常（ecall/ebreak/非法指令/CSR 违例）、机器定时器中断 + MRET、U 模式往返。
 
+S 模式用例：
+
+| 用例 | 覆盖点 | 关键断言 |
+|------|--------|----------|
+| S-mode ECALL delegates to the S handler and SRET returns | `medeleg[9]` 委托、`stvec` 入口、`sepc/scause` 保存、`SPP` 置位、`SRET` 返回 | x13==1、x11==9、x12==ECALL pc、x15==`0x100`、x14==`0x66`、x30==`0x1234` |
+| undelegated S-mode ECALL is taken in M | `medeleg=0` 时 S 的 ECALL 仍进入 M | x11==9、x12==ECALL pc、x13==0、结束时 `debugMode`==M |
+| SRET in M mode traps as illegal | `SRET` 的 M 模式合法性检查 | cause 2、mepc 指向 `SRET` |
+
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 结构规则、命名与 `reserved` 为空）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、异常码）共 62 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 结构规则、S 模式预置与 S 级 CSR 可见性、命名与 `reserved` 为空）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、S 模式 CSR 门控、异常码）共 66 项。
 
 ## 运行方式
 

@@ -79,10 +79,12 @@ IsaConfig.rv32imzcb     // RV32IMC_Zbb_Zcb_Zicsr, M/U —— 含 Zcb 附加压�
 IsaConfig.rv64imzcb     // RV64IMC_Zba_Zbb_Zcb_Zicsr, M/U —— RV64 含 Zcb 附加压缩扩展
 IsaConfig.rv32imzifencei // RV32IM_Zicsr_Zifencei, M/U —— 含 fence.i 指令流同步
 IsaConfig.rv64imzifencei // RV64IM_Zicsr_Zifencei, M/U —— RV64 含 fence.i 指令流同步
-IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— S 模式未实现故被拒绝；RV64I/M 请用 M/U 栈配置
+IsaConfig.rv32imsu // RV32IM_Zicsr, M/S/U —— 含 S 级 CSR、异常/中断委托与 SRET
+IsaConfig.rv64imsu // RV64IM_Zicsr, M/S/U —— RV64 含 S 模式
+IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— RV64I 基线（含 S 模式）
 ```
 
-**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`/`Zifencei` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。
+**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`/`Zifencei` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。S 模式是特权栈属性：`rv32imsu`/`rv64imsu` 会在 `misa` 中置 S 位。
 
 ## CoreConfig 字段
 
@@ -124,7 +126,7 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 生成四十四个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）、`rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（`CoreConfig.rv32imzbkb`/`rv64imzbkb`，Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（`CoreConfig.rv32imzbkc`/`rv64imzbkc`，Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（`CoreConfig.rv32imzbkx`/`rv64imzbkx`，Zbkx）、`rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（`CoreConfig.rv32imzbk`/`rv64imzbk`，Zbkb+Zbkc+Zbkx）、`rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（`CoreConfig.rv32imzknh`/`rv64imzknh`，Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（`CoreConfig.rv32imzksh`/`rv64imzksh`，Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（`CoreConfig.rv32imzksed`/`rv64imzksed`，Zksed）、`rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（`CoreConfig.rv32imzks`/`rv64imzks`，Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（`CoreConfig.rv32imzkne`/`rv64imzkne`，Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（`CoreConfig.rv32imzknd`/`rv64imzknd`，Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（`CoreConfig.rv32imzkn`/`rv64imzkn`，Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（`CoreConfig.rv32imzicond`/`rv64imzicond`，Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（`CoreConfig.rv32imzcb`/`rv64imzcb`，Zbb+Zcb / Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（`CoreConfig.rv32imzifencei`/`rv64imzifencei`，Zifencei），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+`RiscvCoreGen` 生成四十六个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）、`rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（`CoreConfig.rv32imzbkb`/`rv64imzbkb`，Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（`CoreConfig.rv32imzbkc`/`rv64imzbkc`，Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（`CoreConfig.rv32imzbkx`/`rv64imzbkx`，Zbkx）、`rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（`CoreConfig.rv32imzbk`/`rv64imzbk`，Zbkb+Zbkc+Zbkx）、`rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（`CoreConfig.rv32imzknh`/`rv64imzknh`，Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（`CoreConfig.rv32imzksh`/`rv64imzksh`，Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（`CoreConfig.rv32imzksed`/`rv64imzksed`，Zksed）、`rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（`CoreConfig.rv32imzks`/`rv64imzks`，Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（`CoreConfig.rv32imzkne`/`rv64imzkne`，Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（`CoreConfig.rv32imzknd`/`rv64imzknd`，Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（`CoreConfig.rv32imzkn`/`rv64imzkn`，Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（`CoreConfig.rv32imzicond`/`rv64imzicond`，Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（`CoreConfig.rv32imzcb`/`rv64imzcb`，Zbb+Zcb / Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（`CoreConfig.rv32imzifencei`/`rv64imzifencei`，Zifencei），以及 `rtl/RiscvCoreS.v`/`rtl/RiscvCore64S.v`（`CoreConfig.rv32imsu`/`rv64imsu`，M/S/U），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
 
 ### 启用 RV32C 压缩扩展（RV32IMC）
 
@@ -197,13 +199,18 @@ val config = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.M
 
 数据路径、地址、立即数、寄存器堆与访存宽度均按 `isa.xlen` 生成；指令宽度仍是 32 位。RV64 下支持 `*W` 后缀（含 RV64M 的 `MULW/DIVW/DIVUW/REMW/REMUW`）、64 位移位与 `LD/LWU/SD`。
 
-### 表达 roadmap 配置（示例：rv64 M/S/U 基线）
+### 启用 S 模式（M/S/U 特权栈）
 
 ```scala
-val config = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MSU))
+// 推荐使用预置：
+val config = CoreConfig.rv32imsu      // RV32IM_Zicsr，M/S/U
+val config64 = CoreConfig.rv64imsu    // RV64IM_Zicsr，M/S/U
+
+// 也可自行组合：特权栈是 IsaConfig 的第三维
+val custom = CoreConfig(isa = IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MSU))
 ```
 
-配置模型可完整表达该结构（含 misa 的 S 位），但 S 模式硬件尚未实现——`RiscvCore` 构造时以 `require` 显式拒绝并给出原因。
+S 栈下额外实现 `medeleg/mideleg` 与 S 级 CSR，`misa` 自动置 S 位；`satp` 仅支持 BARE 翻译模式。
 
 ### 多核配置（预留）
 
@@ -225,7 +232,7 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- 支持：RV32I / RV64I（M/U 栈），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc、Zbkb、Zbkc、Zbkx、Zknh、Zksh、Zksed、Zknd、Zkne、Zicond、Zcb、Zifencei；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 由参数化 ALU 承载（RV64 W 形式按 `xlen` 展开）
+- 支持：RV32I / RV64I（M/U 栈，或 M/S/U 栈的 `rv32imsu`/`rv64imsu`），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc、Zbkb、Zbkc、Zbkx、Zknh、Zksh、Zksed、Zknd、Zkne、Zicond、Zcb、Zifencei；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 由参数化 ALU 承载（RV64 W 形式按 `xlen` 展开）
 - 拒绝：S/H 模式、RV32 上的 D、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 
