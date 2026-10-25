@@ -450,6 +450,8 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
   - `mtvec` 的 MODE 域写入非 0 值触发 cause 2；trap 重定向恒按 direct 模式取 `{mtvec.BASE,2'b00}`
   - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
   - `mstatus` 可写域：`MIE/MPIE/MPP/SIE/SPIE/SPP/FS/SUM/MXR`；`mie` 可写 `MTIE/STIE/SSIE/SEIE`；`medeleg/mideleg` 按已实现异常/中断位掩码写入
+- Zicntr 计数器（仅 `RvExtension.Zicntr` 使能时）：`mcycle(0xB00)`/`minstret(0xB02)` 与用户视图 `cycle(0xC00)`/`time(0xC01)`/`instret(0xC02)`；RV32 另实现高半字 `cycleh(0xC80)`/`timeh(0xC81)`/`instreth(0xC82)`；`mcycle/minstret` 的 RV32 高半字为 `mcycleh(0xB80)`/`minstreth(0xB82)`。`cycle` 每时钟自增，`instret` 按 WB 提交的指令数累加，`time` 复用 `cycle` 时基
+  - 使能门控：`mcounteren(0x306)` 控制 S/U 读取，M/S/U 栈的 `scounteren(0x106)` 进一步控制 U；低于 M 且对应位为 0 时触发 cause 2（`mtval`=CSR 地址）
 - 浮点 CSR（仅 `RvExtension.SingleFloat` 使能时）：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)`；`frm` 为 WARL 仅接受 0–4，提交 FP 指令累积 `fflags` 并把 `mstatus.FS` 置 Dirty
 - 同步异常 cause：ECALL(M)=11、ECALL(S)=9、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP`/`SPP` 不在配置特权栈的 MRET/SRET=2
 - 异常委托：M 下 trap 始终进入 M；S/U 下 `medeleg[cause]=1` 时进入 S（`sepc/scause/stval` + `SPP/SPIE/SIE`）
@@ -481,3 +483,5 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - **Zicond**：`czero.eqz`/`czero.nez` 条件运算（RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zcb**：附加压缩访存与寄存器运算（`c.lbu/c.lhu/c.lh/c.sb/c.sh/c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul`，RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zifencei**：`fence.i` 指令流同步（RV32 与 RV64）已实现并有定向测试与 RTL 生成
+- **Zicntr**：`cycle/time/instret`（RV32 含 `cycleh/timeh/instreth`）与 `mcycle/minstret`、`mcounteren/scounteren` 已实现；`time` 与 `cycle` 同源，未接入外部实时时钟
+- **Zicntr 访问控制**：M 模式直接可读；S/U 模式需 `mcounteren` 对应位，M/S/U 栈的 U 模式还需 `scounteren` 对应位，违反时按非法指令（cause 2）处理

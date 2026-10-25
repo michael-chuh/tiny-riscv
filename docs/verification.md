@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 122 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 129 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -67,6 +67,8 @@ graph LR
 | RV32 (Zcb) compressed memory and ALU | `c.lbu/c.lhu/c.lh/c.sb/c.sh/c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.not/c.mul`（uimm 0..3 字节 / 0、2 半字） | x16==`0x00000078`、x17==`0x00000034`、x18==`0x00005678`、x19==`0x00001234`、x20==`0x00000080`、x21==`0x00008000`、x22==`0xFFFF8000`、x9==`0x000000FF`、x10==`0xFFFFFF80`、x11==`0x0000FF80`、x12==`0xFFFFFF80`、x13==`0x0000007F`、x14==63 |
 | RV32 (Zifencei) fence.i legal NOP | `fence.i` 后继续执行下一条指令 | x10==7、x13==0（未进入 handler） |
 | RV32 (no Zifencei) fence.i traps | 未使能时 `fence.i` 触发 cause 2 | x13==1、x11==2、x12==`0x0C`、x10==0 |
+| RV32 (Zicntr) counters advance | `cycle/time/instret` 读取，50 条 `addi` 后再次读取 | `cycle` 增量 ≥50、`time` 跟踪 `cycle`、`cycleh/instreth`==0、`instret` 增量==3 |
+| RV32 (Zicntr) U-mode counter reads gated by mcounteren | `mcounteren.CY=0` 时 U 读 `cycle` 触发 cause 2，handler 置位后重试 | x10==0（被拒绝的读不写 rd）、x13==1、x14==`0xAA`、x11!=0、结束时仍在 U |
 | RV64 (Zcb) c.zext.w and compressed memory | `c.lbu/c.lhu/c.lh/c.sh/c.zext.w/c.mul`（64 位符号扩展） | x16==`0x0000000000000078`、x17==`0x0000000000005678`、x18==`0x0000000000001234`、x19==`0xFFFFFFFFFFFF8000`、x13==`0x00000000FFFFFFFF`、x14==63 |
 
 ### 特权/CSR/中断（`src/test/scala/rv32c/sim/ZicsrTrapTest.scala`）
@@ -83,7 +85,7 @@ S 模式用例：
 
 ### 配置模型单元测试
 
-`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 结构规则、S 模式预置与 S 级 CSR 可见性、命名与 `reserved` 为空）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、S 模式 CSR 门控、异常码）共 66 项。
+`IsaConfigSpec`（misa 推导、特权栈结构规则、F/D 结构规则、Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei/Zicntr 结构规则、S 模式预置与 S 级 CSR 可见性、命名与 `reserved` 为空）与 `CsrMapSpec`（CSR 地址唯一性、只读集、FP CSR 可见性、S 模式 CSR 门控、Zicntr 计数器与 RV32 高半字可见性、异常码）共 71 项。
 
 ## 运行方式
 

@@ -24,6 +24,7 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 - Zicond 条件运算扩展：`czero.eqz` / `czero.nez` 依据 rs2 是否为零选择 rs1 或零，全部在 EX 段组合执行
 - Zifencei 指令流同步扩展：`fence.i` 在无缓存流水线上作为合法的提交点，未使能时按非法指令处理
 - Zcb 附加压缩扩展：`c.lbu/c.lhu/c.lh/c.sb/c.sh` 压缩字节/半字访存，以及 `c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul` 压缩寄存器运算
+- Zicntr 用户计数器扩展：`cycle/time/instret`（RV32 另有 `cycleh/timeh/instreth` 高半字）与 `mcounteren/scounteren` 使能门控；`mcycle/minstret` 为机器模式可写别名，退休指令计数在 WB 提交点累加
 - S 模式（M/S/U 特权栈）：S 级 CSR（`sstatus/sie/stvec/sscratch/sepc/scause/stval/sip/satp`）、`medeleg/mideleg` 异常与中断委托、`SRET` 返回，以及 S 模式的 CSR 权限检查与定时器中断路由；`satp` 为 WARL，当前仅支持 BARE（SV39 待补）
 - 数据冒险全旁路（EX/MEM → EX、MEM/WB → EX）
 - load-use 冒险：硬件停顿 1 拍
@@ -37,8 +38,8 @@ rv32c 是一个用 **SpinalHDL** 编写的高效、参数化 RISC-V 处理器，
 
 - RV32I 定向测试通过：数据冒险旁路、load-use 停顿、分支跳过、访存读写均验证正确
 - RV32M 定向测试通过：乘法（高位/有符号×无符号/无符号）、有符号与无符号除法/余数、负数运算、除零、MIN/-1 溢出回绕、除法结果旁路均验证正确
-- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D / Zbb / Zbs / Zba / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond / Zcb / Zifencei / S 模式（M/S/U）定向测试通过，`sbt test` 共 122 项
-- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D）、`rtl/RiscvCoreB.v`（RV32IM+Zbb）、`rtl/RiscvCore64B.v`（RV64IM+Zbb）、`rtl/RiscvCoreBS.v`（RV32IM+Zbs）、`rtl/RiscvCore64BS.v`（RV64IM+Zbs）、`rtl/RiscvCoreBA.v`（RV32IM+Zba）、`rtl/RiscvCore64BA.v`（RV64IM+Zba）、`rtl/RiscvCoreBC.v`（RV32IM+Zbc）、`rtl/RiscvCore64BC.v`（RV64IM+Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（RV32/RV64IM+Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（RV32/RV64IM+Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（RV32/RV64IM+Zbkx）与 `rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（RV32/RV64IM+Zbkb+Zbkc+Zbkx）以及 `rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（RV32/RV64IM+Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（RV32/RV64IM+Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（RV32/RV64IM+Zksed）与 `rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（RV32/RV64IM+Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（RV32/RV64IM+Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（RV32/RV64IM+Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（RV32/RV64IM+Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（RV32/RV64IM+Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（RV32IMC+Zbb+Zcb / RV64IMC+Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（RV32/RV64IM+Zifencei）与 `rtl/RiscvCoreS.v`/`rtl/RiscvCore64S.v`（RV32/RV64IM，M/S/U 特权栈，含 S 级 CSR、异常/中断委托与 SRET），异步复位、标准 Verilog
+- RV64I / RV64M / RV32C / RV64C / RV32A / RV64A / RV32F / RV64D / Zbb / Zbs / Zba / Zbc / Zbkb / Zbkc / Zbkx / Zknh / Zksh / Zksed / Zknd / Zkne / Zicond / Zcb / Zifencei / Zicntr / S 模式（M/S/U）定向测试通过，`sbt test` 共 129 项
+- 已生成可综合的 `rtl/RiscvCore.v`（RV32IM）、`rtl/RiscvCoreC.v`（RV32IMC）、`rtl/RiscvCore64C.v`（RV64IMC）、`rtl/RiscvCoreA.v`（RV32IMA）、`rtl/RiscvCore64A.v`（RV64IMA）、`rtl/RiscvCoreF.v`（RV32F）、`rtl/RiscvCore64F.v`（RV64F）与 `rtl/RiscvCore64D.v`（RV64D）、`rtl/RiscvCoreB.v`（RV32IM+Zbb）、`rtl/RiscvCore64B.v`（RV64IM+Zbb）、`rtl/RiscvCoreBS.v`（RV32IM+Zbs）、`rtl/RiscvCore64BS.v`（RV64IM+Zbs）、`rtl/RiscvCoreBA.v`（RV32IM+Zba）、`rtl/RiscvCore64BA.v`（RV64IM+Zba）、`rtl/RiscvCoreBC.v`（RV32IM+Zbc）、`rtl/RiscvCore64BC.v`（RV64IM+Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（RV32/RV64IM+Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（RV32/RV64IM+Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（RV32/RV64IM+Zbkx）与 `rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（RV32/RV64IM+Zbkb+Zbkc+Zbkx）以及 `rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（RV32/RV64IM+Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（RV32/RV64IM+Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（RV32/RV64IM+Zksed）与 `rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（RV32/RV64IM+Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（RV32/RV64IM+Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（RV32/RV64IM+Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（RV32/RV64IM+Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（RV32/RV64IM+Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（RV32IMC+Zbb+Zcb / RV64IMC+Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（RV32/RV64IM+Zifencei）与 `rtl/RiscvCoreZICNTR.v`/`rtl/RiscvCore64ZICNTR.v`（RV32/RV64IM+Zicntr）与 `rtl/RiscvCoreS.v`/`rtl/RiscvCore64S.v`（RV32/RV64IM，M/S/U 特权栈，含 S 级 CSR、异常/中断委托与 SRET），异步复位、标准 Verilog
 
 ## 快速开始
 
@@ -96,6 +97,7 @@ rtl/                        # 生成的 Verilog（可选）
 - [x] Zicond 条件运算扩展（`RvExtension.Zicond` 配置，RV32/RV64 位宽均支持）
 - [x] Zcb 附加压缩扩展（`RvExtension.Zcb` 配置，RV32/RV64 位宽均支持）
 - [x] Zifencei 指令流同步扩展（`RvExtension.Zifencei` 配置，RV32/RV64 位宽均支持）
+- [x] Zicntr 用户计数器扩展（`RvExtension.Zicntr` 配置，RV32/RV64 位宽均支持）
 - [x] S 模式（M/S/U 特权栈、S 级 CSR、异常与中断委托、SRET；`satp` 仅 BARE）
 - [ ] 分支预测器（BHT/gshare 插件化）
 - [ ] I/D 缓存、AXI4 总线桥

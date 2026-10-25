@@ -7,7 +7,7 @@ rv32c 的全部可配置项集中在两层模型：**ISA 配置**（`rv32c.isa` 
 | 层 | 类型 | 职责 | 单一事实源 |
 |----|------|------|-----------|
 | ISA | `rv32c.isa.IsaConfig` | 位宽、扩展、特权栈 | misa 值、`hasMulDiv` 等能力探测、规范名 |
-| 扩展 | `rv32c.isa.RvExtension` | 命名扩展（M/A/C/F/D/Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zicsr/Zifencei） | `implemented`（当前 RTL 可执行）vs `reserved`（roadmap） |
+| 扩展 | `rv32c.isa.RvExtension` | 命名扩展（M/A/C/F/D/Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zicsr/Zifencei/Zicntr） | `implemented`（当前 RTL 可执行）vs `reserved`（roadmap） |
 | 特权 | `rv32c.isa.PrivConfig` | 特权栈形状（M/M-U/M-S-U） | `hasUser/hasSupervisor/hasHypervisor`、栈名 |
 | CSR | `rv32c.isa.CsrMap` | CSR 地址、只读性、最低特权 | `implementedFor(isa)` / `readOnlyFor(isa)`，供 CSR 读解码与 EX 合法性检查共用 |
 | 异常码 | `rv32c.isa.ExceptionCode` | `mcause` 同步异常编号 | 具名常量（2/3/4/6/8/9/11），消除 trap 通路魔法数字 |
@@ -28,7 +28,7 @@ case class IsaConfig(
 | 字段 | 默认值 | 说明 |
 |------|--------|------|
 | `xlen` | 32 | 数据路径位宽，`isa-support` 以配置为准生成 |
-| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Atomic`（A）、`SingleFloat`（F，FLEN=32）、`DoubleFloat`（D，FLEN=64，仅 RV64 且蕴含 F）、`Compressed`（C，RV32 与 RV64 均支持）、`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`（位操作、条件运算与附加压缩指令，RV32 与 RV64 均支持，无 MISA 位）；`Zicsr` 与 `Zifencei` 同为 `implemented`，`reserved` 当前为空 |
+| `extensions` | `{Zicsr}` | `RvExtension.MulDiv`（M）、`Atomic`（A）、`SingleFloat`（F，FLEN=32）、`DoubleFloat`（D，FLEN=64，仅 RV64 且蕴含 F）、`Compressed`（C，RV32 与 RV64 均支持）、`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`（位操作、条件运算与附加压缩指令，RV32 与 RV64 均支持，无 MISA 位）；`Zicsr`、`Zifencei` 与 `Zicntr` 同为 `implemented`，`reserved` 当前为空 |
 | `priv` | `M/U` | 结构规则由 `PrivConfig` 强制：M 必选、S 蕴含 U、H 蕴含 S；S/H 为 RV64 专用（当前 RTL 仅实现 M/U） |
 
 ### 预设
@@ -79,12 +79,14 @@ IsaConfig.rv32imzcb     // RV32IMC_Zbb_Zcb_Zicsr, M/U —— 含 Zcb 附加压�
 IsaConfig.rv64imzcb     // RV64IMC_Zba_Zbb_Zcb_Zicsr, M/U —— RV64 含 Zcb 附加压缩扩展
 IsaConfig.rv32imzifencei // RV32IM_Zicsr_Zifencei, M/U —— 含 fence.i 指令流同步
 IsaConfig.rv64imzifencei // RV64IM_Zicsr_Zifencei, M/U —— RV64 含 fence.i 指令流同步
+IsaConfig.rv32imzicntr  // RV32IM_Zicsr_Zicntr  , M/U —— 含 cycle/time/instret 与 mcounteren
+IsaConfig.rv64imzicntr  // RV64IM_Zicsr_Zicntr  , M/U —— RV64 版用户计数器
 IsaConfig.rv32imsu // RV32IM_Zicsr, M/S/U —— 含 S 级 CSR、异常/中断委托与 SRET
 IsaConfig.rv64imsu // RV64IM_Zicsr, M/S/U —— RV64 含 S 模式
 IsaConfig.rv64    // RV64I_Zicsr,   M/S/U —— RV64I 基线（含 S 模式）
 ```
 
-**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`/`Zifencei` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。S 模式是特权栈属性：`rv32imsu`/`rv64imsu` 会在 `misa` 中置 S 位。
+**misa 从配置推导**：`misaValue = MXL | I | (U/S 位按特权栈) | 扩展字母位`。默认 RV32 配置得 `0x40100100`（I/U，无 M），`rv32im` 得 `0x40101100`，`rv32imc` 额外置 C 位，`rv32ima` 额外置 A 位（`0x40101101`）；`rv64imc` 得 `MXL=2` 并置 I/M/C/U 位，`rv64ima` 得 `MXL=2` 并置 I/M/A/U 位，`rv32f` 置 F 位，`rv64d` 同时置 F 与 D 位。`Zba`/`Zbb`/`Zbs`/`Zbc`/`Zbkb`/`Zbkc`/`Zbkx`/`Zknh`/`Zksh`/`Zksed`/`Zknd`/`Zkne`/`Zicond`/`Zcb`/`Zifencei`/`Zicntr` 为无名 MISA 位的命名扩展，不改变 `misaValue`（规范保留单字母 `B` 位）。S 模式是特权栈属性：`rv32imsu`/`rv64imsu` 会在 `misa` 中置 S 位。
 
 ## CoreConfig 字段
 
@@ -126,7 +128,7 @@ SpinalConfig().generateVerilog(new RiscvCore(config))
 val config = CoreConfig()             // isa 默认 RV32I_Zicsr, M/U
 ```
 
-`RiscvCoreGen` 生成四十六个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）、`rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（`CoreConfig.rv32imzbkb`/`rv64imzbkb`，Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（`CoreConfig.rv32imzbkc`/`rv64imzbkc`，Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（`CoreConfig.rv32imzbkx`/`rv64imzbkx`，Zbkx）、`rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（`CoreConfig.rv32imzbk`/`rv64imzbk`，Zbkb+Zbkc+Zbkx）、`rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（`CoreConfig.rv32imzknh`/`rv64imzknh`，Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（`CoreConfig.rv32imzksh`/`rv64imzksh`，Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（`CoreConfig.rv32imzksed`/`rv64imzksed`，Zksed）、`rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（`CoreConfig.rv32imzks`/`rv64imzks`，Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（`CoreConfig.rv32imzkne`/`rv64imzkne`，Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（`CoreConfig.rv32imzknd`/`rv64imzknd`，Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（`CoreConfig.rv32imzkn`/`rv64imzkn`，Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（`CoreConfig.rv32imzicond`/`rv64imzicond`，Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（`CoreConfig.rv32imzcb`/`rv64imzcb`，Zbb+Zcb / Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（`CoreConfig.rv32imzifencei`/`rv64imzifencei`，Zifencei），以及 `rtl/RiscvCoreS.v`/`rtl/RiscvCore64S.v`（`CoreConfig.rv32imsu`/`rv64imsu`，M/S/U），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
+`RiscvCoreGen` 生成四十八个配置：`rtl/RiscvCore.v`（`CoreConfig.rv32im`，C 关闭）、`rtl/RiscvCoreC.v`（`CoreConfig.rv32imc`，C 使能）、`rtl/RiscvCore64C.v`（`CoreConfig.rv64imc`，RV64C）、`rtl/RiscvCoreA.v`（`CoreConfig.rv32ima`，RV32A）、`rtl/RiscvCore64A.v`（`CoreConfig.rv64ima`，RV64A）、`rtl/RiscvCoreF.v`（`CoreConfig.rv32f`，RV32F）、`rtl/RiscvCore64F.v`（`CoreConfig.rv64f`，RV64F）、`rtl/RiscvCore64D.v`（`CoreConfig.rv64d`，RV64D）、`rtl/RiscvCoreB.v`/`rtl/RiscvCore64B.v`（`CoreConfig.rv32imzbb`/`rv64imzbb`，Zbb）、`rtl/RiscvCoreBS.v`/`rtl/RiscvCore64BS.v`（`CoreConfig.rv32imzbs`/`rv64imzbs`，Zbs）、`rtl/RiscvCoreBA.v`/`rtl/RiscvCore64BA.v`（`CoreConfig.rv32imzba`/`rv64imzba`，Zba）、`rtl/RiscvCoreBC.v`/`rtl/RiscvCore64BC.v`（`CoreConfig.rv32imzbc`/`rv64imzbc`，Zbc）、`rtl/RiscvCoreBKB.v`/`rtl/RiscvCore64BKB.v`（`CoreConfig.rv32imzbkb`/`rv64imzbkb`，Zbkb）、`rtl/RiscvCoreBKC.v`/`rtl/RiscvCore64BKC.v`（`CoreConfig.rv32imzbkc`/`rv64imzbkc`，Zbkc）、`rtl/RiscvCoreBKX.v`/`rtl/RiscvCore64BKX.v`（`CoreConfig.rv32imzbkx`/`rv64imzbkx`，Zbkx）、`rtl/RiscvCoreBK.v`/`rtl/RiscvCore64BK.v`（`CoreConfig.rv32imzbk`/`rv64imzbk`，Zbkb+Zbkc+Zbkx）、`rtl/RiscvCoreKNH.v`/`rtl/RiscvCore64KNH.v`（`CoreConfig.rv32imzknh`/`rv64imzknh`，Zknh）、`rtl/RiscvCoreKSH.v`/`rtl/RiscvCore64KSH.v`（`CoreConfig.rv32imzksh`/`rv64imzksh`，Zksh）、`rtl/RiscvCoreKSED.v`/`rtl/RiscvCore64KSED.v`（`CoreConfig.rv32imzksed`/`rv64imzksed`，Zksed）、`rtl/RiscvCoreKS.v`/`rtl/RiscvCore64KS.v`（`CoreConfig.rv32imzks`/`rv64imzks`，Zksh+Zksed）、`rtl/RiscvCoreKNE.v`/`rtl/RiscvCore64KNE.v`（`CoreConfig.rv32imzkne`/`rv64imzkne`，Zkne）、`rtl/RiscvCoreKND.v`/`rtl/RiscvCore64KND.v`（`CoreConfig.rv32imzknd`/`rv64imzknd`，Zknd）、`rtl/RiscvCoreKN.v`/`rtl/RiscvCore64KN.v`（`CoreConfig.rv32imzkn`/`rv64imzkn`，Zknd+Zkne）、`rtl/RiscvCoreZICOND.v`/`rtl/RiscvCore64ZICOND.v`（`CoreConfig.rv32imzicond`/`rv64imzicond`，Zicond）、`rtl/RiscvCoreZCB.v`/`rtl/RiscvCore64ZCB.v`（`CoreConfig.rv32imzcb`/`rv64imzcb`，Zbb+Zcb / Zba+Zbb+Zcb）与 `rtl/RiscvCoreZIFENCEI.v`/`rtl/RiscvCore64ZIFENCEI.v`（`CoreConfig.rv32imzifencei`/`rv64imzifencei`，Zifencei）、`rtl/RiscvCoreZICNTR.v`/`rtl/RiscvCore64ZICNTR.v`（`CoreConfig.rv32imzicntr`/`rv64imzicntr`，Zicntr），以及 `rtl/RiscvCoreS.v`/`rtl/RiscvCore64S.v`（`CoreConfig.rv32imsu`/`rv64imsu`，M/S/U），均 `withDebug = true`。`./scripts/gen-rtl.sh` 会同时生成。
 
 ### 启用 RV32C 压缩扩展（RV32IMC）
 
@@ -170,7 +172,7 @@ val config = CoreConfig.rv64d        // isa = IsaConfig.rv64d, FLEN=64，蕴含 
 
 D 核同时实例化 `FpUnit(8, 23)`（binary32）与 `FpUnit(11, 52)`（binary64）两个运算单元，按指令 fmt 路由：`.S` 指令走 32 位单元、`.D` 指令走 64 位单元，避免把单精度操作数宽化后再舍入造成的双重舍入。`FCVT.S.D` / `FCVT.D.S` 在 64 位单元上执行（`roundPackTo` 支持任意目标格式）。FLEN=64 下启用 NaN-boxing：单精度写回结果高 32 位置 1，非 boxed 的单精度输入按规范 NaN（`0x7FC00000`）处理。D 蕴含 F，且仅在 `xlen = 64` 时合法，RV32 配置 D 会在 `IsaConfig` 构造时被 require 拒绝。
 
-### 启用 Zba / Zbb / Zbs / Zbc、Zbkb / Zbkc / Zbkx、Zknh / Zksh / Zksed、Zknd / Zkne、Zicond、Zcb 与 Zifencei 扩展
+### 启用 Zba / Zbb / Zbs / Zbc、Zbkb / Zbkc / Zbkx、Zknh / Zksh / Zksed、Zknd / Zkne、Zicond、Zcb、Zifencei 与 Zicntr 扩展
 
 ```scala
 val config = CoreConfig.rv32imzbb     // isa = IsaConfig.rv32imzbb, 含 Zbb
@@ -189,7 +191,7 @@ val configZcb  = CoreConfig.rv32imzcb    // isa = IsaConfig.rv32imzcb, 含 C + Z
 val configFence = CoreConfig.rv32imzifencei // isa = IsaConfig.rv32imzifencei, 含 Zifencei
 ```
 
-`Zb*`、`Zknh`、`Zk*` 与 `Zicond` 彼此独立、按需使能，位操作通路仅在对应 `isa.hasZbb` / `hasZbs` / `hasZba` / `hasZbc` / `hasZbkb` / `hasZbkc` / `hasZbkx` / `hasZknh` / `hasZksh` / `hasZksed` / `hasZknd` / `hasZkne` / `hasZicond` / `hasZcb` / `hasZifencei` 时译码，未使能时相应编码按非法指令（cause 2）处理。Zbb 提供 `andn/orn/xnor`、`clz/ctz/cpop`、`min/minu/max/maxu`、`rol/ror/rori`、`sext.b/sext.h/zext.h`、`orc.b/rev8` 及 RV64 W 形式；Zbs 提供 `bset/bclr/binv/bext` 寄存器与立即数形式（RV32 5 位 / RV64 6 位位索引）；Zba 提供 `sh1add/sh2add/sh3add` 与 RV64 `add.uw/slli.uw/sh*add.uw`；Zbc 提供 `clmul/clmulh/clmulr` 无进位乘法；Zbkb 提供 `pack/packh/packw`、`brev8` 与 RV32 `zip/unzip`；Zbkc 提供 `clmul/clmulh`（Zbc 的无 `clmulr` 子集，与 Zbc 共用 `clmul/clmulh` 编码）；Zbkx 提供 `xperm4/xperm8` 交叉位置换；Zknh 提供 SHA-2 变换 `sha256sum0/sum1/sig0/sig1`、RV64 `sha512sum0/sum1/sig0/sig1` 与 RV32 拆分形式 `sha512sum0r/sum1r/sig0l/sig0h/sig1l/sig1h`；Zksh 提供 SM3 变换 `sm3p0/sm3p1`；Zksed 提供 SM4 变换 `sm4ed/sm4ks`（支持全部 4 种字节选择 `bs`）；Zkne 提供 AES 加密轮变换 `aes32esi/aes32esmi`（RV32）与 `aes64es/aes64esm`（RV64）；Zknd 提供 AES 解密轮变换 `aes32dsi/aes32dsmi`（RV32）与 `aes64ds/aes64dsm/aes64im`（RV64），两者共用 RV64 密钥调度 `aes64ks1i/aes64ks2`；Zicond 提供 `czero.eqz/czero.nez` 条件零运算；Zcb 提供压缩字节/半字访存 `c.lbu/c.lhu/c.lh/c.sb/c.sh` 与压缩寄存器运算 `c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul`（`c.sext.*/c.zext.h` 需 Zbb，`c.zext.w` 需 RV64+Zba，`c.mul` 需 M）；Zifencei 提供 `fence.i` 指令流同步（无 I 缓存，作为合法提交点）。全部在 EX 段组合执行，复用现有 ALU 结果通路，无新增停顿状态。上述所有 `Zb*`、`Zknh`、`Zk*`、`Zicond`、`Zcb` 与 `Zifencei` 均不置 MISA `B` 位，`rv32imzbb` 的 `misaValue` 与 `rv32im` 相同。
+`Zb*`、`Zknh`、`Zk*` 与 `Zicond` 彼此独立、按需使能，位操作通路仅在对应 `isa.hasZbb` / `hasZbs` / `hasZba` / `hasZbc` / `hasZbkb` / `hasZbkc` / `hasZbkx` / `hasZknh` / `hasZksh` / `hasZksed` / `hasZknd` / `hasZkne` / `hasZicond` / `hasZcb` / `hasZifencei` 时译码，未使能时相应编码按非法指令（cause 2）处理。Zbb 提供 `andn/orn/xnor`、`clz/ctz/cpop`、`min/minu/max/maxu`、`rol/ror/rori`、`sext.b/sext.h/zext.h`、`orc.b/rev8` 及 RV64 W 形式；Zbs 提供 `bset/bclr/binv/bext` 寄存器与立即数形式（RV32 5 位 / RV64 6 位位索引）；Zba 提供 `sh1add/sh2add/sh3add` 与 RV64 `add.uw/slli.uw/sh*add.uw`；Zbc 提供 `clmul/clmulh/clmulr` 无进位乘法；Zbkb 提供 `pack/packh/packw`、`brev8` 与 RV32 `zip/unzip`；Zbkc 提供 `clmul/clmulh`（Zbc 的无 `clmulr` 子集，与 Zbc 共用 `clmul/clmulh` 编码）；Zbkx 提供 `xperm4/xperm8` 交叉位置换；Zknh 提供 SHA-2 变换 `sha256sum0/sum1/sig0/sig1`、RV64 `sha512sum0/sum1/sig0/sig1` 与 RV32 拆分形式 `sha512sum0r/sum1r/sig0l/sig0h/sig1l/sig1h`；Zksh 提供 SM3 变换 `sm3p0/sm3p1`；Zksed 提供 SM4 变换 `sm4ed/sm4ks`（支持全部 4 种字节选择 `bs`）；Zkne 提供 AES 加密轮变换 `aes32esi/aes32esmi`（RV32）与 `aes64es/aes64esm`（RV64）；Zknd 提供 AES 解密轮变换 `aes32dsi/aes32dsmi`（RV32）与 `aes64ds/aes64dsm/aes64im`（RV64），两者共用 RV64 密钥调度 `aes64ks1i/aes64ks2`；Zicond 提供 `czero.eqz/czero.nez` 条件零运算；Zcb 提供压缩字节/半字访存 `c.lbu/c.lhu/c.lh/c.sb/c.sh` 与压缩寄存器运算 `c.zext.b/c.sext.b/c.zext.h/c.sext.h/c.zext.w/c.not/c.mul`（`c.sext.*/c.zext.h` 需 Zbb，`c.zext.w` 需 RV64+Zba，`c.mul` 需 M）；Zifencei 提供 `fence.i` 指令流同步（无 I 缓存，作为合法提交点）；Zicntr 提供 `cycle/time/instret` 与 `mcycle/minstret`（RV32 含高半字）、`mcounteren/scounteren`，`cycle` 每拍自增、`instret` 在 WB 提交点累加。Zb*/Zk*/Zicond/Zcb/Zifencei 在 EX 段组合执行，复用现有 ALU 结果通路，无新增停顿状态。上述所有 `Zb*`、`Zknh`、`Zk*`、`Zicond`、`Zcb`、`Zifencei` 与 `Zicntr` 均不置 MISA `B` 位，`rv32imzbb` 的 `misaValue` 与 `rv32im` 相同。
 
 ### 切换到 RV64IM（M/U 栈）
 
@@ -232,7 +234,7 @@ graph TD
 
 `RiscvCore` 构造时把 `CoreConfig` 与当前 RTL 能力对齐，超范围配置在 elaboration 期即报错：
 
-- 支持：RV32I / RV64I（M/U 栈，或 M/S/U 栈的 `rv32imsu`/`rv64imsu`），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc、Zbkb、Zbkc、Zbkx、Zknh、Zksh、Zksed、Zknd、Zkne、Zicond、Zcb、Zifencei；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 由参数化 ALU 承载（RV64 W 形式按 `xlen` 展开）
+- 支持：RV32I / RV64I（M/U 栈，或 M/S/U 栈的 `rv32imsu`/`rv64imsu`），扩展限定在 `RvExtension.implemented`（M、A、F、Zicsr、C、Zba、Zbb、Zbs、Zbc、Zbkb、Zbkc、Zbkx、Zknh、Zksh、Zksed、Zknd、Zkne、Zicond、Zcb、Zifencei、Zicntr；D 仅 RV64）；RV64 下 M 扩展按 W 后缀形式实现，A 扩展 RV32 与 RV64 均支持（`.W` / `.D`），C 扩展 RV32 与 RV64 均支持，F/D 由参数化 FPU（`expw/sigw`）承载，Zba/Zbb/Zbs/Zbc/Zbkb/Zbkc/Zbkx/Zknh/Zksh/Zksed/Zknd/Zkne/Zicond/Zcb/Zifencei 由参数化 ALU 承载，Zicntr 由 `CsrFile` 计数器承载（RV64 W 形式按 `xlen` 展开）
 - 拒绝：S/H 模式、RV32 上的 D、无 Zicsr、纯 M（无 U）
 - 被拒绝的是"当前 RTL 尚未实现"，而非"配置模型表达不了"——结构与能力分离
 
