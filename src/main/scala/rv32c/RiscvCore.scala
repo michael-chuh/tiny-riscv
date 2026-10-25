@@ -388,6 +388,8 @@ class RiscvCore(config: CoreConfig) extends Component {
   val midelegBits = csrFile.io.mideleg
   val stvecRegBits = csrFile.io.stvec
   val sepcRead = csrFile.io.sepc
+  val counterEnM = csrFile.io.counterEnM
+  val counterEnS = csrFile.io.counterEnS
   val mstatusFs = csrFile.io.mstatusFs
   val csrFrm = csrFile.io.frm
   val mieMtie = csrFile.io.mieMtie
@@ -562,8 +564,27 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.csrAddr === U(0x105, 12 bits) &&
     (idEx.csrOp === CsrOp.WRITE || idEx.csrOp === CsrOp.SET) &&
     csrWrDataEx(1 downto 0) =/= B(0, 2 bits) else False
+  // Zicntr: the user counters (cycle/time/instret and RV32 high halves) are
+  // readable from M unconditionally; below M the matching mcounteren bit must
+  // be set, and U additionally needs scounteren in an M/S/U hart.
+  val counterIdx = UInt(2 bits)
+  counterIdx := U(0)
+  when(idEx.csrAddr === U(0xC01, 12 bits) || idEx.csrAddr === U(0xC81, 12 bits)) {
+    counterIdx := U(1)
+  }
+  when(idEx.csrAddr === U(0xC02, 12 bits) || idEx.csrAddr === U(0xC82, 12 bits)) {
+    counterIdx := U(2)
+  }
+  val counterCsr = isCsrInst &&
+    (idEx.csrAddr === U(0xC00, 12 bits) || idEx.csrAddr === U(0xC80, 12 bits) ||
+      idEx.csrAddr === U(0xC01, 12 bits) || idEx.csrAddr === U(0xC81, 12 bits) ||
+      idEx.csrAddr === U(0xC02, 12 bits) || idEx.csrAddr === U(0xC82, 12 bits))
+  val mCounterDenied = curMode =/= MODE_M && !counterEnM(counterIdx)
+  val sCounterDenied =
+    if (config.priv.hasSupervisor) curMode === MODE_U && !counterEnS(counterIdx) else False
+  val counterDenied = counterCsr && (mCounterDenied || sCounterDenied)
   val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad ||
-    stvecModeBad || csrFsOff) && idEx.valid
+    stvecModeBad || csrFsOff || counterDenied) && idEx.valid
 
   // ===== Synchronous exception decode (EX stage) =====
   // Only one case applies per instruction (SYSTEM ops and CSR ops are mutually
@@ -1215,6 +1236,9 @@ class RiscvCore(config: CoreConfig) extends Component {
     memWb.csrAddr := exMem.csrAddr
     memWb.csrWrData := exMem.csrWrData
   }
+
+  // One instruction commits per advancing cycle; a frozen WB holds its value.
+  csrFile.io.retire := memWb.valid && !freezeAll
 
   // ===== Writeback =====
   // CSR instructions write the pre-write CSR value to rd (wbSel==CSR); loads

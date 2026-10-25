@@ -50,6 +50,7 @@ case class IsaConfig(
   def hasFpu: Boolean = hasSingleFloat
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
+  def hasZicntr: Boolean = extensions.contains(RvExtension.Zicntr)
 
   /** Floating-point register width (FLEN): 64 with D, 32 with F only, 0 without
     * a floating-point unit. */
@@ -287,8 +288,15 @@ object IsaConfig {
   val rv64imzifencei: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zifencei), PrivConfig.MU)
 
-  /** RV64 baseline by roadmap: RV64I + Zicsr, M/S/U. S/H hardware is future
-    * work; constructing this now yields an RV64 hart the current RTL rejects. */
+  /** RV32 with Zicntr (RV32IM_Zicsr_Zicntr, M/U): user counters. */
+  val rv32imzicntr: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicntr), PrivConfig.MU)
+
+  /** RV64 with Zicntr (RV64IM_Zicsr_Zicntr, M/U): user counters. */
+  val rv64imzicntr: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicntr), PrivConfig.MU)
+
+  /** RV64 baseline: RV64I + Zicsr, M/S/U. */
   val rv64: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MSU)
 }

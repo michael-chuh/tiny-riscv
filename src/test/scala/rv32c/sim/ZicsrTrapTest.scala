@@ -31,6 +31,16 @@ object TAsm {
   val STVAL = 0x143
   val SIP = 0x144
   val SATP = 0x180
+  val MCOUNTEREN = 0x306
+  val MCYCLE = 0xB00
+  val MINSTRET = 0xB02
+  val SCOUNTEREN = 0x106
+  val CYCLE = 0xC00
+  val TIME = 0xC01
+  val INSTRET = 0xC02
+  val CYCLEH = 0xC80
+  val TIMEH = 0xC81
+  val INSTRETH = 0xC82
 
   val ECALL = 0x00000073L
   val EBREAK = 0x00100073L
@@ -747,6 +757,115 @@ class ZicsrTrapTest extends AnyFunSuite {
         dut.clockDomain.waitSampling(4)
         assert(u32(dut.io.debugRegs(11).toBigInt) == 2, "cause 2 (illegal)")
         assert(u32(dut.io.debugRegs(12).toBigInt) == sretPc, "mepc points at SRET")
+      }
+  }
+
+  // =====================================================================
+  // Zicntr: cycle/time/instret advance, RV32 high halves read zero, and
+  // instret deltas equal the number of retired instructions between reads.
+  // =====================================================================
+  test("Zicntr counters count cycles and retired instructions") {
+    val a = new TAsm
+    a.csrrs(5, CYCLE, 0)
+    a.csrrs(6, TIME, 0)
+    (1 to 50).foreach(i => a.addi(1, 1, 1))
+    a.csrrs(7, CYCLE, 0)
+    a.csrrs(8, CYCLEH, 0)
+    a.csrrs(9, INSTRET, 0)
+    a.addi(2, 0, 1)
+    a.addi(3, 0, 1)
+    a.csrrs(10, INSTRET, 0)
+    a.csrrs(16, INSTRETH, 0)
+    a.csrrwi(0, MCYCLE, 0)      // mcycle write alias resets the cycle counter
+    a.csrrs(12, MCYCLE, 0)
+    a.li(30, 0x1234)
+    a.j("loop")
+    a.label("loop")
+    a.j("loop")
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imzicntr, a.build))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 500, 30, 0x1234L)
+        assert(cyc < 500, "Zicntr program did not finish")
+        dut.clockDomain.waitSampling(4)
+        val c1 = u32(dut.io.debugRegs(5).toBigInt)
+        val t1 = u32(dut.io.debugRegs(6).toBigInt)
+        val c2 = u32(dut.io.debugRegs(7).toBigInt)
+        assert(c2 > c1, s"cycle did not advance ($c1 -> $c2)")
+        assert(c2 - c1 >= 50, s"cycle delta $c2-$c1 smaller than 50 instructions")
+        assert(t1 >= c1 || t1 + 1 >= c1, "time should track cycle")
+        assert(u32(dut.io.debugRegs(8).toBigInt) == 0, "RV32 cycleh starts at 0")
+        assert(u32(dut.io.debugRegs(16).toBigInt) == 0, "RV32 instreth starts at 0")
+        val i1 = u32(dut.io.debugRegs(9).toBigInt)
+        val i2 = u32(dut.io.debugRegs(10).toBigInt)
+        assert(i2 - i1 == 3, s"instret delta ${i2 - i1} != 3")
+        val mcy = u32(dut.io.debugRegs(12).toBigInt)
+        assert(mcy < 32 && mcy < c1, s"mcycle write did not reset the counter ($mcy)")
+        println(s"PASS: Zicntr in $cyc cycles (cycle delta ${c2 - c1})")
+      }
+  }
+
+  // =====================================================================
+  // Zicntr: U-mode counter reads are gated by mcounteren; the trap handler
+  // opens the gate and the retried read succeeds.
+  // =====================================================================
+  test("Zicntr counter access from U is gated by mcounteren") {
+    val a = new TAsm
+    a.csrrwi(0, MCOUNTEREN, 0)
+    a.label("mtvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MTVEC, 5)
+    a.label("mepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.csrrwi(0, MSTATUS, 0)     // MPP=U
+    a.mret()
+
+    a.label("u_start")
+    a.csrrs(10, CYCLE, 0)       // denied: mcounteren.CY = 0
+    a.addi(14, 0, 0xAA)
+    a.csrrs(11, CYCLE, 0)       // allowed after the handler opens the gate
+    a.li(30, 0x1234)
+    a.j("loop")
+
+    a.label("m_handler")
+    a.addi(13, 13, 1)
+    a.csrrs(6, MEPC, 0)
+    a.addi(6, 6, 4)
+    a.csrrw(0, MEPC, 6)
+    a.csrrwi(0, MCOUNTEREN, 7)
+    a.mret()
+
+    a.label("loop")
+    a.j("loop")
+
+    val prog = a.build
+    val mtvecIdx = a.indexOf("mtvec_patch")
+    val mepcIdx = a.indexOf("mepc_patch")
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == mtvecIdx => TAsm.encI(a.indexOf("m_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mepcIdx  => TAsm.encI(a.indexOf("u_start") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imzicntr, patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 500, 30, 0x1234L)
+        assert(cyc < 500, "gated counter program did not finish")
+        dut.clockDomain.waitSampling(4)
+        assert(u32(dut.io.debugRegs(10).toBigInt) == 0, "denied read must not write rd")
+        assert(u32(dut.io.debugRegs(13).toBigInt) == 1, "exactly one trap")
+        assert(u32(dut.io.debugRegs(14).toBigInt) == 0xAA, "U resumed after the trap")
+        assert(u32(dut.io.debugRegs(11).toBigInt) != 0, "permitted read returns cycle")
+        assert(u32(dut.io.debugMode.toBigInt) == 0, "still in U at the end")
       }
   }
 }

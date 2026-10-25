@@ -61,6 +61,7 @@ case class CoreConfig(
   def hasZicond: Boolean = isa.hasZicond
   def hasZcb: Boolean = isa.hasZcb
   def hasZifencei: Boolean = isa.hasZifencei
+  def hasZicntr: Boolean = isa.hasZicntr
   def hasFloat: Boolean = isa.hasFpu
   /** Floating-point register width: 64 with D, 32 with F, 0 without an FPU. */
   def flen: Int = isa.flen
@@ -199,6 +200,9 @@ object CoreConfig {
   def rv64imzcb: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzcb)
 
   /** RV32IM on the M/S/U stack: supervisor-capable hart (satp BARE only). */
+  def rv32imzicntr: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzicntr)
+  def rv64imzicntr: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzicntr)
+
   def rv32imsu: CoreConfig = CoreConfig(isa = IsaConfig.rv32imsu)
 
   /** RV64IM on the M/S/U stack: supervisor-capable rv64 hart. */

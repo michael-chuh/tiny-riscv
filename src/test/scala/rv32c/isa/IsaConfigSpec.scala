@@ -405,6 +405,23 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(PrivConfig.MSU.supportedEncodings == Set(0, 1, 3))
   }
 
+  test("rv32imzicntr / rv64imzicntr select Zicntr on the matching XLEN") {
+    val rv32 = IsaConfig.rv32imzicntr
+    assert(rv32.xlen == 32 && rv32.hasZicntr && rv32.hasMulDiv)
+    assert(rv32.priv == PrivConfig.MU)
+    val rv64 = IsaConfig.rv64imzicntr
+    assert(rv64.xlen == 64 && rv64.hasZicntr)
+    assert(rv64.priv == PrivConfig.MU)
+    assert(!IsaConfig.rv32im.hasZicntr)
+    // Zicntr contributes no misa bit: only I/M/Zicsr as before.
+    assert(IsaConfig.rv32imzicntr.misaValue == IsaConfig.rv32im.misaValue)
+  }
+
+  test("Zicntr is not in the reserved extension set") {
+    assert(!RvExtension.reserved.contains(RvExtension.Zicntr))
+    assert(RvExtension.implemented.contains(RvExtension.Zicntr))
+  }
+
   // ---- naming ---------------------------------------------------------------
   test("canonical names") {
     assert(IsaConfig.rv32.canonicalName == "RV32I_Zicsr  M/U")
@@ -468,6 +485,8 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(CoreConfig.rv32imzifencei.hasZifencei && CoreConfig.rv64imzifencei.hasZifencei)
     assert(!plain.hasZifencei)
     assert(CoreConfig.rv32imsu.priv == PrivConfig.MSU && CoreConfig.rv64imsu.priv == PrivConfig.MSU)
+    assert(CoreConfig.rv32imzicntr.hasZicntr && CoreConfig.rv64imzicntr.hasZicntr)
+    assert(!plain.hasZicntr)
     assert(!plain.priv.hasSupervisor)
   }
 }

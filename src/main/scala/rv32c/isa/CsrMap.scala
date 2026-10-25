@@ -9,7 +9,8 @@ package rv32c.isa
   * configuration's privilege stack contains S mode.
   */
 case class CsrDef(addr: Int, name: String, readOnly: Boolean, minPriv: PrivMode,
-    requiresFpu: Boolean = false, requiresSupervisor: Boolean = false)
+    requiresFpu: Boolean = false, requiresSupervisor: Boolean = false,
+    requiresZicntr: Boolean = false, isRv32Only: Boolean = false)
 
 /** Single source of truth for which CSRs exist and how they may be accessed.
   *
@@ -32,6 +33,7 @@ object CsrMap {
   val mhartid  = CsrDef(0xF14, "mhartid",  readOnly = true,  PrivMode.M)
   val medeleg  = CsrDef(0x302, "medeleg",  readOnly = false, PrivMode.M, requiresSupervisor = true)
   val mideleg  = CsrDef(0x303, "mideleg",  readOnly = false, PrivMode.M, requiresSupervisor = true)
+  val mcounteren = CsrDef(0x306, "mcounteren", readOnly = false, PrivMode.M, requiresZicntr = true)
 
   // ---- Supervisor-level CSRs (only present on an M/S/U hart) ----
   val sstatus  = CsrDef(0x100, "sstatus",  readOnly = false, PrivMode.S)
@@ -43,6 +45,23 @@ object CsrMap {
   val stval    = CsrDef(0x143, "stval",    readOnly = false, PrivMode.S)
   val sip      = CsrDef(0x144, "sip",      readOnly = true,  PrivMode.S)
   val satp     = CsrDef(0x180, "satp",     readOnly = false, PrivMode.S)
+  val scounteren = CsrDef(0x106, "scounteren", readOnly = false, PrivMode.S, requiresZicntr = true)
+
+  // ---- Counters (Zicntr) ----
+  // Machine counter aliases; writes replace the underlying 64-bit counter.
+  val mcycle     = CsrDef(0xB00, "mcycle",     readOnly = false, PrivMode.M, requiresZicntr = true)
+  val minstret   = CsrDef(0xB02, "minstret",   readOnly = false, PrivMode.M, requiresZicntr = true)
+  val mcycleh    = CsrDef(0xB80, "mcycleh",    readOnly = false, PrivMode.M, requiresZicntr = true, isRv32Only = true)
+  val minstreth  = CsrDef(0xB82, "minstreth",  readOnly = false, PrivMode.M, requiresZicntr = true, isRv32Only = true)
+  // ---- User counters (Zicntr) ----
+  // cycle/time/instret are read-only views of the hart counters; RV32 also
+  // implements the high halves (cycleh/timeh/instreth), RV64 does not.
+  val cycle    = CsrDef(0xC00, "cycle",    readOnly = true, PrivMode.U, requiresZicntr = true)
+  val time     = CsrDef(0xC01, "time",     readOnly = true, PrivMode.U, requiresZicntr = true)
+  val instret  = CsrDef(0xC02, "instret",  readOnly = true, PrivMode.U, requiresZicntr = true)
+  val cycleh   = CsrDef(0xC80, "cycleh",   readOnly = true, PrivMode.U, requiresZicntr = true, isRv32Only = true)
+  val timeh    = CsrDef(0xC81, "timeh",    readOnly = true, PrivMode.U, requiresZicntr = true, isRv32Only = true)
+  val instreth = CsrDef(0xC82, "instreth", readOnly = true, PrivMode.U, requiresZicntr = true, isRv32Only = true)
 
   // ---- Floating-point CSRs (specs/fp-extension/requirements.md R2) ----
   // Non-privileged (U-accessible) and only present when the hart has an FPU.
@@ -53,8 +72,10 @@ object CsrMap {
   /** Every CSR this design family knows about. */
   val all: Seq[CsrDef] = Seq(
     mstatus, misa, mie, mtvec, mscratch, mepc, mcause, mtval, mip, mhartid,
-    medeleg, mideleg,
-    sstatus, sie, stvec, sscratch, sepc, scause, stval, sip, satp,
+    medeleg, mideleg, mcounteren,
+    sstatus, sie, stvec, sscratch, sepc, scause, stval, sip, satp, scounteren,
+    mcycle, minstret, mcycleh, minstreth,
+    cycle, time, instret, cycleh, timeh, instreth,
     fflags, frm, fcsr
   )
 
@@ -67,7 +88,9 @@ object CsrMap {
   def implementedFor(isa: IsaConfig): Seq[CsrDef] =
     all.filter(d => isa.priv.modes.contains(d.minPriv) &&
       (!d.requiresFpu || isa.hasFpu) &&
-      (!d.requiresSupervisor || isa.priv.hasSupervisor))
+      (!d.requiresSupervisor || isa.priv.hasSupervisor) &&
+      (!d.requiresZicntr || isa.hasZicntr) &&
+      (!d.isRv32Only || !isa.isRV64))
 
   /** Subset of `implementedFor` that rejects any write intent. */
   def readOnlyFor(isa: IsaConfig): Seq[CsrDef] =

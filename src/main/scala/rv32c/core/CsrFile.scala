@@ -49,6 +49,8 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     val trapTval = in Bits(xlen bits)
     val mretEna = in Bool()
     val sretEna = in Bool()
+    // Zicntr: one retired (committed) instruction this cycle.
+    val retire = in Bool()
     // FP: an FP instruction (or FP CSR write) committed this cycle -> FS <- Dirty.
     val fpDirty = in Bool()
     // FP: accrued exception flags from a committed FP instruction (sticky OR).
@@ -70,6 +72,9 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     val stvec = out Bits(xlen bits)
     val sepc = out UInt(xlen bits)
     val mstatusSie = out Bool()
+    // Zicntr: mcounteren/scounteren enable bits (CY/TM/IR order).
+    val counterEnM = out Bits(3 bits)
+    val counterEnS = out Bits(3 bits)
     // ---- debug readouts ----
     val debugMepc = out UInt(xlen bits)
     val debugMcause = out Bits(xlen bits)
@@ -100,6 +105,12 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val scauseReg = if (hasSupervisor) Some(Reg(Bits(xlen bits)) init B(0, xlen bits)) else None
   val stvalReg = if (hasSupervisor) Some(Reg(Bits(xlen bits)) init B(0, xlen bits)) else None
   val satpReg = if (hasSupervisor) Some(Reg(Bits(xlen bits)) init B(0, xlen bits)) else None
+  // Zicntr counters (64-bit internal so RV32 can expose high halves) and the
+  // counter-enable registers. cycle/time share the same clock source.
+  val cycleCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  val instretCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  val mcounterenReg = if (isa.hasZicntr) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
+  val scounterenReg = if (isa.hasZicntr && hasSupervisor) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   // FP CSRs; only meaningful (and only wired) when the hart has an FPU.
   val fflagsReg = Reg(Bits(5 bits)) init B(0, 5 bits)
   val frmReg = Reg(Bits(3 bits)) init B(0, 3 bits)
@@ -167,6 +178,34 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     when(io.csrAddr === U(0x143, 12 bits)) { readData := stvalReg.get }
     when(io.csrAddr === U(0x144, 12 bits)) { readData := mipBits & B(sieMask, xlen bits) }
     when(io.csrAddr === U(0x180, 12 bits)) { readData := satpReg.get }
+  }
+  // Zicntr CSRs: read-only counters plus the counter-enable registers.
+  if (isa.hasZicntr) {
+    val cyc = cycleCnt.get
+    val ir = instretCnt.get
+    val me = mcounterenReg.get
+    if (xlen == 32) {
+      when(io.csrAddr === U(0xB00, 12 bits)) { readData := cyc(31 downto 0).asBits }
+      when(io.csrAddr === U(0xB02, 12 bits)) { readData := ir(31 downto 0).asBits }
+      when(io.csrAddr === U(0xB80, 12 bits)) { readData := cyc(63 downto 32).asBits }
+      when(io.csrAddr === U(0xB82, 12 bits)) { readData := ir(63 downto 32).asBits }
+      when(io.csrAddr === U(0xC00, 12 bits)) { readData := cyc(31 downto 0).asBits }
+      when(io.csrAddr === U(0xC01, 12 bits)) { readData := cyc(31 downto 0).asBits }
+      when(io.csrAddr === U(0xC02, 12 bits)) { readData := ir(31 downto 0).asBits }
+      when(io.csrAddr === U(0xC80, 12 bits)) { readData := cyc(63 downto 32).asBits }
+      when(io.csrAddr === U(0xC81, 12 bits)) { readData := cyc(63 downto 32).asBits }
+      when(io.csrAddr === U(0xC82, 12 bits)) { readData := ir(63 downto 32).asBits }
+    } else {
+      when(io.csrAddr === U(0xB00, 12 bits)) { readData := cyc.asBits }
+      when(io.csrAddr === U(0xB02, 12 bits)) { readData := ir.asBits }
+      when(io.csrAddr === U(0xC00, 12 bits)) { readData := cyc.asBits }
+      when(io.csrAddr === U(0xC01, 12 bits)) { readData := cyc.asBits }
+      when(io.csrAddr === U(0xC02, 12 bits)) { readData := ir.asBits }
+    }
+    when(io.csrAddr === U(0x306, 12 bits)) { readData := me.resize(xlen) }
+    if (hasSupervisor) {
+      when(io.csrAddr === U(0x106, 12 bits)) { readData := scounterenReg.get.resize(xlen) }
+    }
   }
   // FP CSRs (present only with an FPU). fcsr = frm[7:5] | fflags[4:0].
   if (isa.hasFpu) {
@@ -286,6 +325,22 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val mscratchNext = Bits(xlen bits)
   when(wbHit(0x340)) { mscratchNext := opNew } otherwise { mscratchNext := mscratchReg }
 
+  val mcounterenNext = Bits(3 bits)
+  val scounterenNext = Bits(3 bits)
+  if (isa.hasZicntr) {
+    mcounterenNext := mcounterenReg.get
+    when(wbHit(0x306)) { mcounterenNext := opNew(2 downto 0) }
+    if (hasSupervisor) {
+      scounterenNext := scounterenReg.get
+      when(wbHit(0x106)) { scounterenNext := opNew(2 downto 0) }
+    } else {
+      scounterenNext := B(0, 3 bits)
+    }
+  } else {
+    mcounterenNext := B(0, 3 bits)
+    scounterenNext := B(0, 3 bits)
+  }
+
   val medelegNext = Bits(xlen bits)
   when(wbHit(0x302)) { medelegNext := maskedNext(medelegReg, opNew, medelegMask) } otherwise {
     medelegNext := medelegReg
@@ -376,6 +431,22 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   }
   fflagsReg := fflagsNext
   frmReg := frmNext
+  if (isa.hasZicntr) {
+    cycleCnt.get := cycleCnt.get + 1
+    when(io.retire) { instretCnt.get := instretCnt.get + 1 }
+    // mcycle/minstret write aliases override the free-running increment.
+    if (xlen == 32) {
+      when(wbHit(0xB00)) { cycleCnt.get := Cat(cycleCnt.get(63 downto 32), opNew(31 downto 0)).asUInt }
+      when(wbHit(0xB80)) { cycleCnt.get := Cat(opNew(31 downto 0), cycleCnt.get(31 downto 0)).asUInt }
+      when(wbHit(0xB02)) { instretCnt.get := Cat(instretCnt.get(63 downto 32), opNew(31 downto 0)).asUInt }
+      when(wbHit(0xB82)) { instretCnt.get := Cat(opNew(31 downto 0), instretCnt.get(31 downto 0)).asUInt }
+    } else {
+      when(wbHit(0xB00)) { cycleCnt.get := opNew.asUInt }
+      when(wbHit(0xB02)) { instretCnt.get := opNew.asUInt }
+    }
+    mcounterenReg.get := mcounterenNext
+    if (hasSupervisor) { scounterenReg.get := scounterenNext }
+  }
 
   // ---- Readouts ----
   io.curMode := curModeReg
@@ -391,6 +462,16 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   io.medeleg := medelegReg
   io.mideleg := midelegReg
   io.mstatusSie := mstatusReg(1)
+  if (isa.hasZicntr) {
+    io.counterEnM := mcounterenReg.get
+  } else {
+    io.counterEnM := B(0, 3 bits)
+  }
+  if (isa.hasZicntr && hasSupervisor) {
+    io.counterEnS := scounterenReg.get
+  } else {
+    io.counterEnS := B(0, 3 bits)
+  }
   if (hasSupervisor) {
     io.stvec := stvecReg.get
     io.sepc := sepcReg.get.asUInt

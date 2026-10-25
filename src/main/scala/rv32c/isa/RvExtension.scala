@@ -93,14 +93,17 @@ object RvExtension {
     * instruction-sequence flush point on both RV32 and RV64; the memory system
     * is not cached, so no additional state is required. */
   case object Zifencei extends RvExtension("Zifencei")
+  /** Zicntr: user-level cycle/time/instret counters plus mcounteren/scounteren.
+    * Implemented on both RV32 (with the *h high halves) and RV64. */
+  case object Zicntr extends RvExtension("Zicntr")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
     * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb,
-    * Zifencei). */
+    * Zifencei, Zicntr). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
       Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb, Zicsr,
-      Compressed, Zifencei)
+      Compressed, Zifencei, Zicntr)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] = Set.empty
 
