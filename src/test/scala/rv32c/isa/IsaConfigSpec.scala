@@ -290,6 +290,33 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(isa.canonicalName == "RV64IM_Zicsr_Zifencei  M/U")
   }
 
+  test("rv32imsu selects the M/S/U stack and sets the misa S bit") {
+    val isa = IsaConfig.rv32imsu
+    assert(isa.hasMulDiv && isa.hasZicsr)
+    assert(isa.priv == PrivConfig.MSU)
+    assert(isa.priv.hasSupervisor && isa.priv.hasUser)
+    val expected = IsaConfig.rv32im.misaValue | (BigInt(1) << ('S' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+    assert(isa.canonicalName.endsWith("M/S/U"))
+  }
+
+  test("rv64imsu is an RV64 hart with the S capability") {
+    val isa = IsaConfig.rv64imsu
+    assert(isa.isRV64 && isa.priv == PrivConfig.MSU)
+    val expected = (IsaConfig.rv64imc.misaValue & ~(BigInt(1) << ('C' - 'A'))) |
+      (BigInt(1) << ('S' - 'A'))
+    assert(isa.misaValue == expected, f"0x${isa.misaValue}%x")
+  }
+
+  test("S-level CSRs exist only on harts with S mode") {
+    val names = CsrMap.implementedFor(IsaConfig.rv32imsu).map(_.name).toSet
+    Seq("sstatus", "sie", "stvec", "sscratch", "sepc", "scause", "stval", "sip", "satp")
+      .foreach(n => assert(names.contains(n), s"missing $n"))
+    assert(names.contains("medeleg") && names.contains("mideleg"))
+    val muNames = CsrMap.implementedFor(IsaConfig.rv32im).map(_.name).toSet
+    assert(!muNames.contains("sstatus") && !muNames.contains("medeleg"))
+  }
+
   test("no extension is left in the reserved set") {
     assert(RvExtension.reserved.isEmpty)
     assert(RvExtension.implemented.contains(RvExtension.Zifencei))
@@ -352,9 +379,15 @@ class IsaConfigSpec extends AnyFunSuite {
     }
   }
 
-  test("S/H on RV32 is rejected (RV64 roadmap)") {
+  test("S mode is allowed on RV32 and RV64") {
+    assert(IsaConfig(32, Set(RvExtension.Zicsr), PrivConfig.MSU).priv.hasSupervisor)
+    assert(IsaConfig(64, Set(RvExtension.Zicsr), PrivConfig.MSU).priv.hasSupervisor)
+  }
+
+  test("H on RV32 is rejected (RV64 roadmap)") {
     intercept[IllegalArgumentException] {
-      IsaConfig(32, Set(RvExtension.Zicsr), PrivConfig.MSU)
+      IsaConfig(32, Set(RvExtension.Zicsr),
+        PrivConfig(Set(PrivMode.M, PrivMode.U, PrivMode.S, PrivMode.H)))
     }
   }
 
@@ -434,5 +467,7 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(!plain.hasZcb)
     assert(CoreConfig.rv32imzifencei.hasZifencei && CoreConfig.rv64imzifencei.hasZifencei)
     assert(!plain.hasZifencei)
+    assert(CoreConfig.rv32imsu.priv == PrivConfig.MSU && CoreConfig.rv64imsu.priv == PrivConfig.MSU)
+    assert(!plain.priv.hasSupervisor)
   }
 }

@@ -223,6 +223,7 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val xlen = config.xlen
   val MODE_U = U(PrivMode.U.encoding, 2 bits)
+  val MODE_S = U(PrivMode.S.encoding, 2 bits)
   val MODE_M = U(PrivMode.M.encoding, 2 bits)
 
   // ---- Capability check: which configurations this RTL can actually run ----
@@ -230,8 +231,8 @@ class RiscvCore(config: CoreConfig) extends Component {
     s"extensions not implemented by this core: ${(config.isa.extensions -- RvExtension.implemented).toSeq.sorted.mkString(", ")}")
   require(config.isa.hasZicsr, "Zicsr decode is currently unconditional; it cannot be disabled")
   require(config.priv.hasUser, "rv32c implements the M/U stack (pure-M is not supported)")
-  require(!config.priv.hasSupervisor && !config.priv.hasHypervisor,
-    "S/H modes are roadmap features and are not implemented yet")
+  require(!config.priv.hasHypervisor,
+    "H mode is a roadmap feature and is not implemented yet")
 
   // ===== Privilege-mode legality (configuration driven) =====
   // The configured stack is the authoritative set of encodings the hart may
@@ -380,6 +381,13 @@ class RiscvCore(config: CoreConfig) extends Component {
   val curMode = csrFile.io.curMode
   val mstatusMie = csrFile.io.mstatusMie
   val mstatusMpp = csrFile.io.mstatusMpp
+  val mstatusSpp = csrFile.io.mstatusSpp
+  val mstatusSie = csrFile.io.mstatusSie
+  val mieStie = csrFile.io.mieStie
+  val medelegBits = csrFile.io.medeleg
+  val midelegBits = csrFile.io.mideleg
+  val stvecRegBits = csrFile.io.stvec
+  val sepcRead = csrFile.io.sepc
   val mstatusFs = csrFile.io.mstatusFs
   val csrFrm = csrFile.io.frm
   val mieMtie = csrFile.io.mieMtie
@@ -540,15 +548,22 @@ class RiscvCore(config: CoreConfig) extends Component {
   val csrFsOff = if (withFloat) isCsrInst && mstatusFs === U(0, 2 bits) &&
     (idEx.csrAddr === U(0x001, 12 bits) || idEx.csrAddr === U(0x002, 12 bits) ||
       idEx.csrAddr === U(0x003, 12 bits)) else False
-  // A CSR is illegal unless the current mode is at least its minimum privilege
-  // (each CsrDef carries that level). With the current M/U stack this means
-  // "no CSR is accessible from U mode", matching the spec subset.
-  val csrPrivIllegal = isCsrInst && csrDefs.map(d => !privAtLeast(d.minPriv)).reduce(_ || _)
+  // A CSR is illegal unless the current mode is at least the minimum privilege
+  // of the *addressed* CSR (each CsrDef carries that level), so supervisor
+  // code may touch S CSRs while machine CSRs stay M-only.
+  val csrPrivIllegal = isCsrInst &&
+    csrDefs.map(d => (idEx.csrAddr === U(d.addr, 12 bits)) && !privAtLeast(d.minPriv)).reduce(_ || _)
   // mtvec.MODE after the write (the stored mode is always 0: nonzero writes trap).
   val mtvecModeBad = isCsrInst && idEx.csrWe && idEx.csrAddr === U(0x305, 12 bits) &&
     (idEx.csrOp === CsrOp.WRITE || idEx.csrOp === CsrOp.SET) &&
     csrWrDataEx(1 downto 0) =/= B(0, 2 bits)
-  val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad || csrFsOff) && idEx.valid
+  // stvec follows the same WARL rule as mtvec: only direct (MODE=0) is legal.
+  val stvecModeBad = if (config.priv.hasSupervisor) isCsrInst && idEx.csrWe &&
+    idEx.csrAddr === U(0x105, 12 bits) &&
+    (idEx.csrOp === CsrOp.WRITE || idEx.csrOp === CsrOp.SET) &&
+    csrWrDataEx(1 downto 0) =/= B(0, 2 bits) else False
+  val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad ||
+    stvecModeBad || csrFsOff) && idEx.valid
 
   // ===== Synchronous exception decode (EX stage) =====
   // Only one case applies per instruction (SYSTEM ops and CSR ops are mutually
@@ -563,6 +578,12 @@ class RiscvCore(config: CoreConfig) extends Component {
   // MRET returns to mstatus.MPP, which must name a mode this hart implements;
   // any other encoding is a reserved/unsupported target and traps as illegal.
   val mppSupported = modeSupported(mstatusMpp)
+  // SRET returns to SPP; SPP must name a mode this hart implements (SPP=0 is U,
+  // which a pure M/S stack does not provide).
+  val sppTarget = Mux(mstatusSpp, MODE_S, MODE_U)
+  val sppSupported = modeSupported(sppTarget)
+  val sretLegal = if (config.priv.hasSupervisor) idEx.valid &&
+    idEx.sysOp === SysOp.SRET && curMode === MODE_S && sppSupported else False
 
   when(idEx.valid) {
     when(idEx.sysOp === SysOp.ECALL) {
@@ -574,6 +595,10 @@ class RiscvCore(config: CoreConfig) extends Component {
       exTrapCause := B(ExceptionCode.breakpoint, xlen bits)
     }
     when(idEx.sysOp === SysOp.MRET && (curMode =/= MODE_M || !mppSupported)) {
+      exTrapEna := True
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
+    }
+    when(idEx.sysOp === SysOp.SRET && !sretLegal) {
       exTrapEna := True
       exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
@@ -621,17 +646,29 @@ class RiscvCore(config: CoreConfig) extends Component {
   // ===== MRET / interrupt resolution =====
   val mretLegal = idEx.valid && idEx.sysOp === SysOp.MRET && curMode === MODE_M && mppSupported
 
-  // MRET reads mepc/mstatus.MPP which a CSR instruction 1-2 slots behind (still
-  // in EX/MEM or MEM/WB) has not yet committed. Stall MRET until those writes
-  // have reached WB and committed.
-  val csrAffectsMret = (memWb.valid && memWb.csrWe &&
-    (memWb.csrAddr === U(0x300, 12 bits) || memWb.csrAddr === U(0x341, 12 bits))) ||
-    (exMem.valid && exMem.csrWe &&
-      (exMem.csrAddr === U(0x300, 12 bits) || exMem.csrAddr === U(0x341, 12 bits)))
-  val csrMretStall = mretLegal && csrAffectsMret
-  val exMretRaw = mretLegal && !csrMretStall
+  // MRET reads mepc/mstatus.MPP and SRET reads sepc/mstatus.SPP, which a CSR
+  // instruction 1-2 slots behind (still in EX/MEM or MEM/WB) has not yet
+  // committed. Stall the return until those writes have reached WB. sstatus
+  // writes share mstatus storage, hence 0x100 is included too.
+  def xretCsrAddr(addr: UInt): Bool =
+    addr === U(0x300, 12 bits) || addr === U(0x100, 12 bits) ||
+      addr === U(0x341, 12 bits) || addr === U(0x141, 12 bits)
+  val csrAffectsXret = (memWb.valid && memWb.csrWe && xretCsrAddr(memWb.csrAddr)) ||
+    (exMem.valid && exMem.csrWe && xretCsrAddr(exMem.csrAddr))
+  val csrXretStall = (mretLegal || sretLegal) && csrAffectsXret
+  val exMretRaw = mretLegal && !csrXretStall
+  val exSretRaw = sretLegal && !csrXretStall
 
-  val intrReq = io.timerInterrupt && mieMtie && mstatusMie && curMode === MODE_M
+  // Machine timer interrupt: delegated to S when mideleg[7] is set. A
+  // machine-level interrupt is always enabled while running below M, and
+  // gated by mstatus.MIE in M. The supervisor timer is taken in S/U when
+  // sie.STIE and (running below S, or SIE while in S).
+  val delegTimer = midelegBits(7)
+  val intrM = io.timerInterrupt && mieMtie && !delegTimer &&
+    (curMode =/= MODE_M || mstatusMie)
+  val intrS = io.timerInterrupt && mieStie && delegTimer &&
+    (curMode === MODE_U || (curMode === MODE_S && mstatusSie))
+  val intrReq = intrM || intrS
 
   // ===== Hazard detection =====
   // Loads and CSR reads produce rd only at WB, so a consumer in ID whose source
@@ -893,7 +930,8 @@ class RiscvCore(config: CoreConfig) extends Component {
   // Taken only when the pipeline is otherwise advancing and nothing older in
   // EX/MEM is redirecting or still running a divide; synchronous exceptions
   // (EX) always win over the timer interrupt (R4.4).
-  val intrTake = intrReq && !exTrapEna && !ctrlFlush && !exMretRaw && !csrMretStall &&
+  val intrTake = intrReq && !exTrapEna && !ctrlFlush && !exMretRaw && !exSretRaw &&
+    !csrXretStall &&
     !divInEx && !stallData && !freezeAll
 
   // Address of the interrupted instruction: the instruction in EX if any, else
@@ -909,9 +947,22 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   val trapCommit = (exTrapEna || intrTake) && !freezeAll
   val exMret = exMretRaw && !freezeAll
+  val exSret = exSretRaw && !freezeAll
+  val exXret = exMret || exSret
 
-  val trapEntry = (mtvecRegBits & B((BigInt(1) << xlen) - 4, xlen bits)).asUInt
-  val intrCauseVal = (BigInt(1) << (xlen - 1)) | 7
+  // Trap delegation: a trap never targets S when it was taken in M, and a
+  // synchronous cause only delegates when medeleg[cause] is set. Interrupt
+  // delegation was already resolved by intrS.
+  val exCauseIdx = exTrapCause.resize(log2Up(xlen)).asUInt
+  val exDelegated = medelegBits(exCauseIdx)
+  val trapToS = (intrTake && intrS) || (exTrapEna && curMode =/= MODE_M && exDelegated)
+
+  val mtvecBase = (mtvecRegBits & B((BigInt(1) << xlen) - 4, xlen bits)).asUInt
+  val stvecBase = (stvecRegBits & B((BigInt(1) << xlen) - 4, xlen bits)).asUInt
+  val trapEntry = Mux(trapToS, stvecBase, mtvecBase)
+  val intrCauseVal = Mux(intrS,
+    B((BigInt(1) << (xlen - 1)) | ExceptionCode.supervisorTimer, xlen bits),
+    B((BigInt(1) << (xlen - 1)) | 7, xlen bits))
 
   // ===== CSR file commit ports =====
   csrFile.io.csrAddr := memWb.csrAddr
@@ -920,9 +971,11 @@ class RiscvCore(config: CoreConfig) extends Component {
   csrFile.io.csrWrData := memWb.csrWrData
   csrFile.io.trapEna := trapCommit
   csrFile.io.trapEpc := Mux(intrTake, intrEpc, idEx.pc)
-  csrFile.io.trapCause := Mux(intrTake, B(intrCauseVal, xlen bits), exTrapCause)
+  csrFile.io.trapCause := Mux(intrTake, intrCauseVal, exTrapCause)
   csrFile.io.trapTval := Mux(intrTake, B(0, xlen bits), exTrapTval)
   csrFile.io.mretEna := exMret
+  csrFile.io.sretEna := exSret
+  csrFile.io.trapToS := trapToS
 
   // An FP instruction (register write or FP CSR write) committed at WB marks the
   // FP state dirty (mstatus.FS <- Dirty).
@@ -943,8 +996,8 @@ class RiscvCore(config: CoreConfig) extends Component {
   // redirecting instruction itself still flows to WB (needed for JAL link
   // writes). A trap / MRET / interrupt additionally bubbles EX/MEM so the
   // faulted or interrupted instruction never reaches WB.
-  val flushYounger = ctrlFlush || trapCommit || exMret || intrTake
-  val bubbleEx = trapCommit || exMret || csrMretStall
+  val flushYounger = ctrlFlush || trapCommit || exXret || intrTake
+  val bubbleEx = trapCommit || exXret || csrXretStall
 
   // ===== PC update =====
   when(!freezeAll) {
@@ -952,9 +1005,11 @@ class RiscvCore(config: CoreConfig) extends Component {
       pcReg := trapEntry
     } elsewhen (exMret) {
       pcReg := mepcRead
+    } elsewhen (exSret) {
+      pcReg := sepcRead
     } elsewhen (ctrlFlush) {
       pcReg := ctrlTarget
-    } elsewhen (stallData || csrMretStall) {
+    } elsewhen (stallData || csrXretStall) {
       pcReg := pcReg // hold
     } otherwise {
       pcReg := pcReg + fetchLen
@@ -963,7 +1018,7 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   // ===== IF/ID update =====
   when(!freezeAll) {
-    when(stallData || csrMretStall) {
+    when(stallData || csrXretStall) {
       // hold
     } elsewhen (flushYounger) {
       ifId.valid := False
@@ -976,7 +1031,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   }
 
   // ===== ID/EX update =====
-  when(!freezeAll && !csrMretStall) {
+  when(!freezeAll && !csrXretStall) {
     when(stallData || flushYounger) {
       idEx.valid := False
     } otherwise {

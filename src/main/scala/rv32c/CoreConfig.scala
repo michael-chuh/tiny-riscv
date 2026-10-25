@@ -198,6 +198,12 @@ object CoreConfig {
   /** RV64IMC + Zba + Zbb + Zcb on the M/U stack: compressed Zcb hart. */
   def rv64imzcb: CoreConfig = CoreConfig(isa = IsaConfig.rv64imzcb)
 
+  /** RV32IM on the M/S/U stack: supervisor-capable hart (satp BARE only). */
+  def rv32imsu: CoreConfig = CoreConfig(isa = IsaConfig.rv32imsu)
+
+  /** RV64IM on the M/S/U stack: supervisor-capable rv64 hart. */
+  def rv64imsu: CoreConfig = CoreConfig(isa = IsaConfig.rv64imsu)
+
   /** RV32IM + Zifencei on the M/U stack: instruction-fence MCU hart. */
   def rv32imzifencei: CoreConfig = CoreConfig(isa = IsaConfig.rv32imzifencei)
 

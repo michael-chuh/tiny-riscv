@@ -27,7 +27,7 @@ object CsrOp extends SpinalEnum {
   * ILLEGAL is also used as the catch-all for unrecognized instructions.
   */
 object SysOp extends SpinalEnum {
-  val NONE, ECALL, EBREAK, MRET, WFI, ILLEGAL = newElement()
+  val NONE, ECALL, EBREAK, MRET, SRET, WFI, ILLEGAL = newElement()
 }
 
 class DecodeOutput(xlen: Int) extends Bundle {
@@ -1297,8 +1297,9 @@ class Decoder(xlen: Int, isa: IsaConfig = IsaConfig.rv32) extends Component {
             is(M"000000000000") { d.sysOp := SysOp.ECALL }
             is(M"000000000001") { d.sysOp := SysOp.EBREAK }
             is(M"001100000010") { d.sysOp := SysOp.MRET }
+            is(M"000100000010") { d.sysOp := SysOp.SRET }
             is(M"000100000101") { d.sysOp := SysOp.WFI }
-            default { d.sysOp := SysOp.ILLEGAL; d.valid := False } // SRET/URET/reserved
+            default { d.sysOp := SysOp.ILLEGAL; d.valid := False } // URET/reserved
           }
         }
         default { // funct3 = 100 (reserved)

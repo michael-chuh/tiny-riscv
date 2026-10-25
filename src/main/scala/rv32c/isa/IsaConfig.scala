@@ -10,8 +10,8 @@ package rv32c.isa
   *
   * Everything the rest of the design needs (misa value, "does this hart have
   * M", readable stack name) is derived here so there is a single source of
-  * truth. Structural rules (xlen consistency, S requires U, S/H are RV64-only
-  * by roadmap) are enforced by `require`; whether the *current* RTL can run a
+  * truth. Structural rules (xlen consistency, H requires S and RV64) are
+  * enforced by `require`; whether the *current* RTL can run a
   * given configuration is checked separately at core instantiation.
   */
 case class IsaConfig(
@@ -20,7 +20,6 @@ case class IsaConfig(
     priv: PrivConfig = PrivConfig.MU
 ) {
   require(xlen == 32 || xlen == 64, s"xlen must be 32 or 64, got $xlen")
-  require(!priv.hasSupervisor || xlen == 64, "S mode is an RV64 roadmap feature")
   require(!priv.hasHypervisor || xlen == 64, "H mode is an RV64 roadmap feature")
   require(!priv.hasHypervisor || priv.hasSupervisor, "H mode builds on S mode")
   require(!extensions.contains(RvExtension.DoubleFloat) || extensions.contains(RvExtension.SingleFloat),
@@ -271,6 +270,14 @@ object IsaConfig {
   val rv64imzcb: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Compressed,
       RvExtension.Zba, RvExtension.Zbb, RvExtension.Zcb), PrivConfig.MU)
+
+  /** RV32 with S-mode (RV32IM_Zicsr, M/S/U): supervisor-level hart. */
+  val rv32imsu: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv), PrivConfig.MSU)
+
+  /** RV64 with S-mode (RV64IM_Zicsr, M/S/U): supervisor-level rv64 hart. */
+  val rv64imsu: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv), PrivConfig.MSU)
 
   /** RV32 with Zifencei (RV32IM_Zicsr_Zifencei, M/U): instruction fence MCU. */
   val rv32imzifencei: IsaConfig =

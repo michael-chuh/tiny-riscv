@@ -18,8 +18,11 @@ class CsrMapSpec extends AnyFunSuite {
 
   test("implementedFor includes every machine CSR on an M/U hart") {
     val impl = CsrMap.implementedFor(IsaConfig.rv32)
-    // On a hart without an FPU the FP CSRs (fcsr/fflags/frm) are absent.
-    val expected = CsrMap.all.filter(!_.requiresFpu).map(_.addr).toSet
+    // On a hart without an FPU the FP CSRs (fcsr/fflags/frm) are absent, and
+    // without S mode the delegation CSRs (medeleg/mideleg) do not exist.
+    val expected = CsrMap.all
+      .filter(d => !d.requiresFpu && !d.requiresSupervisor && d.minPriv != PrivMode.S)
+      .map(_.addr).toSet
     assert(impl.map(_.addr).toSet == expected)
   }
 

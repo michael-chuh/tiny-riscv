@@ -8,6 +8,7 @@ object ExceptionCode {
   def instructionIllegal = 2
   def breakpoint = 3
   def loadMisaligned = 4
+  def supervisorTimer = 5
   def storeMisaligned = 6
   def ecallFromU = 8
   def ecallFromS = 9

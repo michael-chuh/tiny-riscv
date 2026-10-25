@@ -20,10 +20,22 @@ object TAsm {
   val MTVAL = 0x343
   val MIP = 0x344
   val MHARTID = 0xF14
+  val MEDELEG = 0x302
+  val MIDELEG = 0x303
+  val SSTATUS = 0x100
+  val SIE = 0x104
+  val STVEC = 0x105
+  val SSCRATCH = 0x140
+  val SEPC = 0x141
+  val SCAUSE = 0x142
+  val STVAL = 0x143
+  val SIP = 0x144
+  val SATP = 0x180
 
   val ECALL = 0x00000073L
   val EBREAK = 0x00100073L
   val MRET = 0x30200073L
+  val SRET = 0x10200073L
   val WFI = 0x10500073L
   val ILLEGAL_WORD = 0xFFFFFFFFL
 
@@ -67,6 +79,7 @@ class TAsm {
 
   // ---- RV32I ---- //
   def addi(rd: Int, rs1: Int, imm: Int): Unit = emit((_, _) => encI(imm, rs1, 0, rd, 0x13))
+  def andi(rd: Int, rs1: Int, imm: Int): Unit = emit((_, _) => encI(imm, rs1, 7, rd, 0x13))
   def add(rd: Int, rs1: Int, rs2: Int): Unit = emit((_, _) => encR(0, rs2, rs1, 0, rd, 0x33))
   def lui(rd: Int, imm20: Int): Unit = emit((_, _) => encU(imm20, rd, 0x37))
   def li(rd: Int, v: Int): Unit = {
@@ -96,6 +109,7 @@ class TAsm {
   def ecall(): Unit = raw(ECALL)
   def ebreak(): Unit = raw(EBREAK)
   def mret(): Unit = raw(MRET)
+  def sret(): Unit = raw(SRET)
   def wfi(): Unit = raw(WFI)
 
   def build: Seq[Long] = lines.zipWithIndex.map { case (f, i) => f(i, labels) }.toSeq
@@ -537,6 +551,202 @@ class ZicsrTrapTest extends AnyFunSuite {
         assert(u32(dut.io.debugRegs(21).toBigInt) == 2, "U illegal (CSR access + MRET) count")
         assert(u32(dut.io.debugMode.toBigInt) == 3, "back in M mode at end")
         println(s"PASS: U-mode round trip in $cyc cycles")
+      }
+  }
+
+  // =====================================================================
+  // S-mode: a delegated ECALL from S enters the S handler (stvec/scause/
+  // sepc), SPP records the source mode, and SRET returns into S.
+  // =====================================================================
+  test("S-mode ECALL delegates to the S handler and SRET returns") {
+    val a = new TAsm
+    // Machine setup: delegate ECALL-from-S (cause 9), point stvec at the S
+    // handler, enter S via MRET with MPP=S.
+    a.li(5, 1 << 9)
+    a.csrrw(0, MEDELEG, 5)
+    a.label("stvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, STVEC, 5)
+    a.label("mepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.li(5, 0x800)              // MPP=S, MIE=0
+    a.csrrw(0, MSTATUS, 5)
+    a.mret()                    // -> S at s_start
+
+    a.label("s_start")
+    a.addi(10, 0, 0x55)
+    a.ecall()                   // delegated to S
+    a.addi(14, 0, 0x99)         // must be skipped by the handler
+    a.label("s_resume")
+    a.addi(14, 0, 0x66)
+    a.li(30, 0x1234)
+    a.j("loop")
+
+    a.label("s_handler")
+    a.csrrs(11, SCAUSE, 0)
+    a.csrrs(12, SEPC, 0)
+    a.addi(13, 13, 1)
+    a.csrrs(15, SSTATUS, 0)
+    a.andi(15, 15, 0x100)       // SPP bit should be set (trap came from S)
+    a.label("sepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, SEPC, 5)
+    a.sret()
+
+    a.label("loop")
+    a.j("loop")
+
+    val prog = a.build
+    val stvecIdx = a.indexOf("stvec_patch")
+    val mepcIdx = a.indexOf("mepc_patch")
+    val sepcIdx = a.indexOf("sepc_patch")
+    val ecallPc = a.indexOf("s_start") * 4 + 4
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == stvecIdx => TAsm.encI(a.indexOf("s_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mepcIdx  => TAsm.encI(a.indexOf("s_start") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == sepcIdx  => TAsm.encI(a.indexOf("s_resume") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imsu, patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 800, 30, 0x1234L)
+        assert(cyc < 800, "S-mode program did not finish")
+        dut.clockDomain.waitSampling(4)
+        assert(u32(dut.io.debugRegs(13).toBigInt) == 1, "handler entered once")
+        assert(u32(dut.io.debugRegs(11).toBigInt) == 9, "scause = ecall from S")
+        assert(u32(dut.io.debugRegs(12).toBigInt) == ecallPc, "sepc = ECALL pc")
+        assert(u32(dut.io.debugRegs(15).toBigInt) == 0x100, "sstatus.SPP = S")
+        assert(u32(dut.io.debugRegs(10).toBigInt) == 0x55, "x10 S marker")
+        assert(u32(dut.io.debugRegs(14).toBigInt) == 0x66, "resumed after the trap")
+        println(s"PASS: S-mode ECALL delegation/SRET in $cyc cycles")
+      }
+  }
+
+  // =====================================================================
+  // Without medeleg the S ECALL is handled in M, and the S handler is idle.
+  // =====================================================================
+  test("undelegated S-mode ECALL is taken in M") {
+    val a = new TAsm
+    a.csrrwi(0, MEDELEG, 0)     // no delegation
+    a.label("stvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, STVEC, 5)
+    a.label("mtvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MTVEC, 5)
+    a.label("mepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.li(5, 0x800)              // MPP=S
+    a.csrrw(0, MSTATUS, 5)
+    a.mret()
+
+    a.label("s_start")
+    a.addi(10, 0, 0x55)
+    a.ecall()
+    a.addi(14, 0, 0x99)
+
+    a.label("s_handler")
+    a.addi(13, 13, 1)           // must stay 0
+    a.j("loop")
+
+    a.label("m_handler")
+    a.csrrs(11, MCAUSE, 0)
+    a.csrrs(12, MEPC, 0)
+    a.label("done_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.li(5, 0x1800)             // MPP=M
+    a.csrrw(0, MSTATUS, 5)
+    a.mret()
+
+    a.label("m_done")
+    a.li(30, 0x1234)
+    a.j("loop")
+    a.label("loop")
+    a.j("loop")
+
+    val prog = a.build
+    val stvecIdx = a.indexOf("stvec_patch")
+    val mtvecIdx = a.indexOf("mtvec_patch")
+    val mepcIdx = a.indexOf("mepc_patch")
+    val doneIdx = a.indexOf("done_patch")
+    val ecallPc = a.indexOf("s_start") * 4 + 4
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == stvecIdx => TAsm.encI(a.indexOf("s_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mtvecIdx => TAsm.encI(a.indexOf("m_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mepcIdx  => TAsm.encI(a.indexOf("s_start") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == doneIdx  => TAsm.encI(a.indexOf("m_done") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imsu, patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 800, 30, 0x1234L)
+        assert(cyc < 800, "program did not finish")
+        dut.clockDomain.waitSampling(4)
+        assert(u32(dut.io.debugRegs(11).toBigInt) == 9, "mcause = ecall from S")
+        assert(u32(dut.io.debugRegs(12).toBigInt) == ecallPc, "mepc = ECALL pc")
+        assert(u32(dut.io.debugRegs(13).toBigInt) == 0, "S handler not entered")
+        assert(u32(dut.io.debugMode.toBigInt) == 3, "back in M")
+      }
+  }
+
+  // =====================================================================
+  // SRET is M-mode illegal; it traps with cause 2 and mepc at the SRET.
+  // =====================================================================
+  test("SRET in M mode traps as illegal") {
+    val a = new TAsm
+    a.label("mtvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MTVEC, 5)
+    a.label("sret_addr")
+    a.sret()
+    a.li(30, 0xBAD)
+    a.label("m_handler")
+    a.csrrs(11, MCAUSE, 0)
+    a.csrrs(12, MEPC, 0)
+    a.label("done_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.mret()
+    a.label("m_done")
+    a.li(30, 0x1234)
+    a.j("loop")
+    a.label("loop")
+    a.j("loop")
+
+    val prog = a.build
+    val mtvecIdx = a.indexOf("mtvec_patch")
+    val doneIdx = a.indexOf("done_patch")
+    val sretPc = a.indexOf("sret_addr") * 4
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == mtvecIdx => TAsm.encI(a.indexOf("m_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == doneIdx  => TAsm.encI(a.indexOf("m_done") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imsu, patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 400, 30, 0x1234L)
+        assert(cyc < 400, "program did not finish")
+        dut.clockDomain.waitSampling(4)
+        assert(u32(dut.io.debugRegs(11).toBigInt) == 2, "cause 2 (illegal)")
+        assert(u32(dut.io.debugRegs(12).toBigInt) == sretPc, "mepc points at SRET")
       }
   }
 }
