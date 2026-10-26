@@ -33,7 +33,7 @@ graph LR
 - **Zknd / Zkne（`isa.hasZknd/hasZkne`）**：RV32 的 `aes32{es,esm,ds,dsm}i` 编码为 OP（`funct3=000`），由 `instr[29:25]` 选择操作、`instr[31:30]` 给出 `bs`；RV64 的 `aes64{es,esm,ds,dsm}`/`aes64ks2` 编码为 OP（`funct3=000`，`funct7` 区分），`aes64im` 与 `aes64ks1i` 编码为 OP-IMM（`imm[11:4]` 固定、`rcon` 取 `instr[23:20]`，经新增 4 位 `rcon` 随 ID/EX 送入 ALU）；`aes64ks1i` 的 `rcon>10` 在译码级判为 cause 2；未使能时对应编码保持 cause 2
 - **Zicond（`isa.hasZicond`）**：`czero.eqz/czero.nez` 编码为 OP（`funct3=101`/`111`），以 `funct7=0000111` 与基础 RV32I 的 `srl/sra/and` 区分；覆盖层在 OP 分支末尾生效，未使能时编码保持 cause 2
 - **Zifencei（`isa.hasZifencei`）**：MISC-MEM 的 `funct3=001` 仅在该扩展使能时合法；无 I 缓存，译码后不引入额外状态
-- **Zicntr（`isa.hasZicntr`）**：64 位 `cycle/instret` 计数器常驻 `CsrFile`，`cycle` 每拍自增、`instret` 在 WB 提交（`memWb.valid && !freezeAll`）时自增；`mcycle/minstret` 为其 M 模式可写别名，`time` 复用 `cycle` 时基，RV32 以 `cycleh/timeh/instreth` 暴露高 32 位；低于 M 模式读用户计数器需对应 `mcounteren` 位，M/S/U 栈的 U 模式还需 `scounteren` 位，否则按非法指令（cause 2）处理
+- **Zicntr（`isa.hasZicntr`）**：64 位 `cycle/instret` 计数器常驻 `CsrFile`，`cycle` 每拍自增、`instret` 在 WB 提交（`memWb.valid && !freezeAll`）时自增；`mcycle/minstret` 为其 M 模式可写别名，`time` 复用 `cycle` 时基，RV32 以 `cycleh/timeh/instreth` 暴露高 32 位；`mcountinhibit` 的 CY/TM/IR 位分别冻结 `cycle/time/instret` 而互不影响；低于 M 模式读用户计数器需对应 `mcounteren` 位，M/S/U 栈的 U 模式还需 `scounteren` 位，否则按非法指令（cause 2）处理
 - **Zcb（`isa.hasZcb`）**：压缩字节/半字访存在 Q0 `cfunct3=100`（`instr[12:10]` 区分 LB/LH/LHU/SB/SH），压缩寄存器运算在 Q1 `cfunct3=100` + `instr[12:10]=111`（`instr[6:5]=11` 为 zext/sext/not，`instr[6:5]=10` 为 c.mul）；仅 `instr[6:5]=10/11` 被覆盖，其余保留基础 C.SUB/C.XOR/C.OR/C.AND 译码
 - 本阶段不做寄存器数据读取；读地址（rs1/rs2）随 ID/EX 寄存器进入 EX，操作数在 EX 段统一取得（见「数据冒险」）
 

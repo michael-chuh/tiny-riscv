@@ -16,6 +16,7 @@ In scope:
 - User counters: `cycle(0xC00)`, `time(0xC01)`, `instret(0xC02)` read-only.
 - RV32-only high halves: `cycleh(0xC80)`, `timeh(0xC81)`, `instreth(0xC82)`.
 - Access control: `mcounteren(0x306)` and, on M/S/U harts, `scounteren(0x106)`.
+- Counter freeze: `mcountinhibit(0x320)` with CY(0)/TM(1)/IR(2).
 - Presets `rv32imzicntr` / `rv64imzicntr` and RTL
   `RiscvCoreZICNTR` / `RiscvCore64ZICNTR`.
 
@@ -46,6 +47,10 @@ THE `RiscvCore` SHALL require the matching `mcounteren` bit, and in a M/S/U
 hart executing in U mode SHALL additionally require the matching `scounteren`
 bit, raising an illegal-instruction exception (cause 2, `mtval` = CSR address)
 otherwise.
+
+WHEN `mcountinhibit` has CY/TM/IR set,
+THE `CsrFile` SHALL stop incrementing `cycle`/`time`/`instret` respectively,
+leaving the other counters running.
 
 WHEN `mcycle/minstret` are written,
 THE `CsrFile` SHALL replace the corresponding 64-bit counter value.

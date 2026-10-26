@@ -13,7 +13,7 @@ graph LR
 
 ## 当前测试
 
-全部为定向指令流 / 单元测试，`sbt test` 共 129 项。
+全部为定向指令流 / 单元测试，`sbt test` 共 130 项。
 
 ### 指令与流水线（`src/test/scala/rv32c/sim/RiscvCoreTest.scala`）
 
@@ -68,6 +68,7 @@ graph LR
 | RV32 (Zifencei) fence.i legal NOP | `fence.i` 后继续执行下一条指令 | x10==7、x13==0（未进入 handler） |
 | RV32 (no Zifencei) fence.i traps | 未使能时 `fence.i` 触发 cause 2 | x13==1、x11==2、x12==`0x0C`、x10==0 |
 | RV32 (Zicntr) counters advance | `cycle/time/instret` 读取，50 条 `addi` 后再次读取 | `cycle` 增量 ≥50、`time` 跟踪 `cycle`、`cycleh/instreth`==0、`instret` 增量==3 |
+| RV32 (Zicntr) mcountinhibit freezes counters independently | `mcountinhibit.CY/TM/IR` 分别冻结 `cycle/time/instret` | CY 置位时 `cycle` 不变、IR 清除时 `instret` 增量==11、TM 置位时 `time` 不变 |
 | RV32 (Zicntr) U-mode counter reads gated by mcounteren | `mcounteren.CY=0` 时 U 读 `cycle` 触发 cause 2，handler 置位后重试 | x10==0（被拒绝的读不写 rd）、x13==1、x14==`0xAA`、x11!=0、结束时仍在 U |
 | RV64 (Zcb) c.zext.w and compressed memory | `c.lbu/c.lhu/c.lh/c.sh/c.zext.w/c.mul`（64 位符号扩展） | x16==`0x0000000000000078`、x17==`0x0000000000005678`、x18==`0x0000000000001234`、x19==`0xFFFFFFFFFFFF8000`、x13==`0x00000000FFFFFFFF`、x14==63 |
 

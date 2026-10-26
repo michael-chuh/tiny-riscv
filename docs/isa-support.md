@@ -451,6 +451,7 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
   - `mip.MTIP` 由顶层 `timerInterrupt` 输入电平直接反映
   - `mstatus` 可写域：`MIE/MPIE/MPP/SIE/SPIE/SPP/FS/SUM/MXR`；`mie` 可写 `MTIE/STIE/SSIE/SEIE`；`medeleg/mideleg` 按已实现异常/中断位掩码写入
 - Zicntr 计数器（仅 `RvExtension.Zicntr` 使能时）：`mcycle(0xB00)`/`minstret(0xB02)` 与用户视图 `cycle(0xC00)`/`time(0xC01)`/`instret(0xC02)`；RV32 另实现高半字 `cycleh(0xC80)`/`timeh(0xC81)`/`instreth(0xC82)`；`mcycle/minstret` 的 RV32 高半字为 `mcycleh(0xB80)`/`minstreth(0xB82)`。`cycle` 每时钟自增，`instret` 按 WB 提交的指令数累加，`time` 复用 `cycle` 时基
+  - `mcountinhibit(0x320)` 的 CY(0)/TM(1)/IR(2) 分别冻结 `cycle/time/instret`，清除后恢复累加
   - 使能门控：`mcounteren(0x306)` 控制 S/U 读取，M/S/U 栈的 `scounteren(0x106)` 进一步控制 U；低于 M 且对应位为 0 时触发 cause 2（`mtval`=CSR 地址）
 - 浮点 CSR（仅 `RvExtension.SingleFloat` 使能时）：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)`；`frm` 为 WARL 仅接受 0–4，提交 FP 指令累积 `fflags` 并把 `mstatus.FS` 置 Dirty
 - 同步异常 cause：ECALL(M)=11、ECALL(S)=9、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP`/`SPP` 不在配置特权栈的 MRET/SRET=2

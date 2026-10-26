@@ -16,7 +16,9 @@
 ## CSR file
 
 - New storage (guarded by `hasZicntr`): 64-bit `cycleCnt`, 64-bit `instretCnt`,
-  `mcounterenReg(2:0)` and, on S harts, `scounterenReg(2:0)`.
+  `mcounterenReg(2:0)`, `mcountinhibitReg(2:0)` and, on S harts,
+  `scounterenReg(2:0)`. `time` has its own 64-bit register so TM can freeze it
+  without stalling `cycle`.
 - `cycleCnt` increments every edge (free running, independent of stalls);
   `instretCnt` increments when `io.retire` is high. `retire` is driven in the
   core from `memWb.valid && !freezeAll`, i.e. one pulse per committed
@@ -29,6 +31,8 @@
 - Writes: `0xB00/0xB02` replace the 64-bit counters (RV32 high-half writes at
   `0xB80/0xB82` replace the upper word after the increment); `0x306/0x106`
   store the low three bits (CY/TM/IR).
+- `mcountinhibit` bits CY/TM/IR gate the three increments independently; writes
+  store the low three bits.
 - Readouts `counterEnM` / `counterEnS` export the enable bits to the core.
 
 ## Core
@@ -46,7 +50,8 @@
 
 - `ZicsrTrapTest`: counters advance (cycle delta, `time` tracking, zero high
   halves on RV32), instret delta equals the retired instructions between reads,
-  and an `mcycle` write resets the counter; U-mode counter reads trap until
+  an `mcycle` write resets the counter, `mcountinhibit` freezes each counter
+  independently; U-mode counter reads trap until
   `mcounteren` is set by the handler.
 - `IsaConfigSpec` / `CsrMapSpec`: preset shape, no misa change, counter
   visibility, RV32-only high halves, `scounteren` requiring both Zicntr and S.
