@@ -32,6 +32,7 @@ object TAsm {
   val SIP = 0x144
   val SATP = 0x180
   val MCOUNTEREN = 0x306
+  val MCOUNTINHIBIT = 0x320
   val MCYCLE = 0xB00
   val MINSTRET = 0xB02
   val SCOUNTEREN = 0x106
@@ -806,6 +807,57 @@ class ZicsrTrapTest extends AnyFunSuite {
         val mcy = u32(dut.io.debugRegs(12).toBigInt)
         assert(mcy < 32 && mcy < c1, s"mcycle write did not reset the counter ($mcy)")
         println(s"PASS: Zicntr in $cyc cycles (cycle delta ${c2 - c1})")
+      }
+  }
+
+  // =====================================================================
+  // Zicntr + mcountinhibit: CY/TM/IR bits freeze cycle/time/instret without
+  // affecting the others.
+  // =====================================================================
+  test("mcountinhibit freezes cycle, time and instret independently") {
+    val a = new TAsm
+    a.csrrwi(0, MCYCLE, 0)
+    a.csrrwi(0, MCOUNTINHIBIT, 1)   // CY: freeze cycle
+    a.csrrs(5, CYCLE, 0)
+    (1 to 10).foreach(_ => a.addi(1, 1, 1))
+    a.csrrs(6, CYCLE, 0)
+    a.csrrs(7, INSTRET, 0)
+    (1 to 10).foreach(_ => a.addi(1, 1, 1))
+    a.csrrs(8, INSTRET, 0)
+    a.csrrwi(0, MCOUNTINHIBIT, 6)   // TM+IR: freeze time and instret
+    a.csrrs(9, INSTRET, 0)
+    (1 to 10).foreach(_ => a.addi(1, 1, 1))
+    a.csrrs(10, INSTRET, 0)
+    a.csrrs(11, TIME, 0)
+    (1 to 10).foreach(_ => a.addi(1, 1, 1))
+    a.csrrs(12, TIME, 0)
+    a.csrrwi(0, MCOUNTINHIBIT, 0)   // re-enable all counters
+    a.li(30, 0x1234)
+    a.j("loop")
+    a.label("loop")
+    a.j("loop")
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig.rv32imzicntr, a.build))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 500, 30, 0x1234L)
+        assert(cyc < 500, "mcountinhibit program did not finish")
+        dut.clockDomain.waitSampling(4)
+        val c1 = u32(dut.io.debugRegs(5).toBigInt)
+        val c2 = u32(dut.io.debugRegs(6).toBigInt)
+        assert(c1 == c2, s"cycle not frozen by mcountinhibit.CY ($c1 -> $c2)")
+        val i1 = u32(dut.io.debugRegs(7).toBigInt)
+        val i2 = u32(dut.io.debugRegs(8).toBigInt)
+        assert(i2 - i1 == 11, s"instret delta ${i2 - i1} != 11 while IR clear")
+        val i3 = u32(dut.io.debugRegs(9).toBigInt)
+        val i4 = u32(dut.io.debugRegs(10).toBigInt)
+        assert(i3 == i4, s"instret not frozen by mcountinhibit.IR ($i3 -> $i4)")
+        val t1 = u32(dut.io.debugRegs(11).toBigInt)
+        val t2 = u32(dut.io.debugRegs(12).toBigInt)
+        assert(t1 == t2, s"time not frozen by mcountinhibit.TM ($t1 -> $t2)")
       }
   }
 

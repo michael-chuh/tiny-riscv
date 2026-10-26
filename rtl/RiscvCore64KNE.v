@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCore64KNE
-// Git hash  : e2b700153236ae84ab850dffcd8d07262f7d26f0
+// Git hash  : a4130b8251b4203b071af8b306d6141cf2c38306
 
 `timescale 1ns/1ps
 
@@ -22220,37 +22220,38 @@ module CsrFile (
   wire                wbActive;
   reg        [63:0]   opNew;
   reg        [63:0]   mstatusPostWb;
-  wire                when_CsrFile_l240;
+  wire                when_CsrFile_l245;
   wire       [63:0]   _zz_mstatusPostWb;
   wire       [63:0]   _zz_mstatusPostWb_1;
-  wire                when_CsrFile_l242;
+  wire                when_CsrFile_l247;
   reg        [63:0]   mstatusNext;
   reg        [1:0]    curModeNext;
   reg        [63:0]   mepcNext;
   reg        [63:0]   _zz_mepcNext;
-  wire                when_CsrFile_l293;
   wire                when_CsrFile_l298;
+  wire                when_CsrFile_l303;
   reg        [63:0]   mcauseNext;
-  wire                when_CsrFile_l301;
-  wire                when_CsrFile_l302;
-  reg        [63:0]   mtvalNext;
-  wire                when_CsrFile_l305;
   wire                when_CsrFile_l306;
-  reg        [63:0]   mieNext;
+  wire                when_CsrFile_l307;
+  reg        [63:0]   mtvalNext;
+  wire                when_CsrFile_l310;
   wire                when_CsrFile_l311;
+  reg        [63:0]   mieNext;
+  wire                when_CsrFile_l316;
   wire       [63:0]   _zz_mieNext;
   reg        [63:0]   mtvecNext;
-  wire                when_CsrFile_l317;
+  wire                when_CsrFile_l322;
   wire       [63:0]   _zz_mtvecNext;
   reg        [63:0]   mscratchNext;
-  wire                when_CsrFile_l326;
+  wire                when_CsrFile_l331;
   wire       [2:0]    mcounterenNext;
   wire       [2:0]    scounterenNext;
+  wire       [2:0]    mcountinhibitNext;
   reg        [63:0]   medelegNext;
-  wire                when_CsrFile_l345;
+  wire                when_CsrFile_l354;
   wire       [63:0]   _zz_medelegNext;
   reg        [63:0]   midelegNext;
-  wire                when_CsrFile_l350;
+  wire                when_CsrFile_l359;
   wire       [63:0]   _zz_midelegNext;
   wire       [63:0]   stvecNext;
   wire       [63:0]   sscratchNext;
@@ -22344,13 +22345,13 @@ module CsrFile (
     endcase
   end
 
-  assign when_CsrFile_l240 = (wbActive && (io_csrAddr == 12'h300));
+  assign when_CsrFile_l245 = (wbActive && (io_csrAddr == 12'h300));
   assign _zz_mstatusPostWb = 64'h00000000000c79aa;
   always @(*) begin
-    if(when_CsrFile_l240) begin
+    if(when_CsrFile_l245) begin
       mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb)) | (opNew & _zz_mstatusPostWb));
     end else begin
-      if(when_CsrFile_l242) begin
+      if(when_CsrFile_l247) begin
         mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb_1)) | (opNew & _zz_mstatusPostWb_1));
       end else begin
         mstatusPostWb = mstatusReg;
@@ -22359,7 +22360,7 @@ module CsrFile (
   end
 
   assign _zz_mstatusPostWb_1 = 64'h00000000000c6122;
-  assign when_CsrFile_l242 = 1'b0;
+  assign when_CsrFile_l247 = 1'b0;
   always @(*) begin
     if(io_trapEna) begin
       mstatusNext = mstatusPostWb;
@@ -22407,9 +22408,9 @@ module CsrFile (
     end
   end
 
-  assign when_CsrFile_l293 = (wbActive && (io_csrAddr == 12'h341));
+  assign when_CsrFile_l298 = (wbActive && (io_csrAddr == 12'h341));
   always @(*) begin
-    if(when_CsrFile_l293) begin
+    if(when_CsrFile_l298) begin
       _zz_mepcNext = opNew;
     end else begin
       _zz_mepcNext = mepcReg;
@@ -22418,60 +22419,60 @@ module CsrFile (
 
   always @(*) begin
     mepcNext = _zz_mepcNext;
-    if(when_CsrFile_l298) begin
+    if(when_CsrFile_l303) begin
       mepcNext = io_trapEpc;
     end
   end
 
-  assign when_CsrFile_l298 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l301 = (wbActive && (io_csrAddr == 12'h342));
+  assign when_CsrFile_l303 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l306 = (wbActive && (io_csrAddr == 12'h342));
   always @(*) begin
-    if(when_CsrFile_l301) begin
+    if(when_CsrFile_l306) begin
       mcauseNext = opNew;
     end else begin
       mcauseNext = mcauseReg;
     end
-    if(when_CsrFile_l302) begin
+    if(when_CsrFile_l307) begin
       mcauseNext = io_trapCause;
     end
   end
 
-  assign when_CsrFile_l302 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l305 = (wbActive && (io_csrAddr == 12'h343));
+  assign when_CsrFile_l307 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l310 = (wbActive && (io_csrAddr == 12'h343));
   always @(*) begin
-    if(when_CsrFile_l305) begin
+    if(when_CsrFile_l310) begin
       mtvalNext = opNew;
     end else begin
       mtvalNext = mtvalReg;
     end
-    if(when_CsrFile_l306) begin
+    if(when_CsrFile_l311) begin
       mtvalNext = io_trapTval;
     end
   end
 
-  assign when_CsrFile_l306 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l311 = (io_trapEna && (! io_trapToS));
   always @(*) begin
     mieNext = mieReg;
-    if(when_CsrFile_l311) begin
+    if(when_CsrFile_l316) begin
       mieNext = ((mieReg & (~ _zz_mieNext)) | (opNew & _zz_mieNext));
     end
   end
 
-  assign when_CsrFile_l311 = (wbActive && (io_csrAddr == 12'h304));
+  assign when_CsrFile_l316 = (wbActive && (io_csrAddr == 12'h304));
   assign _zz_mieNext = 64'h00000000000002a2;
-  assign when_CsrFile_l317 = (wbActive && (io_csrAddr == 12'h305));
+  assign when_CsrFile_l322 = (wbActive && (io_csrAddr == 12'h305));
   assign _zz_mtvecNext = 64'hfffffffffffffffc;
   always @(*) begin
-    if(when_CsrFile_l317) begin
+    if(when_CsrFile_l322) begin
       mtvecNext = ((mtvecReg & (~ _zz_mtvecNext)) | (opNew & _zz_mtvecNext));
     end else begin
       mtvecNext = mtvecReg;
     end
   end
 
-  assign when_CsrFile_l326 = (wbActive && (io_csrAddr == 12'h340));
+  assign when_CsrFile_l331 = (wbActive && (io_csrAddr == 12'h340));
   always @(*) begin
-    if(when_CsrFile_l326) begin
+    if(when_CsrFile_l331) begin
       mscratchNext = opNew;
     end else begin
       mscratchNext = mscratchReg;
@@ -22480,20 +22481,21 @@ module CsrFile (
 
   assign mcounterenNext = 3'b000;
   assign scounterenNext = 3'b000;
-  assign when_CsrFile_l345 = (wbActive && (io_csrAddr == 12'h302));
+  assign mcountinhibitNext = 3'b000;
+  assign when_CsrFile_l354 = (wbActive && (io_csrAddr == 12'h302));
   assign _zz_medelegNext = 64'h000000000000035d;
   always @(*) begin
-    if(when_CsrFile_l345) begin
+    if(when_CsrFile_l354) begin
       medelegNext = ((medelegReg & (~ _zz_medelegNext)) | (opNew & _zz_medelegNext));
     end else begin
       medelegNext = medelegReg;
     end
   end
 
-  assign when_CsrFile_l350 = (wbActive && (io_csrAddr == 12'h303));
+  assign when_CsrFile_l359 = (wbActive && (io_csrAddr == 12'h303));
   assign _zz_midelegNext = 64'h0000000000000080;
   always @(*) begin
-    if(when_CsrFile_l350) begin
+    if(when_CsrFile_l359) begin
       midelegNext = ((midelegReg & (~ _zz_midelegNext)) | (opNew & _zz_midelegNext));
     end else begin
       midelegNext = midelegReg;

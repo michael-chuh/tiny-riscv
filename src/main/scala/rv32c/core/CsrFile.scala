@@ -108,7 +108,10 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   // Zicntr counters (64-bit internal so RV32 can expose high halves) and the
   // counter-enable registers. cycle/time share the same clock source.
   val cycleCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  val timeCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
   val instretCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  // mcountinhibit: CY(0) freezes cycle, TM(1) freezes time, IR(2) freezes instret.
+  val mcountinhibitReg = if (isa.hasZicntr) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   val mcounterenReg = if (isa.hasZicntr) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   val scounterenReg = if (isa.hasZicntr && hasSupervisor) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   // FP CSRs; only meaningful (and only wired) when the hart has an FPU.
@@ -182,6 +185,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   // Zicntr CSRs: read-only counters plus the counter-enable registers.
   if (isa.hasZicntr) {
     val cyc = cycleCnt.get
+    val tm = timeCnt.get
     val ir = instretCnt.get
     val me = mcounterenReg.get
     if (xlen == 32) {
@@ -190,19 +194,20 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
       when(io.csrAddr === U(0xB80, 12 bits)) { readData := cyc(63 downto 32).asBits }
       when(io.csrAddr === U(0xB82, 12 bits)) { readData := ir(63 downto 32).asBits }
       when(io.csrAddr === U(0xC00, 12 bits)) { readData := cyc(31 downto 0).asBits }
-      when(io.csrAddr === U(0xC01, 12 bits)) { readData := cyc(31 downto 0).asBits }
+      when(io.csrAddr === U(0xC01, 12 bits)) { readData := tm(31 downto 0).asBits }
       when(io.csrAddr === U(0xC02, 12 bits)) { readData := ir(31 downto 0).asBits }
       when(io.csrAddr === U(0xC80, 12 bits)) { readData := cyc(63 downto 32).asBits }
-      when(io.csrAddr === U(0xC81, 12 bits)) { readData := cyc(63 downto 32).asBits }
+      when(io.csrAddr === U(0xC81, 12 bits)) { readData := tm(63 downto 32).asBits }
       when(io.csrAddr === U(0xC82, 12 bits)) { readData := ir(63 downto 32).asBits }
     } else {
       when(io.csrAddr === U(0xB00, 12 bits)) { readData := cyc.asBits }
       when(io.csrAddr === U(0xB02, 12 bits)) { readData := ir.asBits }
       when(io.csrAddr === U(0xC00, 12 bits)) { readData := cyc.asBits }
-      when(io.csrAddr === U(0xC01, 12 bits)) { readData := cyc.asBits }
+      when(io.csrAddr === U(0xC01, 12 bits)) { readData := tm.asBits }
       when(io.csrAddr === U(0xC02, 12 bits)) { readData := ir.asBits }
     }
     when(io.csrAddr === U(0x306, 12 bits)) { readData := me.resize(xlen) }
+    when(io.csrAddr === U(0x320, 12 bits)) { readData := mcountinhibitReg.get.resize(xlen) }
     if (hasSupervisor) {
       when(io.csrAddr === U(0x106, 12 bits)) { readData := scounterenReg.get.resize(xlen) }
     }
@@ -327,9 +332,12 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
 
   val mcounterenNext = Bits(3 bits)
   val scounterenNext = Bits(3 bits)
+  val mcountinhibitNext = Bits(3 bits)
   if (isa.hasZicntr) {
     mcounterenNext := mcounterenReg.get
     when(wbHit(0x306)) { mcounterenNext := opNew(2 downto 0) }
+    mcountinhibitNext := mcountinhibitReg.get
+    when(wbHit(0x320)) { mcountinhibitNext := opNew(2 downto 0) }
     if (hasSupervisor) {
       scounterenNext := scounterenReg.get
       when(wbHit(0x106)) { scounterenNext := opNew(2 downto 0) }
@@ -339,6 +347,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   } else {
     mcounterenNext := B(0, 3 bits)
     scounterenNext := B(0, 3 bits)
+    mcountinhibitNext := B(0, 3 bits)
   }
 
   val medelegNext = Bits(xlen bits)
@@ -432,8 +441,10 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   fflagsReg := fflagsNext
   frmReg := frmNext
   if (isa.hasZicntr) {
-    cycleCnt.get := cycleCnt.get + 1
-    when(io.retire) { instretCnt.get := instretCnt.get + 1 }
+    val inh = mcountinhibitReg.get
+    when(!inh(0)) { cycleCnt.get := cycleCnt.get + 1 }
+    when(!inh(1)) { timeCnt.get := timeCnt.get + 1 }
+    when(io.retire && !inh(2)) { instretCnt.get := instretCnt.get + 1 }
     // mcycle/minstret write aliases override the free-running increment.
     if (xlen == 32) {
       when(wbHit(0xB00)) { cycleCnt.get := Cat(cycleCnt.get(63 downto 32), opNew(31 downto 0)).asUInt }
@@ -445,6 +456,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
       when(wbHit(0xB02)) { instretCnt.get := opNew.asUInt }
     }
     mcounterenReg.get := mcounterenNext
+    mcountinhibitReg.get := mcountinhibitNext
     if (hasSupervisor) { scounterenReg.get := scounterenNext }
   }
 

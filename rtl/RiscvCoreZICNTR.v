@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCoreZICNTR
-// Git hash  : e2b700153236ae84ab850dffcd8d07262f7d26f0
+// Git hash  : a4130b8251b4203b071af8b306d6141cf2c38306
 
 `timescale 1ns/1ps
 
@@ -645,12 +645,12 @@ module RiscvCoreZICNTR (
   assign _zz_loadResult_9 = _zz_loadResult_2;
   assign _zz_divInEx = AluOp_DIV;
   assign _zz_divInEx_1 = AluOp_DIVU;
-  assign _zz_csrImplemented = (((((((((((_zz_csrImplemented_1 || _zz_csrImplemented_2) || (idEx_csrAddr == _zz_csrImplemented_3)) || (idEx_csrAddr == 12'h305)) || (idEx_csrAddr == 12'h340)) || (idEx_csrAddr == 12'h341)) || (idEx_csrAddr == 12'h342)) || (idEx_csrAddr == 12'h343)) || (idEx_csrAddr == 12'h344)) || (idEx_csrAddr == 12'hf14)) || (idEx_csrAddr == 12'h306)) || (idEx_csrAddr == 12'hb00));
+  assign _zz_csrImplemented = (((((((((((_zz_csrImplemented_1 || _zz_csrImplemented_2) || (idEx_csrAddr == _zz_csrImplemented_3)) || (idEx_csrAddr == 12'h340)) || (idEx_csrAddr == 12'h341)) || (idEx_csrAddr == 12'h342)) || (idEx_csrAddr == 12'h343)) || (idEx_csrAddr == 12'h344)) || (idEx_csrAddr == 12'hf14)) || (idEx_csrAddr == 12'h306)) || (idEx_csrAddr == 12'h320)) || (idEx_csrAddr == 12'hb00));
   assign _zz_csrImplemented_4 = (idEx_csrAddr == 12'hb02);
   assign _zz_csrImplemented_5 = 12'hb80;
-  assign _zz_csrImplemented_1 = (idEx_csrAddr == 12'h300);
-  assign _zz_csrImplemented_2 = (idEx_csrAddr == 12'h301);
-  assign _zz_csrImplemented_3 = 12'h304;
+  assign _zz_csrImplemented_1 = ((idEx_csrAddr == 12'h300) || (idEx_csrAddr == 12'h301));
+  assign _zz_csrImplemented_2 = (idEx_csrAddr == 12'h304);
+  assign _zz_csrImplemented_3 = 12'h305;
   assign _zz_csrPrivIllegal = (((((_zz_csrPrivIllegal_1 || _zz_csrPrivIllegal_16) || (_zz_csrPrivIllegal_17 && _zz_csrPrivIllegal_18)) || ((idEx_csrAddr == _zz_csrPrivIllegal_19) && (! _zz_csrPrivIllegal_20))) || ((idEx_csrAddr == 12'hb80) && (! (_zz_csrPrivIllegal_21 <= csrFile_1_io_curMode)))) || ((idEx_csrAddr == 12'hb82) && (! (2'b11 <= csrFile_1_io_curMode))));
   assign _zz_csrPrivIllegal_22 = ((idEx_csrAddr == 12'hc00) && (! (2'b00 <= csrFile_1_io_curMode)));
   assign _zz_csrPrivIllegal_23 = (idEx_csrAddr == 12'hc01);
@@ -658,25 +658,25 @@ module RiscvCoreZICNTR (
   assign _zz_csrPrivIllegal_25 = 12'hc02;
   assign _zz_csrPrivIllegal_26 = (2'b00 <= csrFile_1_io_curMode);
   assign _zz_csrPrivIllegal_27 = 2'b00;
-  assign _zz_csrPrivIllegal_1 = (((((_zz_csrPrivIllegal_2 || _zz_csrPrivIllegal_10) || (_zz_csrPrivIllegal_11 && _zz_csrPrivIllegal_12)) || ((idEx_csrAddr == _zz_csrPrivIllegal_13) && (! _zz_csrPrivIllegal_14))) || ((idEx_csrAddr == 12'h344) && (! (_zz_csrPrivIllegal_15 <= csrFile_1_io_curMode)))) || ((idEx_csrAddr == 12'hf14) && (! (2'b11 <= csrFile_1_io_curMode))));
-  assign _zz_csrPrivIllegal_16 = ((idEx_csrAddr == 12'h306) && (! (2'b11 <= csrFile_1_io_curMode)));
+  assign _zz_csrPrivIllegal_1 = (((((_zz_csrPrivIllegal_2 || _zz_csrPrivIllegal_10) || (_zz_csrPrivIllegal_11 && _zz_csrPrivIllegal_12)) || ((idEx_csrAddr == _zz_csrPrivIllegal_13) && (! _zz_csrPrivIllegal_14))) || ((idEx_csrAddr == 12'hf14) && (! (_zz_csrPrivIllegal_15 <= csrFile_1_io_curMode)))) || ((idEx_csrAddr == 12'h306) && (! (2'b11 <= csrFile_1_io_curMode))));
+  assign _zz_csrPrivIllegal_16 = ((idEx_csrAddr == 12'h320) && (! (2'b11 <= csrFile_1_io_curMode)));
   assign _zz_csrPrivIllegal_17 = (idEx_csrAddr == 12'hb00);
   assign _zz_csrPrivIllegal_18 = (! (2'b11 <= csrFile_1_io_curMode));
   assign _zz_csrPrivIllegal_19 = 12'hb02;
   assign _zz_csrPrivIllegal_20 = (2'b11 <= csrFile_1_io_curMode);
   assign _zz_csrPrivIllegal_21 = 2'b11;
-  assign _zz_csrPrivIllegal_2 = (((((_zz_csrPrivIllegal_3 && _zz_csrPrivIllegal_4) || (_zz_csrPrivIllegal_5 && _zz_csrPrivIllegal_6)) || ((idEx_csrAddr == _zz_csrPrivIllegal_7) && (! _zz_csrPrivIllegal_8))) || ((idEx_csrAddr == 12'h305) && (! (_zz_csrPrivIllegal_9 <= csrFile_1_io_curMode)))) || ((idEx_csrAddr == 12'h340) && (! (2'b11 <= csrFile_1_io_curMode))));
-  assign _zz_csrPrivIllegal_10 = ((idEx_csrAddr == 12'h341) && (! (2'b11 <= csrFile_1_io_curMode)));
-  assign _zz_csrPrivIllegal_11 = (idEx_csrAddr == 12'h342);
+  assign _zz_csrPrivIllegal_2 = (((((_zz_csrPrivIllegal_3 || _zz_csrPrivIllegal_4) || (_zz_csrPrivIllegal_5 && _zz_csrPrivIllegal_6)) || ((idEx_csrAddr == _zz_csrPrivIllegal_7) && (! _zz_csrPrivIllegal_8))) || ((idEx_csrAddr == 12'h340) && (! (_zz_csrPrivIllegal_9 <= csrFile_1_io_curMode)))) || ((idEx_csrAddr == 12'h341) && (! (2'b11 <= csrFile_1_io_curMode))));
+  assign _zz_csrPrivIllegal_10 = ((idEx_csrAddr == 12'h342) && (! (2'b11 <= csrFile_1_io_curMode)));
+  assign _zz_csrPrivIllegal_11 = (idEx_csrAddr == 12'h343);
   assign _zz_csrPrivIllegal_12 = (! (2'b11 <= csrFile_1_io_curMode));
-  assign _zz_csrPrivIllegal_13 = 12'h343;
+  assign _zz_csrPrivIllegal_13 = 12'h344;
   assign _zz_csrPrivIllegal_14 = (2'b11 <= csrFile_1_io_curMode);
   assign _zz_csrPrivIllegal_15 = 2'b11;
-  assign _zz_csrPrivIllegal_3 = (idEx_csrAddr == 12'h300);
-  assign _zz_csrPrivIllegal_4 = (! (2'b11 <= csrFile_1_io_curMode));
-  assign _zz_csrPrivIllegal_5 = (idEx_csrAddr == 12'h301);
+  assign _zz_csrPrivIllegal_3 = ((idEx_csrAddr == 12'h300) && (! (2'b11 <= csrFile_1_io_curMode)));
+  assign _zz_csrPrivIllegal_4 = ((idEx_csrAddr == 12'h301) && (! (2'b11 <= csrFile_1_io_curMode)));
+  assign _zz_csrPrivIllegal_5 = (idEx_csrAddr == 12'h304);
   assign _zz_csrPrivIllegal_6 = (! (2'b11 <= csrFile_1_io_curMode));
-  assign _zz_csrPrivIllegal_7 = 12'h304;
+  assign _zz_csrPrivIllegal_7 = 12'h305;
   assign _zz_csrPrivIllegal_8 = (2'b11 <= csrFile_1_io_curMode);
   assign _zz_csrPrivIllegal_9 = 2'b11;
   assign _zz_csrAffectsXret = 12'h300;
@@ -21164,58 +21164,63 @@ module CsrFile (
   reg        [31:0]   midelegReg;
   reg        [1:0]    curModeReg;
   reg        [63:0]   cycleCnt;
+  reg        [63:0]   timeCnt;
   reg        [63:0]   instretCnt;
+  reg        [2:0]    mcountinhibitReg;
   reg        [2:0]    mcounterenReg;
   reg        [4:0]    fflagsReg;
   reg        [2:0]    frmReg;
   reg        [31:0]   readData;
   wire       [31:0]   mipBits;
-  wire                when_CsrFile_l188;
-  wire                when_CsrFile_l189;
-  wire                when_CsrFile_l190;
-  wire                when_CsrFile_l191;
   wire                when_CsrFile_l192;
   wire                when_CsrFile_l193;
   wire                when_CsrFile_l194;
   wire                when_CsrFile_l195;
   wire                when_CsrFile_l196;
   wire                when_CsrFile_l197;
-  wire                when_CsrFile_l205;
+  wire                when_CsrFile_l198;
+  wire                when_CsrFile_l199;
+  wire                when_CsrFile_l200;
+  wire                when_CsrFile_l201;
+  wire                when_CsrFile_l209;
+  wire                when_CsrFile_l210;
   wire                wbActive;
   reg        [31:0]   opNew;
   reg        [31:0]   mstatusPostWb;
-  wire                when_CsrFile_l240;
+  wire                when_CsrFile_l245;
   wire       [31:0]   _zz_mstatusPostWb;
   wire       [31:0]   _zz_mstatusPostWb_1;
-  wire                when_CsrFile_l242;
+  wire                when_CsrFile_l247;
   reg        [31:0]   mstatusNext;
   reg        [1:0]    curModeNext;
   reg        [31:0]   mepcNext;
   reg        [31:0]   _zz_mepcNext;
-  wire                when_CsrFile_l293;
   wire                when_CsrFile_l298;
+  wire                when_CsrFile_l303;
   reg        [31:0]   mcauseNext;
-  wire                when_CsrFile_l301;
-  wire                when_CsrFile_l302;
-  reg        [31:0]   mtvalNext;
-  wire                when_CsrFile_l305;
   wire                when_CsrFile_l306;
-  reg        [31:0]   mieNext;
+  wire                when_CsrFile_l307;
+  reg        [31:0]   mtvalNext;
+  wire                when_CsrFile_l310;
   wire                when_CsrFile_l311;
+  reg        [31:0]   mieNext;
+  wire                when_CsrFile_l316;
   wire       [31:0]   _zz_mieNext;
   reg        [31:0]   mtvecNext;
-  wire                when_CsrFile_l317;
+  wire                when_CsrFile_l322;
   wire       [31:0]   _zz_mtvecNext;
   reg        [31:0]   mscratchNext;
-  wire                when_CsrFile_l326;
+  wire                when_CsrFile_l331;
   reg        [2:0]    mcounterenNext;
   wire       [2:0]    scounterenNext;
-  wire                when_CsrFile_l332;
+  reg        [2:0]    mcountinhibitNext;
+  wire                when_CsrFile_l338;
+  wire                when_CsrFile_l340;
   reg        [31:0]   medelegNext;
-  wire                when_CsrFile_l345;
+  wire                when_CsrFile_l354;
   wire       [31:0]   _zz_medelegNext;
   reg        [31:0]   midelegNext;
-  wire                when_CsrFile_l350;
+  wire                when_CsrFile_l359;
   wire       [31:0]   _zz_midelegNext;
   wire       [31:0]   stvecNext;
   wire       [31:0]   sscratchNext;
@@ -21225,10 +21230,13 @@ module CsrFile (
   wire       [31:0]   satpNext;
   wire       [4:0]    fflagsNext;
   wire       [2:0]    frmNext;
-  wire                when_CsrFile_l439;
-  wire                when_CsrFile_l440;
-  wire                when_CsrFile_l441;
-  wire                when_CsrFile_l442;
+  wire                when_CsrFile_l445;
+  wire                when_CsrFile_l446;
+  wire                when_CsrFile_l447;
+  wire                when_CsrFile_l450;
+  wire                when_CsrFile_l451;
+  wire                when_CsrFile_l452;
+  wire                when_CsrFile_l453;
   `ifndef SYNTHESIS
   reg [39:0] io_csrOp_string;
   `endif
@@ -21292,52 +21300,56 @@ module CsrFile (
         readData = 32'h0;
       end
     endcase
-    if(when_CsrFile_l188) begin
-      readData = cycleCnt[31 : 0];
-    end
-    if(when_CsrFile_l189) begin
-      readData = instretCnt[31 : 0];
-    end
-    if(when_CsrFile_l190) begin
-      readData = cycleCnt[63 : 32];
-    end
-    if(when_CsrFile_l191) begin
-      readData = instretCnt[63 : 32];
-    end
     if(when_CsrFile_l192) begin
       readData = cycleCnt[31 : 0];
     end
     if(when_CsrFile_l193) begin
-      readData = cycleCnt[31 : 0];
-    end
-    if(when_CsrFile_l194) begin
       readData = instretCnt[31 : 0];
     end
+    if(when_CsrFile_l194) begin
+      readData = cycleCnt[63 : 32];
+    end
     if(when_CsrFile_l195) begin
-      readData = cycleCnt[63 : 32];
-    end
-    if(when_CsrFile_l196) begin
-      readData = cycleCnt[63 : 32];
-    end
-    if(when_CsrFile_l197) begin
       readData = instretCnt[63 : 32];
     end
-    if(when_CsrFile_l205) begin
+    if(when_CsrFile_l196) begin
+      readData = cycleCnt[31 : 0];
+    end
+    if(when_CsrFile_l197) begin
+      readData = timeCnt[31 : 0];
+    end
+    if(when_CsrFile_l198) begin
+      readData = instretCnt[31 : 0];
+    end
+    if(when_CsrFile_l199) begin
+      readData = cycleCnt[63 : 32];
+    end
+    if(when_CsrFile_l200) begin
+      readData = timeCnt[63 : 32];
+    end
+    if(when_CsrFile_l201) begin
+      readData = instretCnt[63 : 32];
+    end
+    if(when_CsrFile_l209) begin
       readData = {29'd0, mcounterenReg};
+    end
+    if(when_CsrFile_l210) begin
+      readData = {29'd0, mcountinhibitReg};
     end
   end
 
-  assign when_CsrFile_l188 = (io_csrAddr == 12'hb00);
-  assign when_CsrFile_l189 = (io_csrAddr == 12'hb02);
-  assign when_CsrFile_l190 = (io_csrAddr == 12'hb80);
-  assign when_CsrFile_l191 = (io_csrAddr == 12'hb82);
-  assign when_CsrFile_l192 = (io_csrAddr == 12'hc00);
-  assign when_CsrFile_l193 = (io_csrAddr == 12'hc01);
-  assign when_CsrFile_l194 = (io_csrAddr == 12'hc02);
-  assign when_CsrFile_l195 = (io_csrAddr == 12'hc80);
-  assign when_CsrFile_l196 = (io_csrAddr == 12'hc81);
-  assign when_CsrFile_l197 = (io_csrAddr == 12'hc82);
-  assign when_CsrFile_l205 = (io_csrAddr == 12'h306);
+  assign when_CsrFile_l192 = (io_csrAddr == 12'hb00);
+  assign when_CsrFile_l193 = (io_csrAddr == 12'hb02);
+  assign when_CsrFile_l194 = (io_csrAddr == 12'hb80);
+  assign when_CsrFile_l195 = (io_csrAddr == 12'hb82);
+  assign when_CsrFile_l196 = (io_csrAddr == 12'hc00);
+  assign when_CsrFile_l197 = (io_csrAddr == 12'hc01);
+  assign when_CsrFile_l198 = (io_csrAddr == 12'hc02);
+  assign when_CsrFile_l199 = (io_csrAddr == 12'hc80);
+  assign when_CsrFile_l200 = (io_csrAddr == 12'hc81);
+  assign when_CsrFile_l201 = (io_csrAddr == 12'hc82);
+  assign when_CsrFile_l209 = (io_csrAddr == 12'h306);
+  assign when_CsrFile_l210 = (io_csrAddr == 12'h320);
   assign io_rdData = readData;
   assign wbActive = (io_csrWe && (io_csrOp != CsrOp_NONE));
   always @(*) begin
@@ -21357,13 +21369,13 @@ module CsrFile (
     endcase
   end
 
-  assign when_CsrFile_l240 = (wbActive && (io_csrAddr == 12'h300));
+  assign when_CsrFile_l245 = (wbActive && (io_csrAddr == 12'h300));
   assign _zz_mstatusPostWb = 32'h000c79aa;
   always @(*) begin
-    if(when_CsrFile_l240) begin
+    if(when_CsrFile_l245) begin
       mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb)) | (opNew & _zz_mstatusPostWb));
     end else begin
-      if(when_CsrFile_l242) begin
+      if(when_CsrFile_l247) begin
         mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb_1)) | (opNew & _zz_mstatusPostWb_1));
       end else begin
         mstatusPostWb = mstatusReg;
@@ -21372,7 +21384,7 @@ module CsrFile (
   end
 
   assign _zz_mstatusPostWb_1 = 32'h000c6122;
-  assign when_CsrFile_l242 = 1'b0;
+  assign when_CsrFile_l247 = 1'b0;
   always @(*) begin
     if(io_trapEna) begin
       mstatusNext = mstatusPostWb;
@@ -21420,9 +21432,9 @@ module CsrFile (
     end
   end
 
-  assign when_CsrFile_l293 = (wbActive && (io_csrAddr == 12'h341));
+  assign when_CsrFile_l298 = (wbActive && (io_csrAddr == 12'h341));
   always @(*) begin
-    if(when_CsrFile_l293) begin
+    if(when_CsrFile_l298) begin
       _zz_mepcNext = opNew;
     end else begin
       _zz_mepcNext = mepcReg;
@@ -21431,60 +21443,60 @@ module CsrFile (
 
   always @(*) begin
     mepcNext = _zz_mepcNext;
-    if(when_CsrFile_l298) begin
+    if(when_CsrFile_l303) begin
       mepcNext = io_trapEpc;
     end
   end
 
-  assign when_CsrFile_l298 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l301 = (wbActive && (io_csrAddr == 12'h342));
+  assign when_CsrFile_l303 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l306 = (wbActive && (io_csrAddr == 12'h342));
   always @(*) begin
-    if(when_CsrFile_l301) begin
+    if(when_CsrFile_l306) begin
       mcauseNext = opNew;
     end else begin
       mcauseNext = mcauseReg;
     end
-    if(when_CsrFile_l302) begin
+    if(when_CsrFile_l307) begin
       mcauseNext = io_trapCause;
     end
   end
 
-  assign when_CsrFile_l302 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l305 = (wbActive && (io_csrAddr == 12'h343));
+  assign when_CsrFile_l307 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l310 = (wbActive && (io_csrAddr == 12'h343));
   always @(*) begin
-    if(when_CsrFile_l305) begin
+    if(when_CsrFile_l310) begin
       mtvalNext = opNew;
     end else begin
       mtvalNext = mtvalReg;
     end
-    if(when_CsrFile_l306) begin
+    if(when_CsrFile_l311) begin
       mtvalNext = io_trapTval;
     end
   end
 
-  assign when_CsrFile_l306 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l311 = (io_trapEna && (! io_trapToS));
   always @(*) begin
     mieNext = mieReg;
-    if(when_CsrFile_l311) begin
+    if(when_CsrFile_l316) begin
       mieNext = ((mieReg & (~ _zz_mieNext)) | (opNew & _zz_mieNext));
     end
   end
 
-  assign when_CsrFile_l311 = (wbActive && (io_csrAddr == 12'h304));
+  assign when_CsrFile_l316 = (wbActive && (io_csrAddr == 12'h304));
   assign _zz_mieNext = 32'h000002a2;
-  assign when_CsrFile_l317 = (wbActive && (io_csrAddr == 12'h305));
+  assign when_CsrFile_l322 = (wbActive && (io_csrAddr == 12'h305));
   assign _zz_mtvecNext = 32'hfffffffc;
   always @(*) begin
-    if(when_CsrFile_l317) begin
+    if(when_CsrFile_l322) begin
       mtvecNext = ((mtvecReg & (~ _zz_mtvecNext)) | (opNew & _zz_mtvecNext));
     end else begin
       mtvecNext = mtvecReg;
     end
   end
 
-  assign when_CsrFile_l326 = (wbActive && (io_csrAddr == 12'h340));
+  assign when_CsrFile_l331 = (wbActive && (io_csrAddr == 12'h340));
   always @(*) begin
-    if(when_CsrFile_l326) begin
+    if(when_CsrFile_l331) begin
       mscratchNext = opNew;
     end else begin
       mscratchNext = mscratchReg;
@@ -21493,27 +21505,35 @@ module CsrFile (
 
   always @(*) begin
     mcounterenNext = mcounterenReg;
-    if(when_CsrFile_l332) begin
+    if(when_CsrFile_l338) begin
       mcounterenNext = opNew[2 : 0];
     end
   end
 
-  assign when_CsrFile_l332 = (wbActive && (io_csrAddr == 12'h306));
+  assign when_CsrFile_l338 = (wbActive && (io_csrAddr == 12'h306));
+  always @(*) begin
+    mcountinhibitNext = mcountinhibitReg;
+    if(when_CsrFile_l340) begin
+      mcountinhibitNext = opNew[2 : 0];
+    end
+  end
+
+  assign when_CsrFile_l340 = (wbActive && (io_csrAddr == 12'h320));
   assign scounterenNext = 3'b000;
-  assign when_CsrFile_l345 = (wbActive && (io_csrAddr == 12'h302));
+  assign when_CsrFile_l354 = (wbActive && (io_csrAddr == 12'h302));
   assign _zz_medelegNext = 32'h0000035d;
   always @(*) begin
-    if(when_CsrFile_l345) begin
+    if(when_CsrFile_l354) begin
       medelegNext = ((medelegReg & (~ _zz_medelegNext)) | (opNew & _zz_medelegNext));
     end else begin
       medelegNext = medelegReg;
     end
   end
 
-  assign when_CsrFile_l350 = (wbActive && (io_csrAddr == 12'h303));
+  assign when_CsrFile_l359 = (wbActive && (io_csrAddr == 12'h303));
   assign _zz_midelegNext = 32'h00000080;
   always @(*) begin
-    if(when_CsrFile_l350) begin
+    if(when_CsrFile_l359) begin
       midelegNext = ((midelegReg & (~ _zz_midelegNext)) | (opNew & _zz_midelegNext));
     end else begin
       midelegNext = midelegReg;
@@ -21528,10 +21548,13 @@ module CsrFile (
   assign satpNext = 32'h0;
   assign fflagsNext = fflagsReg;
   assign frmNext = frmReg;
-  assign when_CsrFile_l439 = (wbActive && (io_csrAddr == 12'hb00));
-  assign when_CsrFile_l440 = (wbActive && (io_csrAddr == 12'hb80));
-  assign when_CsrFile_l441 = (wbActive && (io_csrAddr == 12'hb02));
-  assign when_CsrFile_l442 = (wbActive && (io_csrAddr == 12'hb82));
+  assign when_CsrFile_l445 = (! mcountinhibitReg[0]);
+  assign when_CsrFile_l446 = (! mcountinhibitReg[1]);
+  assign when_CsrFile_l447 = (io_retire && (! mcountinhibitReg[2]));
+  assign when_CsrFile_l450 = (wbActive && (io_csrAddr == 12'hb00));
+  assign when_CsrFile_l451 = (wbActive && (io_csrAddr == 12'hb80));
+  assign when_CsrFile_l452 = (wbActive && (io_csrAddr == 12'hb02));
+  assign when_CsrFile_l453 = (wbActive && (io_csrAddr == 12'hb82));
   assign io_curMode = curModeReg;
   assign io_mstatusMie = mstatusReg[3];
   assign io_mstatusMpp = mstatusReg[12 : 11];
@@ -21565,7 +21588,9 @@ module CsrFile (
       midelegReg <= 32'h0;
       curModeReg <= MODE_M;
       cycleCnt <= 64'h0;
+      timeCnt <= 64'h0;
       instretCnt <= 64'h0;
+      mcountinhibitReg <= 3'b000;
       mcounterenReg <= 3'b000;
       fflagsReg <= 5'h0;
       frmReg <= 3'b000;
@@ -21582,23 +21607,29 @@ module CsrFile (
       curModeReg <= curModeNext;
       fflagsReg <= fflagsNext;
       frmReg <= frmNext;
-      cycleCnt <= (cycleCnt + 64'h0000000000000001);
-      if(io_retire) begin
+      if(when_CsrFile_l445) begin
+        cycleCnt <= (cycleCnt + 64'h0000000000000001);
+      end
+      if(when_CsrFile_l446) begin
+        timeCnt <= (timeCnt + 64'h0000000000000001);
+      end
+      if(when_CsrFile_l447) begin
         instretCnt <= (instretCnt + 64'h0000000000000001);
       end
-      if(when_CsrFile_l439) begin
+      if(when_CsrFile_l450) begin
         cycleCnt <= {cycleCnt[63 : 32],opNew[31 : 0]};
       end
-      if(when_CsrFile_l440) begin
+      if(when_CsrFile_l451) begin
         cycleCnt <= {opNew[31 : 0],cycleCnt[31 : 0]};
       end
-      if(when_CsrFile_l441) begin
+      if(when_CsrFile_l452) begin
         instretCnt <= {instretCnt[63 : 32],opNew[31 : 0]};
       end
-      if(when_CsrFile_l442) begin
+      if(when_CsrFile_l453) begin
         instretCnt <= {opNew[31 : 0],instretCnt[31 : 0]};
       end
       mcounterenReg <= mcounterenNext;
+      mcountinhibitReg <= mcountinhibitNext;
     end
   end
 

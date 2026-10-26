@@ -30,8 +30,9 @@ class CsrMapSpec extends AnyFunSuite {
 
   test("implementedFor exposes the Zicntr counters on an RV32 counter hart") {
     val impl = CsrMap.implementedFor(IsaConfig.rv32imzicntr).map(_.addr).toSet
-    assert(Set(0xC00, 0xC01, 0xC02, 0xC80, 0xC81, 0xC82, 0x306).subsetOf(impl))
+    assert(Set(0xC00, 0xC01, 0xC02, 0xC80, 0xC81, 0xC82, 0x306, 0x320).subsetOf(impl))
     assert(!CsrMap.implementedFor(IsaConfig.rv32im).exists(_.addr == 0xC00))
+    assert(!CsrMap.implementedFor(IsaConfig.rv32im).exists(_.addr == 0x320))
   }
 
   test("RV64 harts implement no RV32 counter high halves") {

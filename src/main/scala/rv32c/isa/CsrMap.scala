@@ -34,6 +34,7 @@ object CsrMap {
   val medeleg  = CsrDef(0x302, "medeleg",  readOnly = false, PrivMode.M, requiresSupervisor = true)
   val mideleg  = CsrDef(0x303, "mideleg",  readOnly = false, PrivMode.M, requiresSupervisor = true)
   val mcounteren = CsrDef(0x306, "mcounteren", readOnly = false, PrivMode.M, requiresZicntr = true)
+  val mcountinhibit = CsrDef(0x320, "mcountinhibit", readOnly = false, PrivMode.M, requiresZicntr = true)
 
   // ---- Supervisor-level CSRs (only present on an M/S/U hart) ----
   val sstatus  = CsrDef(0x100, "sstatus",  readOnly = false, PrivMode.S)
@@ -72,7 +73,7 @@ object CsrMap {
   /** Every CSR this design family knows about. */
   val all: Seq[CsrDef] = Seq(
     mstatus, misa, mie, mtvec, mscratch, mepc, mcause, mtval, mip, mhartid,
-    medeleg, mideleg, mcounteren,
+    medeleg, mideleg, mcounteren, mcountinhibit,
     sstatus, sie, stvec, sscratch, sepc, scause, stval, sip, satp, scounteren,
     mcycle, minstret, mcycleh, minstreth,
     cycle, time, instret, cycleh, timeh, instreth,
