@@ -26,6 +26,9 @@ case class IsaConfig(
     "D implies F: enable SingleFloat together with DoubleFloat")
   require(!extensions.contains(RvExtension.DoubleFloat) || xlen == 64,
     "D (double-precision float) is an RV64 feature in this core")
+  require(!extensions.contains(RvExtension.Sstc) ||
+    (priv.hasSupervisor && extensions.contains(RvExtension.Zicntr)),
+    "Sstc requires S mode and a Zicntr time source")
 
   // ---- convenience probes -------------------------------------------------
   def hasMulDiv: Boolean = extensions.contains(RvExtension.MulDiv)
@@ -51,6 +54,7 @@ case class IsaConfig(
   def hasZicsr: Boolean = extensions.contains(RvExtension.Zicsr)
   def hasZifencei: Boolean = extensions.contains(RvExtension.Zifencei)
   def hasZicntr: Boolean = extensions.contains(RvExtension.Zicntr)
+  def hasSstc: Boolean = extensions.contains(RvExtension.Sstc)
 
   /** Floating-point register width (FLEN): 64 with D, 32 with F only, 0 without
     * a floating-point unit. */
@@ -295,6 +299,16 @@ object IsaConfig {
   /** RV64 with Zicntr (RV64IM_Zicsr_Zicntr, M/U): user counters. */
   val rv64imzicntr: IsaConfig =
     IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicntr), PrivConfig.MU)
+
+  /** RV64 with Zicntr and Sstc (RV64IM_Zicsr_Zicntr_Sstc, M/S/U). */
+  val rv64imzicntrsu: IsaConfig =
+    IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicntr,
+      RvExtension.Sstc), PrivConfig.MSU)
+
+  /** RV32 with Zicntr and Sstc (RV32IM_Zicsr_Zicntr_Sstc, M/S/U). */
+  val rv32imzicntrsu: IsaConfig =
+    IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv, RvExtension.Zicntr,
+      RvExtension.Sstc), PrivConfig.MSU)
 
   /** RV64 baseline: RV64I + Zicsr, M/S/U. */
   val rv64: IsaConfig =

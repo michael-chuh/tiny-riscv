@@ -75,6 +75,8 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     // Zicntr: mcounteren/scounteren enable bits (CY/TM/IR order).
     val counterEnM = out Bits(3 bits)
     val counterEnS = out Bits(3 bits)
+    // Sstc: supervisor timer interrupt pending (time >= stimecmp with STCE on).
+    val sTimerPending = out Bool()
     // ---- debug readouts ----
     val debugMepc = out UInt(xlen bits)
     val debugMcause = out Bits(xlen bits)
@@ -112,6 +114,11 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val instretCnt = if (isa.hasZicntr) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
   // mcountinhibit: CY(0) freezes cycle, TM(1) freezes time, IR(2) freezes instret.
   val mcountinhibitReg = if (isa.hasZicntr) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
+  // Sstc: 64-bit supervisor timer compare and menvcfg (only STCE=bit63 kept).
+  val stimecmpReg = if (isa.hasSstc) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  val menvcfgReg = if (isa.hasSstc) Some(Reg(UInt(64 bits)) init U(0, 64 bits)) else None
+  val sTimerPending = if (isa.hasSstc)
+    menvcfgReg.get(63) && (timeCnt.get >= stimecmpReg.get) else False
   val mcounterenReg = if (isa.hasZicntr) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   val scounterenReg = if (isa.hasZicntr && hasSupervisor) Some(Reg(Bits(3 bits)) init B(0, 3 bits)) else None
   // FP CSRs; only meaningful (and only wired) when the hart has an FPU.
@@ -142,9 +149,11 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
 
   // ---- Combinational read (returns the current value for a CSR address) ----
   val readData = Bits(xlen bits)
-  // mip: bit7 (MTIP) mirrors the external timer interrupt line, all other bits 0.
+  // mip: bit7 (MTIP) mirrors the external timer interrupt line; with Sstc the
+  // supervisor timer pending bit (5) reflects the stimecmp comparison.
   val mipBits = Bits(xlen bits)
   mipBits := (B(0, xlen - 8 bits) ## io.timerInterrupt.asBits ## B(0, 7 bits))
+  if (isa.hasSstc) { mipBits(5) := sTimerPending }
   switch(io.csrAddr) {
     is(U(0x300, 12 bits)) { readData := mstatusReg }
     is(U(0x301, 12 bits)) { readData := B(isa.misaValue, xlen bits) }
@@ -210,6 +219,19 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     when(io.csrAddr === U(0x320, 12 bits)) { readData := mcountinhibitReg.get.resize(xlen) }
     if (hasSupervisor) {
       when(io.csrAddr === U(0x106, 12 bits)) { readData := scounterenReg.get.resize(xlen) }
+    }
+  }
+  // Sstc CSRs: stimecmp reads as zero until menvcfg.STCE is set.
+  if (isa.hasSstc) {
+    val stc = Mux(menvcfgReg.get(63), stimecmpReg.get, U(0, 64 bits))
+    if (xlen == 32) {
+      when(io.csrAddr === U(0x14D, 12 bits)) { readData := stc(31 downto 0).asBits }
+      when(io.csrAddr === U(0x15D, 12 bits)) { readData := stc(63 downto 32).asBits }
+      when(io.csrAddr === U(0x30A, 12 bits)) { readData := menvcfgReg.get(31 downto 0).asBits }
+      when(io.csrAddr === U(0x31A, 12 bits)) { readData := menvcfgReg.get(63 downto 32).asBits }
+    } else {
+      when(io.csrAddr === U(0x14D, 12 bits)) { readData := stc.asBits }
+      when(io.csrAddr === U(0x30A, 12 bits)) { readData := menvcfgReg.get.asBits }
     }
   }
   // FP CSRs (present only with an FPU). fcsr = frm[7:5] | fflags[4:0].
@@ -333,6 +355,8 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val mcounterenNext = Bits(3 bits)
   val scounterenNext = Bits(3 bits)
   val mcountinhibitNext = Bits(3 bits)
+  val stimecmpNext = UInt(64 bits)
+  val menvcfgNext = UInt(64 bits)
   if (isa.hasZicntr) {
     mcounterenNext := mcounterenReg.get
     when(wbHit(0x306)) { mcounterenNext := opNew(2 downto 0) }
@@ -348,6 +372,27 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     mcounterenNext := B(0, 3 bits)
     scounterenNext := B(0, 3 bits)
     mcountinhibitNext := B(0, 3 bits)
+  }
+  if (isa.hasSstc) {
+    stimecmpNext := stimecmpReg.get
+    menvcfgNext := menvcfgReg.get
+    when(wbHit(0x30A)) {
+      if (xlen == 32) { menvcfgNext(31 downto 0) := opNew.asUInt }
+      else { menvcfgNext := opNew.asUInt }
+    }
+    if (xlen == 32) {
+      when(wbHit(0x31A)) { menvcfgNext(63 downto 32) := opNew.asUInt }
+    }
+    when(wbHit(0x14D) && menvcfgReg.get(63)) {
+      if (xlen == 32) { stimecmpNext(31 downto 0) := opNew.asUInt }
+      else { stimecmpNext := opNew.asUInt }
+    }
+    if (xlen == 32) {
+      when(wbHit(0x15D) && menvcfgReg.get(63)) { stimecmpNext(63 downto 32) := opNew.asUInt }
+    }
+  } else {
+    stimecmpNext := U(0, 64 bits)
+    menvcfgNext := U(0, 64 bits)
   }
 
   val medelegNext = Bits(xlen bits)
@@ -459,6 +504,11 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     mcountinhibitReg.get := mcountinhibitNext
     if (hasSupervisor) { scounterenReg.get := scounterenNext }
   }
+  if (isa.hasSstc) {
+    // menvcfg is WARL: only STCE (bit 63) is writable in this implementation.
+    menvcfgReg.get := (menvcfgNext(63) ## U(0, 63 bits)).asUInt
+    stimecmpReg.get := stimecmpNext
+  }
 
   // ---- Readouts ----
   io.curMode := curModeReg
@@ -484,6 +534,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   } else {
     io.counterEnS := B(0, 3 bits)
   }
+  io.sTimerPending := sTimerPending
   if (hasSupervisor) {
     io.stvec := stvecReg.get
     io.sepc := sepcReg.get.asUInt

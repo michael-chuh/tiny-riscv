@@ -96,14 +96,17 @@ object RvExtension {
   /** Zicntr: user-level cycle/time/instret counters plus mcounteren/scounteren.
     * Implemented on both RV32 (with the *h high halves) and RV64. */
   case object Zicntr extends RvExtension("Zicntr")
+  /** Sstc: supervisor timer compare (stimecmp) driven by the hart time counter.
+    * Requires S mode and Zicntr (the time source). */
+  case object Sstc extends RvExtension("Sstc")
 
   /** Extensions the current RTL can execute (M, A, F, D, Zicsr, C, Zbb, Zbs,
     * Zba, Zbc, Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb,
-    * Zifencei, Zicntr). */
+    * Zifencei, Zicntr, Sstc). */
   val implemented: Set[RvExtension] =
     Set(MulDiv, Atomic, SingleFloat, DoubleFloat, Zbb, Zbs, Zba, Zbc,
       Zbkb, Zbkc, Zbkx, Zknh, Zksh, Zksed, Zkne, Zknd, Zicond, Zcb, Zicsr,
-      Compressed, Zifencei, Zicntr)
+      Compressed, Zifencei, Zicntr, Sstc)
   /** Roadmap extensions the model can express but the RTL cannot run yet. */
   val reserved: Set[RvExtension] = Set.empty
 

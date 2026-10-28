@@ -5,6 +5,7 @@ import org.scalatest.funsuite.AnyFunSuite
 import spinal.core._
 import spinal.core.sim._
 import rv32c._
+import rv32c.isa._
 
 /** Two-pass RV32I+Zicsr mini assembler used to build the trap/interrupt/CSR
   * test programs. Each instruction word occupies one index (address = 4*index).
@@ -36,6 +37,10 @@ object TAsm {
   val MCYCLE = 0xB00
   val MINSTRET = 0xB02
   val SCOUNTEREN = 0x106
+  val STIMECMP = 0x14D
+  val STIMECMPH = 0x15D
+  val MENVCFG = 0x30A
+  val MENVCFGH = 0x31A
   val CYCLE = 0xC00
   val TIME = 0xC01
   val INSTRET = 0xC02
@@ -90,6 +95,7 @@ class TAsm {
 
   // ---- RV32I ---- //
   def addi(rd: Int, rs1: Int, imm: Int): Unit = emit((_, _) => encI(imm, rs1, 0, rd, 0x13))
+  def slli(rd: Int, rs1: Int, sh: Int): Unit = emit((_, _) => encI(sh, rs1, 1, rd, 0x13))
   def andi(rd: Int, rs1: Int, imm: Int): Unit = emit((_, _) => encI(imm, rs1, 7, rd, 0x13))
   def add(rd: Int, rs1: Int, rs2: Int): Unit = emit((_, _) => encR(0, rs2, rs1, 0, rd, 0x33))
   def lui(rd: Int, imm20: Int): Unit = emit((_, _) => encU(imm20, rd, 0x37))
@@ -918,6 +924,126 @@ class ZicsrTrapTest extends AnyFunSuite {
         assert(u32(dut.io.debugRegs(14).toBigInt) == 0xAA, "U resumed after the trap")
         assert(u32(dut.io.debugRegs(11).toBigInt) != 0, "permitted read returns cycle")
         assert(u32(dut.io.debugMode.toBigInt) == 0, "still in U at the end")
+      }
+  }
+  // =====================================================================
+  // Sstc: with menvcfg.STCE set, time >= stimecmp raises STIP and the
+  // delegated supervisor timer interrupt reaches the S handler.
+  // =====================================================================
+  test("Sstc stimecmp raises a supervisor timer interrupt") {
+    val isa = IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.MulDiv,
+      RvExtension.Zicntr, RvExtension.Sstc), PrivConfig.MSU)
+    val a = new TAsm
+    a.addi(5, 0, 1)
+    a.slli(5, 5, 63)              // menvcfg.STCE (bit 63)
+    a.csrrw(0, MENVCFG, 5)
+    a.csrrs(5, TIME, 0)           // stimecmp = time + 64
+    a.addi(5, 5, 64)
+    a.csrrw(0, STIMECMP, 5)
+    if (isa.xlen == 32) a.csrrw(0, STIMECMPH, 0)
+    a.li(5, 0x80)                 // mideleg[7]: delegate the timer interrupt
+    a.csrrw(0, MIDELEG, 5)
+    a.li(5, 0x20)                 // mie.STIE
+    a.csrrw(0, MIE, 5)
+    a.label("stvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, STVEC, 5)
+    a.label("mepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.li(5, 0x802)                // MPP=S, SIE=1
+    a.csrrw(0, MSTATUS, 5)
+    a.mret()
+    a.label("s_start")
+    a.addi(1, 1, 1)               // spin until the timer fires
+    a.j("s_start")
+    a.label("s_handler")
+    a.csrrs(11, SCAUSE, 0)
+    a.li(30, 0x1234)
+    a.j("s_done")
+    a.label("s_done")
+    a.j("s_done")
+
+    val prog = a.build
+    val stvecIdx = a.indexOf("stvec_patch")
+    val mepcIdx = a.indexOf("mepc_patch")
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == stvecIdx => TAsm.encI(a.indexOf("s_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mepcIdx  => TAsm.encI(a.indexOf("s_start") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig(isa = isa), patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 800, 30, 0x1234L)
+        assert(cyc < 800, "Sstc program did not reach the S handler")
+        dut.clockDomain.waitSampling(4)
+        val cause = dut.io.debugRegs(11).toBigInt
+        assert(cause == ((BigInt(1) << 63) | 5), s"scause $cause != 0x8000000000000005")
+        assert(dut.io.debugMode.toBigInt == 1, "trap should land in S mode")
+        assert(dut.io.debugRegs(1).toBigInt > 0, "S loop should have run")
+      }
+  }
+
+  test("Sstc works on an RV32 hart via menvcfgh and stimecmph") {
+    val isa = IsaConfig(32, Set(RvExtension.Zicsr, RvExtension.MulDiv,
+      RvExtension.Zicntr, RvExtension.Sstc), PrivConfig.MSU)
+    val a = new TAsm
+    a.lui(5, 0x80000)             // menvcfg.STCE lives in menvcfgh bit 31
+    a.csrrw(0, MENVCFG, 5)
+    a.csrrw(0, MENVCFGH, 5)
+    a.csrrs(5, TIME, 0)           // stimecmp = time + 64
+    a.addi(5, 5, 64)
+    a.csrrw(0, STIMECMP, 5)
+    a.csrrw(0, STIMECMPH, 0)
+    a.li(5, 0x80)
+    a.csrrw(0, MIDELEG, 5)
+    a.li(5, 0x20)
+    a.csrrw(0, MIE, 5)
+    a.label("stvec_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, STVEC, 5)
+    a.label("mepc_patch")
+    a.addi(5, 0, 0)
+    a.csrrw(0, MEPC, 5)
+    a.li(5, 0x802)
+    a.csrrw(0, MSTATUS, 5)
+    a.mret()
+    a.label("s_start")
+    a.addi(1, 1, 1)
+    a.j("s_start")
+    a.label("s_handler")
+    a.csrrs(11, SCAUSE, 0)
+    a.li(30, 0x1234)
+    a.j("s_done")
+    a.label("s_done")
+    a.j("s_done")
+
+    val prog = a.build
+    val stvecIdx = a.indexOf("stvec_patch")
+    val mepcIdx = a.indexOf("mepc_patch")
+    val patched = prog.zipWithIndex.map {
+      case (_, i) if i == stvecIdx => TAsm.encI(a.indexOf("s_handler") * 4, 0, 0, 5, 0x13)
+      case (_, i) if i == mepcIdx  => TAsm.encI(a.indexOf("s_start") * 4, 0, 0, 5, 0x13)
+      case (w, _)                   => w
+    }
+
+    SimConfig.withIVerilog
+      .workspacePath("simWork")
+      .compile(new CpuTb(CoreConfig(isa = isa), patched))
+      .doSim { dut =>
+        dut.clockDomain.forkStimulus(10)
+        dut.clockDomain.waitSampling(5)
+        val cyc = runUntilReg(dut, 800, 30, 0x1234L)
+        assert(cyc < 800, "RV32 Sstc program did not reach the S handler")
+        dut.clockDomain.waitSampling(4)
+        assert(u32(dut.io.debugRegs(11).toBigInt) == 0x80000005L,
+          s"scause ${u32(dut.io.debugRegs(11).toBigInt)} != 0x80000005")
+        assert(u32(dut.io.debugMode.toBigInt) == 1, "trap should land in S mode")
       }
   }
 }

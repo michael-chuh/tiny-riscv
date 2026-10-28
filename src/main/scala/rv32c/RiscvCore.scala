@@ -390,6 +390,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val sepcRead = csrFile.io.sepc
   val counterEnM = csrFile.io.counterEnM
   val counterEnS = csrFile.io.counterEnS
+  val sTimerPending = csrFile.io.sTimerPending
   val mstatusFs = csrFile.io.mstatusFs
   val csrFrm = csrFile.io.frm
   val mieMtie = csrFile.io.mieMtie
@@ -687,7 +688,7 @@ class RiscvCore(config: CoreConfig) extends Component {
   val delegTimer = midelegBits(7)
   val intrM = io.timerInterrupt && mieMtie && !delegTimer &&
     (curMode =/= MODE_M || mstatusMie)
-  val intrS = io.timerInterrupt && mieStie && delegTimer &&
+  val intrS = (io.timerInterrupt || sTimerPending) && mieStie && delegTimer &&
     (curMode === MODE_U || (curMode === MODE_S && mstatusSie))
   val intrReq = intrM || intrS
 

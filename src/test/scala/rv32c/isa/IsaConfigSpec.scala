@@ -417,6 +417,30 @@ class IsaConfigSpec extends AnyFunSuite {
     assert(IsaConfig.rv32imzicntr.misaValue == IsaConfig.rv32im.misaValue)
   }
 
+  test("Sstc presets add Sstc on top of Zicntr and S mode") {
+    val rv64 = IsaConfig.rv64imzicntrsu
+    assert(rv64.hasSstc && rv64.hasZicntr && rv64.priv.hasSupervisor)
+    assert(rv64.xlen == 64)
+    val rv32 = IsaConfig.rv32imzicntrsu
+    assert(rv32.hasSstc && rv32.priv.hasSupervisor && rv32.xlen == 32)
+    assert(!IsaConfig.rv64imzicntr.hasSstc)
+    assert(!IsaConfig.rv64imsu.hasSstc)
+    // Sstc contributes no misa bit.
+    assert(rv64.misaValue == IsaConfig.rv64imsu.misaValue)
+  }
+
+  test("Sstc requires S mode and a Zicntr time source") {
+    assertThrows[IllegalArgumentException] {
+      IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.Zicntr, RvExtension.Sstc),
+        PrivConfig.MU)
+    }
+    assertThrows[IllegalArgumentException] {
+      IsaConfig(64, Set(RvExtension.Zicsr, RvExtension.Sstc), PrivConfig.MSU)
+    }
+    assert(!RvExtension.reserved.contains(RvExtension.Sstc))
+    assert(RvExtension.implemented.contains(RvExtension.Sstc))
+  }
+
   test("Zicntr is not in the reserved extension set") {
     assert(!RvExtension.reserved.contains(RvExtension.Zicntr))
     assert(RvExtension.implemented.contains(RvExtension.Zicntr))

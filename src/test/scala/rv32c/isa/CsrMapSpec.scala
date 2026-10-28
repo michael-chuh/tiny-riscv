@@ -20,10 +20,11 @@ class CsrMapSpec extends AnyFunSuite {
     val impl = CsrMap.implementedFor(IsaConfig.rv32)
     // On a hart without an FPU the FP CSRs (fcsr/fflags/frm) are absent,
     // without S mode the delegation CSRs (medeleg/mideleg) do not exist, and
-    // without Zicntr the counters and counter-enable registers are absent.
+    // without Zicntr the counters and counter-enable registers are absent, and
+    // without Sstc the timer-compare and envcfg CSRs do not exist.
     val expected = CsrMap.all
       .filter(d => !d.requiresFpu && !d.requiresSupervisor && !d.requiresZicntr &&
-        d.minPriv != PrivMode.S)
+        !d.requiresSstc && d.minPriv != PrivMode.S)
       .map(_.addr).toSet
     assert(impl.map(_.addr).toSet == expected)
   }
@@ -45,6 +46,17 @@ class CsrMapSpec extends AnyFunSuite {
     assert(CsrMap.implementedFor(IsaConfig.rv32imzicntr).exists(_.addr == 0x106) == false)
     assert(CsrMap.implementedFor(IsaConfig.rv32imsu).exists(_.addr == 0x106) == false)
     assert(CsrMap.implementedFor(IsaConfig.rv32imsu).exists(_.addr == 0x306) == false)
+  }
+
+  test("Sstc CSRs appear only on Sstc harts, high halves only on RV32") {
+    val rv64 = CsrMap.implementedFor(IsaConfig.rv64imzicntrsu).map(_.addr).toSet
+    assert(rv64.contains(0x14D) && rv64.contains(0x30A))
+    assert(!rv64.contains(0x15D) && !rv64.contains(0x31A))
+    val rv32 = CsrMap.implementedFor(IsaConfig.rv32imzicntrsu).map(_.addr).toSet
+    assert(rv32.contains(0x14D) && rv32.contains(0x15D))
+    assert(rv32.contains(0x30A) && rv32.contains(0x31A))
+    assert(!CsrMap.implementedFor(IsaConfig.rv64imzicntr).exists(_.addr == 0x14D))
+    assert(!CsrMap.implementedFor(IsaConfig.rv64imsu).exists(_.addr == 0x30A))
   }
 
   test("implementedFor exposes the FP CSRs on an FPU hart") {

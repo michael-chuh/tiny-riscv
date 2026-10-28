@@ -10,7 +10,8 @@ package rv32c.isa
   */
 case class CsrDef(addr: Int, name: String, readOnly: Boolean, minPriv: PrivMode,
     requiresFpu: Boolean = false, requiresSupervisor: Boolean = false,
-    requiresZicntr: Boolean = false, isRv32Only: Boolean = false)
+    requiresZicntr: Boolean = false, isRv32Only: Boolean = false,
+    requiresSstc: Boolean = false)
 
 /** Single source of truth for which CSRs exist and how they may be accessed.
   *
@@ -35,6 +36,8 @@ object CsrMap {
   val mideleg  = CsrDef(0x303, "mideleg",  readOnly = false, PrivMode.M, requiresSupervisor = true)
   val mcounteren = CsrDef(0x306, "mcounteren", readOnly = false, PrivMode.M, requiresZicntr = true)
   val mcountinhibit = CsrDef(0x320, "mcountinhibit", readOnly = false, PrivMode.M, requiresZicntr = true)
+  val menvcfg = CsrDef(0x30A, "menvcfg", readOnly = false, PrivMode.M, requiresSstc = true)
+  val menvcfgh = CsrDef(0x31A, "menvcfgh", readOnly = false, PrivMode.M, requiresSstc = true, isRv32Only = true)
 
   // ---- Supervisor-level CSRs (only present on an M/S/U hart) ----
   val sstatus  = CsrDef(0x100, "sstatus",  readOnly = false, PrivMode.S)
@@ -47,6 +50,8 @@ object CsrMap {
   val sip      = CsrDef(0x144, "sip",      readOnly = true,  PrivMode.S)
   val satp     = CsrDef(0x180, "satp",     readOnly = false, PrivMode.S)
   val scounteren = CsrDef(0x106, "scounteren", readOnly = false, PrivMode.S, requiresZicntr = true)
+  val stimecmp = CsrDef(0x14D, "stimecmp", readOnly = false, PrivMode.S, requiresSstc = true)
+  val stimecmph = CsrDef(0x15D, "stimecmph", readOnly = false, PrivMode.S, requiresSstc = true, isRv32Only = true)
 
   // ---- Counters (Zicntr) ----
   // Machine counter aliases; writes replace the underlying 64-bit counter.
@@ -73,8 +78,9 @@ object CsrMap {
   /** Every CSR this design family knows about. */
   val all: Seq[CsrDef] = Seq(
     mstatus, misa, mie, mtvec, mscratch, mepc, mcause, mtval, mip, mhartid,
-    medeleg, mideleg, mcounteren, mcountinhibit,
+    medeleg, mideleg, mcounteren, mcountinhibit, menvcfg, menvcfgh,
     sstatus, sie, stvec, sscratch, sepc, scause, stval, sip, satp, scounteren,
+    stimecmp, stimecmph,
     mcycle, minstret, mcycleh, minstreth,
     cycle, time, instret, cycleh, timeh, instreth,
     fflags, frm, fcsr
@@ -91,6 +97,7 @@ object CsrMap {
       (!d.requiresFpu || isa.hasFpu) &&
       (!d.requiresSupervisor || isa.priv.hasSupervisor) &&
       (!d.requiresZicntr || isa.hasZicntr) &&
+      (!d.requiresSstc || isa.hasSstc) &&
       (!d.isRv32Only || !isa.isRV64))
 
   /** Subset of `implementedFor` that rejects any write intent. */
