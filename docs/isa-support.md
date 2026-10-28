@@ -453,10 +453,14 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - Zicntr 计数器（仅 `RvExtension.Zicntr` 使能时）：`mcycle(0xB00)`/`minstret(0xB02)` 与用户视图 `cycle(0xC00)`/`time(0xC01)`/`instret(0xC02)`；RV32 另实现高半字 `cycleh(0xC80)`/`timeh(0xC81)`/`instreth(0xC82)`；`mcycle/minstret` 的 RV32 高半字为 `mcycleh(0xB80)`/`minstreth(0xB82)`。`cycle` 每时钟自增，`instret` 按 WB 提交的指令数累加，`time` 复用 `cycle` 时基
   - `mcountinhibit(0x320)` 的 CY(0)/TM(1)/IR(2) 分别冻结 `cycle/time/instret`，清除后恢复累加
   - 使能门控：`mcounteren(0x306)` 控制 S/U 读取，M/S/U 栈的 `scounteren(0x106)` 进一步控制 U；低于 M 且对应位为 0 时触发 cause 2（`mtval`=CSR 地址）
+- Sstc 监督者定时器比较（仅 `RvExtension.Sstc` 使能时，需 Zicntr 与 S 模式）：`stimecmp(0x14D)` 与 RV32 `stimecmph(0x15D)`、`menvcfg(0x30A)` 与 RV32 `menvcfgh(0x31A)`
+  - `menvcfg` 为 WARL，本实现仅保留 `STCE`（bit 63），其余位读 0 写忽略
+  - `STCE=1` 后硬件比较 Zicntr 的 `time` 与 `stimecmp`：`time >= stimecmp` 时内部拉高 STIP（`mip/sip` bit 5），清零 `stimecmp` 或在 `STCE=0` 时撤回
+  - `STCE=0` 时 `stimecmp` 读 0 且写入被忽略；`mie.STIE` + `mideleg.STIP` 使能后按 cause 5 进入 S 模式
 - 浮点 CSR（仅 `RvExtension.SingleFloat` 使能时）：`fflags(0x001)`、`frm(0x002)`、`fcsr(0x003)`；`frm` 为 WARL 仅接受 0–4，提交 FP 指令累积 `fflags` 并把 `mstatus.FS` 置 Dirty
 - 同步异常 cause：ECALL(M)=11、ECALL(S)=9、ECALL(U)=8、EBREAK=3、非法指令/CSR 访问违例=2、`MPP`/`SPP` 不在配置特权栈的 MRET/SRET=2
 - 异常委托：M 下 trap 始终进入 M；S/U 下 `medeleg[cause]=1` 时进入 S（`sepc/scause/stval` + `SPP/SPIE/SIE`）
-- 定时器中断：M 级在 `MTIE && !mideleg[7] && (curMode≠M || MIE)` 时接受（cause=0x80000007）；S 级在 `STIE && mideleg[7] && (curMode==U || (curMode==S && SIE))` 时接受（cause=0x80000005），`mtval/stval=0`
+- 定时器中断：M 级在 `MTIE && !mideleg[7] && (curMode≠M || MIE)` 时接受（cause=0x80000007）；S 级在 `(timerInterrupt || Sstc STIP) && STIE && mideleg[7] && (curMode==U || (curMode==S && SIE))` 时接受（cause=0x80000005），`mtval/stval=0`
 - 复位 `debugPc` 回到 `resetVector`，内部 CSR/模式全部清零/复位为 M
 
 ## 立即数编码
@@ -486,3 +490,4 @@ CSR 指令在译码级无条件支持（与 RV32I 同属基础路径）。下表
 - **Zifencei**：`fence.i` 指令流同步（RV32 与 RV64）已实现并有定向测试与 RTL 生成
 - **Zicntr**：`cycle/time/instret`（RV32 含 `cycleh/timeh/instreth`）与 `mcycle/minstret`、`mcounteren/scounteren` 已实现；`time` 与 `cycle` 同源，未接入外部实时时钟
 - **Zicntr 访问控制**：M 模式直接可读；S/U 模式需 `mcounteren` 对应位，M/S/U 栈的 U 模式还需 `scounteren` 对应位，违反时按非法指令（cause 2）处理
+- **Sstc**：`stimecmp/menvcfg`（RV32 含高半字）与 `menvcfg.STCE` 驱动 STIP，实现无 SBI 的 S 模式定时器中断（RV32 与 RV64）已实现并有定向测试与 RTL 生成
