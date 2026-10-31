@@ -11,6 +11,7 @@ class IfIdBundle(xlen: Int) extends Bundle {
   val pc = UInt(xlen bits)
   val instruction = Bits(32 bits)
   val compressed = Bool()      // RV32C: instruction is 16 bits wide
+  val pageFault = Bool()       // Sv39: this fetch raised an instruction page fault
 }
 object IfIdBundle {
   def zero(xlen: Int): IfIdBundle = {
@@ -19,6 +20,7 @@ object IfIdBundle {
     b.pc := U(0, xlen bits)
     b.instruction := B(0, 32 bits)
     b.compressed := False
+    b.pageFault := False
     b
   }
 }
@@ -68,6 +70,7 @@ class IdExBundle(xlen: Int) extends Bundle {
   val csrAddr = UInt(12 bits)  // CSR address (instr[31:20])
   val csrWe = Bool()           // instruction performs a CSR write
   val sysOp = SysOp()          // SYSTEM sub-op (ecall/ebreak/mret/wfi/illegal)
+  val pageFault = Bool()       // instruction page fault raised by the fetch
 }
 object IdExBundle {
   def zero(xlen: Int): IdExBundle = {
@@ -113,6 +116,7 @@ object IdExBundle {
     b.csrAddr := U(0, 12 bits)
     b.csrWe := False
     b.sysOp := SysOp.NONE
+    b.pageFault := False
     b
   }
 }
@@ -139,11 +143,13 @@ class ExMemBundle(xlen: Int) extends Bundle {
   val rd = UInt(5 bits)
   val wbSel = UInt(3 bits)     // WbSel: ALU / MEM / PC4 / CSR
   val aluResult = Bits(xlen bits)
+  val paddr = Bits(xlen bits)  // Sv39 translated address (equals aluResult on BARE)
   val rs2Data = Bits(xlen bits)
   val csrOp = CsrOp()
   val csrWe = Bool()
   val csrAddr = UInt(12 bits)
   val csrWrData = Bits(xlen bits)
+  val sysOp = SysOp()          // SYSTEM sub-op (SFENCE.VMA ordering)
 }
 object ExMemBundle {
   def zero(xlen: Int): ExMemBundle = {
@@ -167,11 +173,13 @@ object ExMemBundle {
     b.rd := U(0, 5 bits)
     b.wbSel := U(0, 3 bits)
     b.aluResult := B(0, xlen bits)
+    b.paddr := B(0, xlen bits)
     b.rs2Data := B(0, xlen bits)
     b.csrOp := CsrOp.NONE
     b.csrWe := False
     b.csrAddr := U(0, 12 bits)
     b.csrWrData := B(0, xlen bits)
+    b.sysOp := SysOp.NONE
     b
   }
 }
@@ -189,6 +197,7 @@ class MemWbBundle(xlen: Int) extends Bundle {
   val csrWe = Bool()
   val csrAddr = UInt(12 bits)
   val csrWrData = Bits(xlen bits)
+  val sysOp = SysOp()          // SYSTEM sub-op (SFENCE.VMA ordering)
 }
 object MemWbBundle {
   def zero(xlen: Int): MemWbBundle = {
@@ -205,6 +214,7 @@ object MemWbBundle {
     b.csrWe := False
     b.csrAddr := U(0, 12 bits)
     b.csrWrData := B(0, xlen bits)
+    b.sysOp := SysOp.NONE
     b
   }
 }
@@ -253,6 +263,14 @@ class RiscvCore(config: CoreConfig) extends Component {
       Mux(mode === U(PrivMode.S.encoding, 2 bits), U(ExceptionCode.ecallFromS),
         U(ExceptionCode.ecallFromM)))
 
+  // ===== Sv39 MMU outputs (instance created after the EX trap decode) =====
+  val mmuIHit = Bool()
+  val mmuIFault = Bool()
+  val mmuIPaddr = UInt(xlen bits)
+  val mmuDHit = Bool()
+  val mmuDFault = Bool()
+  val mmuDPaddr = UInt(xlen bits)
+
   // ===== Fetch stage =====
   // Without C, pcReg keeps its 4-byte granularity and a full word is delivered
   // each cycle. With C the PC is 2-byte granular: the bus always fetches the
@@ -270,19 +288,25 @@ class RiscvCore(config: CoreConfig) extends Component {
   val fetchInstr = Bits(32 bits)
   val fetchLen = UInt(3 bits)
   val fetchCompressed = Bool()
+  val fetchVaddr = UInt(xlen bits)
+  val fetchFault = Bool()
 
   io.iBus.valid := True
+  io.iBus.pc := mmuIPaddr
+  fetchFault := mmuIFault
   if (withCompressed) {
     val alignedPc = Cat(pcReg(xlen - 1 downto 2), U(0, 2 bits)).asUInt
-    io.iBus.pc := Mux(mis32, alignedPc + U(4, xlen bits), alignedPc)
+    fetchVaddr := Mux(mis32, alignedPc + U(4, xlen bits), alignedPc)
 
     val word = io.iBus.instruction
     val lowHalf = word(15 downto 0)
     val highHalf = word(31 downto 16)
-    mis32Start := !mis32 && pcReg(1) && (highHalf(1 downto 0) === B"11")
+    mis32Start := !fetchFault && !mis32 && pcReg(1) && (highHalf(1 downto 0) === B"11")
     mis32Stall := mis32Start
 
-    when(mis32) {
+    when(fetchFault) {
+      mis32 := False
+    } elsewhen (mis32) {
       mis32 := False
     } elsewhen (mis32Start) {
       mis32 := True
@@ -309,7 +333,7 @@ class RiscvCore(config: CoreConfig) extends Component {
       fetchCompressed := True
     }
   } else {
-    io.iBus.pc := pcReg
+    fetchVaddr := pcReg
     mis32Start := False
     mis32Stall := False
     fetchInstr := io.iBus.instruction
@@ -587,6 +611,12 @@ class RiscvCore(config: CoreConfig) extends Component {
   val csrIllegal = (csrRoWrite || csrUnimpl || csrPrivIllegal || mtvecModeBad ||
     stvecModeBad || csrFsOff || counterDenied) && idEx.valid
 
+  // SFENCE.VMA requires supervisor mode (M included); TVM is not implemented,
+  // so it stays legal in M when S mode exists.
+  val sfenceLegal = if (config.priv.hasSupervisor) idEx.valid &&
+    idEx.sysOp === SysOp.SFENCE &&
+    (curMode === MODE_S || curMode === MODE_M) else False
+
   // ===== Synchronous exception decode (EX stage) =====
   // Only one case applies per instruction (SYSTEM ops and CSR ops are mutually
   // exclusive), so last-write-wins assignment ordering is safe.
@@ -651,6 +681,11 @@ class RiscvCore(config: CoreConfig) extends Component {
       exTrapEna := True
       exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
     }
+    // SFENCE.VMA is a supervisor instruction: illegal in U mode.
+    when(idEx.sysOp === SysOp.SFENCE && !sfenceLegal) {
+      exTrapEna := True
+      exTrapCause := B(ExceptionCode.instructionIllegal, xlen bits)
+    }
     // FP loads/stores require natural alignment (W: 4 bytes, D: 8 bytes).
     when(idEx.fpLoad || idEx.fpStore) {
       val fpAlignOk = Mux(idEx.memSize === U(3, 2 bits),
@@ -663,7 +698,72 @@ class RiscvCore(config: CoreConfig) extends Component {
         exTrapTval := aluResult
       }
     }
+    // Sv39 page faults. A fetch fault is carried with the instruction; data
+    // faults come from the MMU once the walk reports a bad translation.
+    when(idEx.pageFault) {
+      exTrapEna := True
+      exTrapCause := B(ExceptionCode.instructionPageFault, xlen bits)
+      exTrapTval := idEx.pc.asBits
+    }
+    when(mmuDFault) {
+      exTrapEna := True
+      exTrapCause := B(Mux(idEx.isLr,
+        U(ExceptionCode.loadPageFault, xlen bits),
+        U(ExceptionCode.storePageFault, xlen bits)), xlen bits)
+      exTrapTval := aluResult
+    }
   }
+
+  // ===== Sv39 MMU =====
+  // Active for S/U accesses when satp.MODE selects Sv39; M-mode and BARE pass
+  // through. Unresolved translations stall the core; page-table walks drive the
+  // data bus while the pipeline is frozen. Sv39 is RV64-only, so RV32 configs
+  // keep the direct address path.
+  val mmuIValid = io.iBus.valid && !exTrapEna && !(idEx.valid && idEx.pageFault)
+  val mmuDValid = idEx.valid && !idEx.pageFault &&
+    (idEx.memRead || idEx.memWrite || idEx.atomic)
+  val mmuAmoAccess = idEx.atomic && !idEx.isLr && !idEx.isSc
+  val ptwAccess = Bool()
+  val ptwAddr = UInt(xlen bits)
+
+  if (xlen == 64) {
+    val mmu = new Sv39Mmu(64)
+    mmu.io.enable := csrFile.io.satpMode === U(8, 4 bits) && curMode =/= MODE_M
+    mmu.io.ppn := csrFile.io.satpPpn
+    mmu.io.priv := curMode
+    mmu.io.sum := csrFile.io.mstatusSum
+    mmu.io.flush := csrFile.io.satpWrite ||
+      (memWb.valid && memWb.sysOp === SysOp.SFENCE)
+    mmu.io.iValid := mmuIValid
+    mmu.io.iVaddr := fetchVaddr
+    mmu.io.dValid := mmuDValid
+    mmu.io.dAccess := Cat(idEx.memWrite || mmuAmoAccess,
+      idEx.memRead || idEx.isLr || mmuAmoAccess).asUInt
+    mmu.io.dVaddr := aluResult.asUInt
+    mmu.io.ptwData := io.dBus.readData.asBits
+
+    mmuIHit := mmu.io.iHit
+    mmuIFault := mmu.io.iFault
+    mmuIPaddr := mmu.io.iPaddr
+    mmuDHit := mmu.io.dHit
+    mmuDFault := mmu.io.dFault
+    mmuDPaddr := mmu.io.dPaddr
+    ptwAccess := mmu.io.ptwValid
+    ptwAddr := mmu.io.ptwAddr
+  } else {
+    mmuIHit := True
+    mmuIFault := False
+    mmuIPaddr := fetchVaddr
+    mmuDHit := True
+    mmuDFault := False
+    mmuDPaddr := aluResult.asUInt
+    ptwAccess := False
+    ptwAddr := U(0, xlen bits)
+  }
+
+  // A miss whose fault has not been reported yet keeps the pipeline frozen.
+  val mmuStall = (mmuIValid && !mmuIHit && !mmuIFault) ||
+    (mmuDValid && !mmuDHit && !mmuDFault)
 
   // ===== MRET / interrupt resolution =====
   val mretLegal = idEx.valid && idEx.sysOp === SysOp.MRET && curMode === MODE_M && mppSupported
@@ -708,7 +808,14 @@ class RiscvCore(config: CoreConfig) extends Component {
   val fpProducerMem = exMem.valid && exMem.fpWrite && exMem.rd =/= U(0)
   val fpStallData = (fpProducerEx && fpSrcMatch(idEx.rd)) ||
     (fpProducerMem && fpSrcMatch(exMem.rd))
-  val stallData = intStallData || fpStallData
+  // A satp write or SFENCE.VMA in MEM/WB must order before any younger
+  // translation: hold the front end until it retires and the MMU flushes.
+  val exOrdersMmu = exMem.valid && (exMem.sysOp === SysOp.SFENCE ||
+    (exMem.csrWe && exMem.csrAddr === U(0x180, 12 bits)))
+  val wbOrdersMmu = memWb.valid && (memWb.sysOp === SysOp.SFENCE ||
+    (memWb.csrWe && memWb.csrAddr === U(0x180, 12 bits)))
+  val mmuOrderStall = exOrdersMmu || wbOrdersMmu
+  val stallData = intStallData || fpStallData || mmuOrderStall
   val fetchStall = !io.iBus.ready
   val memStall = exMem.valid && (exMem.memRead || exMem.memWrite) && !exMem.atomic && !io.dBus.ready
 
@@ -883,7 +990,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     res
   }
 
-  val otherFreeze = memStall || fetchStall || divStall || mis32Stall
+  val otherFreeze = memStall || fetchStall || divStall || mis32Stall || mmuStall
 
   if (withAtomic) {
     val resvValid = RegInit(False)
@@ -911,14 +1018,14 @@ class RiscvCore(config: CoreConfig) extends Component {
     val dNew = amoCombine(xlen, exMem.amoOp, amoOld, exMem.rs2Data)
     amoNewValue := Mux(amoIsW, wNew.asSInt.resize(xlen).asBits, dNew)
 
-    amoDriveRead := isAmoMem && amoState === U(0)
+    amoDriveRead := isAmoMem && mmuDHit && amoState === U(0)
     amoDriveWrite := isAmoMem && amoState === U(1)
-    amoStall := isAmoMem && !(amoState === U(1) && io.dBus.ready)
+    amoStall := isAmoMem && (!mmuDHit || amoState === U(0) || !io.dBus.ready)
     scSuccess := scOk
 
     when(isAmoMem) {
       when(amoState === U(0)) {
-        when(io.dBus.ready) { amoOld := io.dBus.readData; amoState := U(1) }
+        when(mmuDHit && io.dBus.ready) { amoOld := io.dBus.readData; amoState := U(1) }
       } elsewhen (amoState === U(1)) {
         when(io.dBus.ready) { amoState := U(0) }
       }
@@ -1048,6 +1155,7 @@ class RiscvCore(config: CoreConfig) extends Component {
       ifId.pc := pcReg
       ifId.instruction := fetchInstr
       ifId.compressed := fetchCompressed
+      ifId.pageFault := fetchFault
       ifId.valid := True
     }
   }
@@ -1099,6 +1207,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     idEx.csrAddr := dec.csrAddr
     idEx.csrWe := dec.csrWe
     idEx.sysOp := dec.sysOp
+    idEx.pageFault := ifId.pageFault
   }
 
   // ===== EX/MEM update =====
@@ -1108,6 +1217,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     } otherwise {
       exMem.valid := idEx.valid
     }
+    exMem.paddr := mmuDPaddr.asBits
     exMem.memRead := idEx.memRead
     exMem.memWrite := idEx.memWrite
     exMem.memSize := idEx.memSize
@@ -1130,6 +1240,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     exMem.csrOp := idEx.csrOp
     exMem.csrWe := idEx.csrWe
     exMem.csrAddr := idEx.csrAddr
+    exMem.sysOp := idEx.sysOp
     exMem.csrWrData := csrWrDataEx
   }
 
@@ -1140,10 +1251,10 @@ class RiscvCore(config: CoreConfig) extends Component {
   val effMemWrite = exMem.memWrite && Mux(exMem.isSc, scSuccess, True)
   val normalRead = exMem.valid && exMem.memRead && !exMem.atomic
   val normalWrite = exMem.valid && effMemWrite
-  io.dBus.valid := normalRead || normalWrite || amoDriveRead || amoDriveWrite
-  io.dBus.write := normalWrite || amoDriveWrite
+  io.dBus.valid := ptwAccess || normalRead || normalWrite || amoDriveRead || amoDriveWrite
+  io.dBus.write := !ptwAccess && (normalWrite || amoDriveWrite)
   io.dBus.size := exMem.memSize
-  io.dBus.address := memAddr.asUInt
+  io.dBus.address := Mux(ptwAccess, ptwAddr, exMem.paddr.asUInt)
 
   // Byte offset within the data-memory word; the word is xlen/8 bytes wide, so
   // RV64 needs 3 offset bits to reach the high half of a word (addresses 4..7).
@@ -1235,6 +1346,7 @@ class RiscvCore(config: CoreConfig) extends Component {
     memWb.csrOp := exMem.csrOp
     memWb.csrWe := exMem.csrWe
     memWb.csrAddr := exMem.csrAddr
+    memWb.sysOp := exMem.sysOp
     memWb.csrWrData := exMem.csrWrData
   }
 

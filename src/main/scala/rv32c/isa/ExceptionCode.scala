@@ -13,4 +13,7 @@ object ExceptionCode {
   def ecallFromU = 8
   def ecallFromS = 9
   def ecallFromM = 11
+  def instructionPageFault = 12
+  def loadPageFault = 13
+  def storePageFault = 15
 }

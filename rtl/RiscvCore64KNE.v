@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCore64KNE
-// Git hash  : bc3b7f20766a280a7398c77ed28c2aae015335f7
+// Git hash  : 17dbfc483b2afee25fac67afa7e7634cbcad3110
 
 `timescale 1ns/1ps
 
@@ -178,7 +178,8 @@ module RiscvCore64KNE (
   localparam SysOp_MRET = 3'd3;
   localparam SysOp_SRET = 3'd4;
   localparam SysOp_WFI = 3'd5;
-  localparam SysOp_ILLEGAL = 3'd6;
+  localparam SysOp_SFENCE = 3'd6;
+  localparam SysOp_ILLEGAL = 3'd7;
 
   wire                regFile_io_writeEnable;
   wire                csrFile_1_io_csrWe;
@@ -186,6 +187,10 @@ module RiscvCore64KNE (
   wire       [63:0]   csrFile_1_io_trapCause;
   wire       [63:0]   csrFile_1_io_trapTval;
   wire                csrFile_1_io_retire;
+  wire                sv39Mmu_1_io_enable;
+  wire                sv39Mmu_1_io_flush;
+  wire       [1:0]    sv39Mmu_1_io_dAccess;
+  wire       [63:0]   sv39Mmu_1_io_dVaddr;
   wire                divider_1_io_start;
   wire       [63:0]   divider_1_io_a;
   wire       [63:0]   divider_1_io_b;
@@ -282,10 +287,22 @@ module RiscvCore64KNE (
   wire       [2:0]    csrFile_1_io_counterEnM;
   wire       [2:0]    csrFile_1_io_counterEnS;
   wire                csrFile_1_io_sTimerPending;
+  wire       [43:0]   csrFile_1_io_satpPpn;
+  wire       [3:0]    csrFile_1_io_satpMode;
+  wire                csrFile_1_io_satpWrite;
+  wire                csrFile_1_io_mstatusSum;
   wire       [63:0]   csrFile_1_io_debugMepc;
   wire       [63:0]   csrFile_1_io_debugMcause;
   wire       [1:0]    csrFile_1_io_debugMode;
   wire       [63:0]   alu_1_io_result;
+  wire       [63:0]   sv39Mmu_1_io_iPaddr;
+  wire                sv39Mmu_1_io_iHit;
+  wire                sv39Mmu_1_io_iFault;
+  wire       [63:0]   sv39Mmu_1_io_dPaddr;
+  wire                sv39Mmu_1_io_dHit;
+  wire                sv39Mmu_1_io_dFault;
+  wire                sv39Mmu_1_io_ptwValid;
+  wire       [63:0]   sv39Mmu_1_io_ptwAddr;
   wire                divider_1_io_busy;
   wire                divider_1_io_done;
   wire       [63:0]   divider_1_io_quotient;
@@ -362,6 +379,12 @@ module RiscvCore64KNE (
   wire       [1:0]    MODE_U;
   wire       [1:0]    MODE_S;
   wire       [1:0]    MODE_M;
+  wire                mmuIHit;
+  wire                mmuIFault;
+  wire       [63:0]   mmuIPaddr;
+  wire                mmuDHit;
+  wire                mmuDFault;
+  wire       [63:0]   mmuDPaddr;
   reg        [63:0]   pcReg;
   wire                mis32;
   wire       [15:0]   hiReg;
@@ -370,10 +393,13 @@ module RiscvCore64KNE (
   wire       [31:0]   fetchInstr;
   wire       [2:0]    fetchLen;
   wire                fetchCompressed;
+  wire       [63:0]   fetchVaddr;
+  wire                fetchFault;
   reg                 ifId_valid;
   reg        [63:0]   ifId_pc;
   reg        [31:0]   ifId_instruction;
   reg                 ifId_compressed;
+  reg                 ifId_pageFault;
   reg                 idEx_valid;
   reg        [63:0]   idEx_pc;
   reg                 idEx_compressed;
@@ -415,6 +441,7 @@ module RiscvCore64KNE (
   reg        [11:0]   idEx_csrAddr;
   reg                 idEx_csrWe;
   reg        [2:0]    idEx_sysOp;
+  reg                 idEx_pageFault;
   reg                 exMem_valid;
   reg                 exMem_memRead;
   reg                 exMem_memWrite;
@@ -434,11 +461,13 @@ module RiscvCore64KNE (
   reg        [4:0]    exMem_rd;
   reg        [2:0]    exMem_wbSel;
   reg        [63:0]   exMem_aluResult;
+  reg        [63:0]   exMem_paddr;
   reg        [63:0]   exMem_rs2Data;
   reg        [1:0]    exMem_csrOp;
   reg                 exMem_csrWe;
   reg        [11:0]   exMem_csrAddr;
   reg        [63:0]   exMem_csrWrData;
+  reg        [2:0]    exMem_sysOp;
   reg                 memWb_valid;
   reg                 memWb_regWrite;
   reg        [4:0]    memWb_rd;
@@ -451,16 +480,17 @@ module RiscvCore64KNE (
   reg                 memWb_csrWe;
   reg        [11:0]   memWb_csrAddr;
   reg        [63:0]   memWb_csrWrData;
+  reg        [2:0]    memWb_sysOp;
   wire       [0:0]    fpRs1Data;
   wire       [0:0]    fpRs2Data;
   wire       [0:0]    fpRs3Data;
   wire       [63:0]   wbWriteData;
   reg        [63:0]   forwardRs1;
-  wire                when_RiscvCore_l410;
-  wire                when_RiscvCore_l412;
+  wire                when_RiscvCore_l434;
+  wire                when_RiscvCore_l436;
   reg        [63:0]   forwardRs2;
-  wire                when_RiscvCore_l425;
-  wire                when_RiscvCore_l427;
+  wire                when_RiscvCore_l449;
+  wire                when_RiscvCore_l451;
   wire       [0:0]    fpFwdRs1;
   wire       [0:0]    fpFwdRs2;
   wire       [0:0]    fpFwdRs3;
@@ -485,13 +515,14 @@ module RiscvCore64KNE (
   wire                mtvecModeBad;
   wire                stvecModeBad;
   reg        [1:0]    counterIdx;
-  wire                when_RiscvCore_l573;
-  wire                when_RiscvCore_l576;
+  wire                when_RiscvCore_l597;
+  wire                when_RiscvCore_l600;
   wire                counterCsr;
   wire                mCounterDenied;
   wire                sCounterDenied;
   wire                counterDenied;
   wire                csrIllegal;
+  wire                sfenceLegal;
   reg                 exTrapEna;
   reg        [63:0]   exTrapCause;
   reg        [63:0]   exTrapTval;
@@ -499,16 +530,23 @@ module RiscvCore64KNE (
   wire       [1:0]    sppTarget;
   wire                sppSupported;
   wire                sretLegal;
-  wire                when_RiscvCore_l611;
-  wire                when_RiscvCore_l615;
-  wire                when_RiscvCore_l619;
-  wire                when_RiscvCore_l623;
-  wire                when_RiscvCore_l632;
-  wire                when_RiscvCore_l638;
   wire                when_RiscvCore_l641;
-  wire                when_RiscvCore_l650;
-  wire                when_RiscvCore_l655;
-  wire                when_RiscvCore_l658;
+  wire                when_RiscvCore_l645;
+  wire                when_RiscvCore_l649;
+  wire                when_RiscvCore_l653;
+  wire                when_RiscvCore_l662;
+  wire                when_RiscvCore_l668;
+  wire                when_RiscvCore_l671;
+  wire                when_RiscvCore_l680;
+  wire                when_RiscvCore_l685;
+  wire                when_RiscvCore_l690;
+  wire                when_RiscvCore_l693;
+  wire                mmuIValid;
+  wire                mmuDValid;
+  wire                mmuAmoAccess;
+  wire                ptwAccess;
+  wire       [63:0]   ptwAddr;
+  wire                mmuStall;
   wire                mretLegal;
   wire                csrAffectsXret;
   wire                csrXretStall;
@@ -522,6 +560,9 @@ module RiscvCore64KNE (
   wire                fpProducerEx;
   wire                fpProducerMem;
   wire                fpStallData;
+  wire                exOrdersMmu;
+  wire                wbOrdersMmu;
+  wire                mmuOrderStall;
   wire                stallData;
   wire                fetchStall;
   wire                memStall;
@@ -570,13 +611,13 @@ module RiscvCore64KNE (
   wire       [63:0]   intrCauseVal;
   wire                flushYounger;
   wire                bubbleEx;
-  wire                when_RiscvCore_l1025;
-  wire                when_RiscvCore_l1034;
-  wire                when_RiscvCore_l1042;
-  wire                when_RiscvCore_l1043;
-  wire                when_RiscvCore_l1056;
-  wire                when_RiscvCore_l1057;
-  wire                when_RiscvCore_l1105;
+  wire                when_RiscvCore_l1132;
+  wire                when_RiscvCore_l1141;
+  wire                when_RiscvCore_l1149;
+  wire                when_RiscvCore_l1150;
+  wire                when_RiscvCore_l1164;
+  wire                when_RiscvCore_l1165;
+  wire                when_RiscvCore_l1214;
   wire                effMemWrite;
   wire                normalRead;
   wire                normalWrite;
@@ -588,14 +629,16 @@ module RiscvCore64KNE (
   wire       [15:0]   _zz_loadResult_1;
   wire       [31:0]   _zz_loadResult_2;
   wire       [0:0]    fpLoadData;
-  wire                when_RiscvCore_l1216;
+  wire                when_RiscvCore_l1327;
   `ifndef SYNTHESIS
   reg [87:0] idEx_aluOp_string;
   reg [31:0] idEx_branchType_string;
   reg [39:0] idEx_csrOp_string;
   reg [55:0] idEx_sysOp_string;
   reg [39:0] exMem_csrOp_string;
+  reg [55:0] exMem_sysOp_string;
   reg [39:0] memWb_csrOp_string;
+  reg [55:0] memWb_sysOp_string;
   `endif
 
 
@@ -789,6 +832,10 @@ module RiscvCore64KNE (
     .io_counterEnM     (csrFile_1_io_counterEnM[2:0]  ), //o
     .io_counterEnS     (csrFile_1_io_counterEnS[2:0]  ), //o
     .io_sTimerPending  (csrFile_1_io_sTimerPending    ), //o
+    .io_satpPpn        (csrFile_1_io_satpPpn[43:0]    ), //o
+    .io_satpMode       (csrFile_1_io_satpMode[3:0]    ), //o
+    .io_satpWrite      (csrFile_1_io_satpWrite        ), //o
+    .io_mstatusSum     (csrFile_1_io_mstatusSum       ), //o
     .io_debugMepc      (csrFile_1_io_debugMepc[63:0]  ), //o
     .io_debugMcause    (csrFile_1_io_debugMcause[63:0]), //o
     .io_debugMode      (csrFile_1_io_debugMode[1:0]   ), //o
@@ -802,6 +849,29 @@ module RiscvCore64KNE (
     .io_bs     (idEx_bs[1:0]         ), //i
     .io_rcon   (idEx_rcon[3:0]       ), //i
     .io_result (alu_1_io_result[63:0])  //o
+  );
+  Sv39Mmu sv39Mmu_1 (
+    .io_enable   (sv39Mmu_1_io_enable       ), //i
+    .io_ppn      (csrFile_1_io_satpPpn[43:0]), //i
+    .io_priv     (csrFile_1_io_curMode[1:0] ), //i
+    .io_sum      (csrFile_1_io_mstatusSum   ), //i
+    .io_flush    (sv39Mmu_1_io_flush        ), //i
+    .io_iValid   (mmuIValid                 ), //i
+    .io_iVaddr   (fetchVaddr[63:0]          ), //i
+    .io_iPaddr   (sv39Mmu_1_io_iPaddr[63:0] ), //o
+    .io_iHit     (sv39Mmu_1_io_iHit         ), //o
+    .io_iFault   (sv39Mmu_1_io_iFault       ), //o
+    .io_dValid   (mmuDValid                 ), //i
+    .io_dAccess  (sv39Mmu_1_io_dAccess[1:0] ), //i
+    .io_dVaddr   (sv39Mmu_1_io_dVaddr[63:0] ), //i
+    .io_dPaddr   (sv39Mmu_1_io_dPaddr[63:0] ), //o
+    .io_dHit     (sv39Mmu_1_io_dHit         ), //o
+    .io_dFault   (sv39Mmu_1_io_dFault       ), //o
+    .io_ptwValid (sv39Mmu_1_io_ptwValid     ), //o
+    .io_ptwAddr  (sv39Mmu_1_io_ptwAddr[63:0]), //o
+    .io_ptwData  (io_dBus_readData[63:0]    ), //i
+    .clk         (clk                       ), //i
+    .reset       (reset                     )  //i
   );
   Divider divider_1 (
     .io_start     (divider_1_io_start          ), //i
@@ -955,6 +1025,7 @@ module RiscvCore64KNE (
       SysOp_MRET : idEx_sysOp_string = "MRET   ";
       SysOp_SRET : idEx_sysOp_string = "SRET   ";
       SysOp_WFI : idEx_sysOp_string = "WFI    ";
+      SysOp_SFENCE : idEx_sysOp_string = "SFENCE ";
       SysOp_ILLEGAL : idEx_sysOp_string = "ILLEGAL";
       default : idEx_sysOp_string = "???????";
     endcase
@@ -969,12 +1040,38 @@ module RiscvCore64KNE (
     endcase
   end
   always @(*) begin
+    case(exMem_sysOp)
+      SysOp_NONE : exMem_sysOp_string = "NONE   ";
+      SysOp_ECALL : exMem_sysOp_string = "ECALL  ";
+      SysOp_EBREAK : exMem_sysOp_string = "EBREAK ";
+      SysOp_MRET : exMem_sysOp_string = "MRET   ";
+      SysOp_SRET : exMem_sysOp_string = "SRET   ";
+      SysOp_WFI : exMem_sysOp_string = "WFI    ";
+      SysOp_SFENCE : exMem_sysOp_string = "SFENCE ";
+      SysOp_ILLEGAL : exMem_sysOp_string = "ILLEGAL";
+      default : exMem_sysOp_string = "???????";
+    endcase
+  end
+  always @(*) begin
     case(memWb_csrOp)
       CsrOp_NONE : memWb_csrOp_string = "NONE ";
       CsrOp_WRITE : memWb_csrOp_string = "WRITE";
       CsrOp_SET : memWb_csrOp_string = "SET  ";
       CsrOp_CLEAR : memWb_csrOp_string = "CLEAR";
       default : memWb_csrOp_string = "?????";
+    endcase
+  end
+  always @(*) begin
+    case(memWb_sysOp)
+      SysOp_NONE : memWb_sysOp_string = "NONE   ";
+      SysOp_ECALL : memWb_sysOp_string = "ECALL  ";
+      SysOp_EBREAK : memWb_sysOp_string = "EBREAK ";
+      SysOp_MRET : memWb_sysOp_string = "MRET   ";
+      SysOp_SRET : memWb_sysOp_string = "SRET   ";
+      SysOp_WFI : memWb_sysOp_string = "WFI    ";
+      SysOp_SFENCE : memWb_sysOp_string = "SFENCE ";
+      SysOp_ILLEGAL : memWb_sysOp_string = "ILLEGAL";
+      default : memWb_sysOp_string = "???????";
     endcase
   end
   `endif
@@ -985,7 +1082,9 @@ module RiscvCore64KNE (
   assign mis32 = 1'b0;
   assign hiReg = 16'h0;
   assign io_iBus_valid = 1'b1;
-  assign io_iBus_pc = pcReg;
+  assign io_iBus_pc = mmuIPaddr;
+  assign fetchFault = mmuIFault;
+  assign fetchVaddr = pcReg;
   assign mis32Start = 1'b0;
   assign mis32Stall = 1'b0;
   assign fetchInstr = io_iBus_instruction;
@@ -995,12 +1094,12 @@ module RiscvCore64KNE (
   assign fpRs2Data = 1'b0;
   assign fpRs3Data = 1'b0;
   assign wbWriteData = ((memWb_wbSel == 3'b011) ? csrFile_1_io_rdData : memWb_wbData);
-  assign when_RiscvCore_l410 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs1));
+  assign when_RiscvCore_l434 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs1));
   always @(*) begin
-    if(when_RiscvCore_l410) begin
+    if(when_RiscvCore_l434) begin
       forwardRs1 = exMem_aluResult;
     end else begin
-      if(when_RiscvCore_l412) begin
+      if(when_RiscvCore_l436) begin
         forwardRs1 = wbWriteData;
       end else begin
         forwardRs1 = regFile_io_rs1Data;
@@ -1008,13 +1107,13 @@ module RiscvCore64KNE (
     end
   end
 
-  assign when_RiscvCore_l412 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs1));
-  assign when_RiscvCore_l425 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs2));
+  assign when_RiscvCore_l436 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs1));
+  assign when_RiscvCore_l449 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs2));
   always @(*) begin
-    if(when_RiscvCore_l425) begin
+    if(when_RiscvCore_l449) begin
       forwardRs2 = exMem_aluResult;
     end else begin
-      if(when_RiscvCore_l427) begin
+      if(when_RiscvCore_l451) begin
         forwardRs2 = wbWriteData;
       end else begin
         forwardRs2 = regFile_io_rs2Data;
@@ -1022,7 +1121,7 @@ module RiscvCore64KNE (
     end
   end
 
-  assign when_RiscvCore_l427 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs2));
+  assign when_RiscvCore_l451 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs2));
   assign fpFwdRs1 = 1'b0;
   assign fpFwdRs2 = 1'b0;
   assign fpFwdRs3 = 1'b0;
@@ -1107,54 +1206,64 @@ module RiscvCore64KNE (
   assign stvecModeBad = 1'b0;
   always @(*) begin
     counterIdx = 2'b00;
-    if(when_RiscvCore_l573) begin
+    if(when_RiscvCore_l597) begin
       counterIdx = 2'b01;
     end
-    if(when_RiscvCore_l576) begin
+    if(when_RiscvCore_l600) begin
       counterIdx = 2'b10;
     end
   end
 
-  assign when_RiscvCore_l573 = ((idEx_csrAddr == 12'hc01) || (idEx_csrAddr == 12'hc81));
-  assign when_RiscvCore_l576 = ((idEx_csrAddr == 12'hc02) || (idEx_csrAddr == 12'hc82));
+  assign when_RiscvCore_l597 = ((idEx_csrAddr == 12'hc01) || (idEx_csrAddr == 12'hc81));
+  assign when_RiscvCore_l600 = ((idEx_csrAddr == 12'hc02) || (idEx_csrAddr == 12'hc82));
   assign counterCsr = (isCsrInst && ((((((idEx_csrAddr == 12'hc00) || (idEx_csrAddr == 12'hc80)) || (idEx_csrAddr == 12'hc01)) || (idEx_csrAddr == 12'hc81)) || (idEx_csrAddr == 12'hc02)) || (idEx_csrAddr == 12'hc82)));
   assign mCounterDenied = ((csrFile_1_io_curMode != MODE_M) && (! csrFile_1_io_counterEnM[counterIdx]));
   assign sCounterDenied = 1'b0;
   assign counterDenied = (counterCsr && (mCounterDenied || sCounterDenied));
   assign csrIllegal = (((((((csrRoWrite || csrUnimpl) || csrPrivIllegal) || mtvecModeBad) || stvecModeBad) || csrFsOff) || counterDenied) && idEx_valid);
+  assign sfenceLegal = 1'b0;
   always @(*) begin
     exTrapEna = 1'b0;
     if(idEx_valid) begin
-      if(when_RiscvCore_l611) begin
+      if(when_RiscvCore_l641) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l615) begin
+      if(when_RiscvCore_l645) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l619) begin
+      if(when_RiscvCore_l649) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l623) begin
+      if(when_RiscvCore_l653) begin
         exTrapEna = 1'b1;
       end
       if(csrIllegal) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l632) begin
+      if(when_RiscvCore_l662) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l638) begin
-        if(when_RiscvCore_l641) begin
+      if(when_RiscvCore_l668) begin
+        if(when_RiscvCore_l671) begin
           exTrapEna = 1'b1;
         end
       end
-      if(when_RiscvCore_l650) begin
+      if(when_RiscvCore_l680) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l655) begin
-        if(when_RiscvCore_l658) begin
+      if(when_RiscvCore_l685) begin
+        exTrapEna = 1'b1;
+      end
+      if(when_RiscvCore_l690) begin
+        if(when_RiscvCore_l693) begin
           exTrapEna = 1'b1;
         end
+      end
+      if(idEx_pageFault) begin
+        exTrapEna = 1'b1;
+      end
+      if(mmuDFault) begin
+        exTrapEna = 1'b1;
       end
     end
   end
@@ -1162,36 +1271,45 @@ module RiscvCore64KNE (
   always @(*) begin
     exTrapCause = 64'h0;
     if(idEx_valid) begin
-      if(when_RiscvCore_l611) begin
+      if(when_RiscvCore_l641) begin
         exTrapCause = {60'd0, _zz_exTrapCause};
       end
-      if(when_RiscvCore_l615) begin
+      if(when_RiscvCore_l645) begin
         exTrapCause = 64'h0000000000000003;
       end
-      if(when_RiscvCore_l619) begin
+      if(when_RiscvCore_l649) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l623) begin
+      if(when_RiscvCore_l653) begin
         exTrapCause = 64'h0000000000000002;
       end
       if(csrIllegal) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l632) begin
+      if(when_RiscvCore_l662) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l638) begin
-        if(when_RiscvCore_l641) begin
+      if(when_RiscvCore_l668) begin
+        if(when_RiscvCore_l671) begin
           exTrapCause = (idEx_isLr ? 64'h0000000000000004 : 64'h0000000000000006);
         end
       end
-      if(when_RiscvCore_l650) begin
+      if(when_RiscvCore_l680) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l655) begin
-        if(when_RiscvCore_l658) begin
+      if(when_RiscvCore_l685) begin
+        exTrapCause = 64'h0000000000000002;
+      end
+      if(when_RiscvCore_l690) begin
+        if(when_RiscvCore_l693) begin
           exTrapCause = (idEx_fpLoad ? 64'h0000000000000004 : 64'h0000000000000006);
         end
+      end
+      if(idEx_pageFault) begin
+        exTrapCause = 64'h000000000000000c;
+      end
+      if(mmuDFault) begin
+        exTrapCause = (idEx_isLr ? 64'h000000000000000d : 64'h000000000000000f);
       end
     end
   end
@@ -1202,15 +1320,21 @@ module RiscvCore64KNE (
       if(csrIllegal) begin
         exTrapTval = _zz_exTrapTval;
       end
-      if(when_RiscvCore_l638) begin
-        if(when_RiscvCore_l641) begin
+      if(when_RiscvCore_l668) begin
+        if(when_RiscvCore_l671) begin
           exTrapTval = aluResult;
         end
       end
-      if(when_RiscvCore_l655) begin
-        if(when_RiscvCore_l658) begin
+      if(when_RiscvCore_l690) begin
+        if(when_RiscvCore_l693) begin
           exTrapTval = aluResult;
         end
+      end
+      if(idEx_pageFault) begin
+        exTrapTval = idEx_pc;
+      end
+      if(mmuDFault) begin
+        exTrapTval = aluResult;
       end
     end
   end
@@ -1219,16 +1343,33 @@ module RiscvCore64KNE (
   assign sppTarget = (csrFile_1_io_mstatusSpp ? MODE_S : MODE_U);
   assign sppSupported = ((sppTarget == 2'b00) || (sppTarget == 2'b11));
   assign sretLegal = 1'b0;
-  assign when_RiscvCore_l611 = (idEx_sysOp == SysOp_ECALL);
-  assign when_RiscvCore_l615 = (idEx_sysOp == SysOp_EBREAK);
-  assign when_RiscvCore_l619 = ((idEx_sysOp == SysOp_MRET) && ((csrFile_1_io_curMode != MODE_M) || (! mppSupported)));
-  assign when_RiscvCore_l623 = ((idEx_sysOp == SysOp_SRET) && (! sretLegal));
-  assign when_RiscvCore_l632 = (idEx_illegal || (idEx_sysOp == SysOp_ILLEGAL));
-  assign when_RiscvCore_l638 = (idEx_atomic || idEx_isLr);
-  assign when_RiscvCore_l641 = (! ((idEx_memSize == 2'b10) ? (aluResult[1 : 0] == 2'b00) : (aluResult[2 : 0] == 3'b000)));
-  assign when_RiscvCore_l650 = (idEx_fp && (csrFile_1_io_mstatusFs == 2'b00));
-  assign when_RiscvCore_l655 = (idEx_fpLoad || idEx_fpStore);
-  assign when_RiscvCore_l658 = (! ((idEx_memSize == 2'b11) ? (aluResult[2 : 0] == 3'b000) : (aluResult[1 : 0] == 2'b00)));
+  assign when_RiscvCore_l641 = (idEx_sysOp == SysOp_ECALL);
+  assign when_RiscvCore_l645 = (idEx_sysOp == SysOp_EBREAK);
+  assign when_RiscvCore_l649 = ((idEx_sysOp == SysOp_MRET) && ((csrFile_1_io_curMode != MODE_M) || (! mppSupported)));
+  assign when_RiscvCore_l653 = ((idEx_sysOp == SysOp_SRET) && (! sretLegal));
+  assign when_RiscvCore_l662 = (idEx_illegal || (idEx_sysOp == SysOp_ILLEGAL));
+  assign when_RiscvCore_l668 = (idEx_atomic || idEx_isLr);
+  assign when_RiscvCore_l671 = (! ((idEx_memSize == 2'b10) ? (aluResult[1 : 0] == 2'b00) : (aluResult[2 : 0] == 3'b000)));
+  assign when_RiscvCore_l680 = (idEx_fp && (csrFile_1_io_mstatusFs == 2'b00));
+  assign when_RiscvCore_l685 = ((idEx_sysOp == SysOp_SFENCE) && (! sfenceLegal));
+  assign when_RiscvCore_l690 = (idEx_fpLoad || idEx_fpStore);
+  assign when_RiscvCore_l693 = (! ((idEx_memSize == 2'b11) ? (aluResult[2 : 0] == 3'b000) : (aluResult[1 : 0] == 2'b00)));
+  assign mmuIValid = ((io_iBus_valid && (! exTrapEna)) && (! (idEx_valid && idEx_pageFault)));
+  assign mmuDValid = ((idEx_valid && (! idEx_pageFault)) && ((idEx_memRead || idEx_memWrite) || idEx_atomic));
+  assign mmuAmoAccess = ((idEx_atomic && (! idEx_isLr)) && (! idEx_isSc));
+  assign sv39Mmu_1_io_enable = ((csrFile_1_io_satpMode == 4'b1000) && (csrFile_1_io_curMode != MODE_M));
+  assign sv39Mmu_1_io_flush = (csrFile_1_io_satpWrite || (memWb_valid && (memWb_sysOp == SysOp_SFENCE)));
+  assign sv39Mmu_1_io_dAccess = {(idEx_memWrite || mmuAmoAccess),((idEx_memRead || idEx_isLr) || mmuAmoAccess)};
+  assign sv39Mmu_1_io_dVaddr = aluResult;
+  assign mmuIHit = sv39Mmu_1_io_iHit;
+  assign mmuIFault = sv39Mmu_1_io_iFault;
+  assign mmuIPaddr = sv39Mmu_1_io_iPaddr;
+  assign mmuDHit = sv39Mmu_1_io_dHit;
+  assign mmuDFault = sv39Mmu_1_io_dFault;
+  assign mmuDPaddr = sv39Mmu_1_io_dPaddr;
+  assign ptwAccess = sv39Mmu_1_io_ptwValid;
+  assign ptwAddr = sv39Mmu_1_io_ptwAddr;
+  assign mmuStall = (((mmuIValid && (! mmuIHit)) && (! mmuIFault)) || ((mmuDValid && (! mmuDHit)) && (! mmuDFault)));
   assign mretLegal = (((idEx_valid && (idEx_sysOp == SysOp_MRET)) && (csrFile_1_io_curMode == MODE_M)) && mppSupported);
   assign csrAffectsXret = (((memWb_valid && memWb_csrWe) && ((((memWb_csrAddr == _zz_csrAffectsXret) || (memWb_csrAddr == _zz_csrAffectsXret_1)) || (memWb_csrAddr == 12'h341)) || (memWb_csrAddr == 12'h141))) || ((exMem_valid && exMem_csrWe) && ((((exMem_csrAddr == _zz_csrAffectsXret_2) || (exMem_csrAddr == _zz_csrAffectsXret_3)) || (exMem_csrAddr == 12'h341)) || (exMem_csrAddr == 12'h141))));
   assign csrXretStall = ((mretLegal || sretLegal) && csrAffectsXret);
@@ -1242,7 +1383,10 @@ module RiscvCore64KNE (
   assign fpProducerEx = ((idEx_valid && idEx_fpWrite) && (idEx_rd != 5'h0));
   assign fpProducerMem = ((exMem_valid && exMem_fpWrite) && (exMem_rd != 5'h0));
   assign fpStallData = ((fpProducerEx && (decoder_1_io_output_fp && (((idEx_rd == decoder_1_io_output_rs1) || (idEx_rd == decoder_1_io_output_rs2)) || (idEx_rd == decoder_1_io_output_rs3)))) || (fpProducerMem && (decoder_1_io_output_fp && (((exMem_rd == decoder_1_io_output_rs1) || (exMem_rd == decoder_1_io_output_rs2)) || (exMem_rd == decoder_1_io_output_rs3)))));
-  assign stallData = (intStallData || fpStallData);
+  assign exOrdersMmu = (exMem_valid && ((exMem_sysOp == SysOp_SFENCE) || (exMem_csrWe && (exMem_csrAddr == 12'h180))));
+  assign wbOrdersMmu = (memWb_valid && ((memWb_sysOp == SysOp_SFENCE) || (memWb_csrWe && (memWb_csrAddr == 12'h180))));
+  assign mmuOrderStall = (exOrdersMmu || wbOrdersMmu);
+  assign stallData = ((intStallData || fpStallData) || mmuOrderStall);
   assign fetchStall = (! io_iBus_ready);
   assign memStall = (((exMem_valid && (exMem_memRead || exMem_memWrite)) && (! exMem_atomic)) && (! io_dBus_ready));
   assign divIsDiv = ((((idEx_aluOp == AluOp_DIV) || (idEx_aluOp == AluOp_DIVU)) || (idEx_aluOp == AluOp_DIVW)) || (idEx_aluOp == AluOp_DIVUW));
@@ -1271,7 +1415,7 @@ module RiscvCore64KNE (
   assign fpResultIsSingle = ((isFpCompute && (! idEx_fpIntRd)) && (! idEx_fpFmt));
   assign fpToFpResult = fpuResult;
   assign exAluResultFp = (isFpCompute ? (idEx_fpIntRd ? fpToIntResult : fpToFpResult) : exAluResult);
-  assign otherFreeze = (((memStall || fetchStall) || divStall) || mis32Stall);
+  assign otherFreeze = ((((memStall || fetchStall) || divStall) || mis32Stall) || mmuStall);
   assign amoStall = 1'b0;
   assign amoDriveRead = 1'b0;
   assign amoDriveWrite = 1'b0;
@@ -1309,20 +1453,20 @@ module RiscvCore64KNE (
   assign csrFile_1_io_trapTval = (intrTake ? 64'h0 : exTrapTval);
   assign flushYounger = (((ctrlFlush || trapCommit) || exXret) || intrTake);
   assign bubbleEx = ((trapCommit || exXret) || csrXretStall);
-  assign when_RiscvCore_l1025 = (! freezeAll);
-  assign when_RiscvCore_l1034 = (stallData || csrXretStall);
-  assign when_RiscvCore_l1042 = (! freezeAll);
-  assign when_RiscvCore_l1043 = (stallData || csrXretStall);
-  assign when_RiscvCore_l1056 = ((! freezeAll) && (! csrXretStall));
-  assign when_RiscvCore_l1057 = (stallData || flushYounger);
-  assign when_RiscvCore_l1105 = (! freezeAll);
+  assign when_RiscvCore_l1132 = (! freezeAll);
+  assign when_RiscvCore_l1141 = (stallData || csrXretStall);
+  assign when_RiscvCore_l1149 = (! freezeAll);
+  assign when_RiscvCore_l1150 = (stallData || csrXretStall);
+  assign when_RiscvCore_l1164 = ((! freezeAll) && (! csrXretStall));
+  assign when_RiscvCore_l1165 = (stallData || flushYounger);
+  assign when_RiscvCore_l1214 = (! freezeAll);
   assign effMemWrite = (exMem_memWrite && (exMem_isSc ? scSuccess : 1'b1));
   assign normalRead = ((exMem_valid && exMem_memRead) && (! exMem_atomic));
   assign normalWrite = (exMem_valid && effMemWrite);
-  assign io_dBus_valid = (((normalRead || normalWrite) || amoDriveRead) || amoDriveWrite);
-  assign io_dBus_write = (normalWrite || amoDriveWrite);
+  assign io_dBus_valid = ((((ptwAccess || normalRead) || normalWrite) || amoDriveRead) || amoDriveWrite);
+  assign io_dBus_write = ((! ptwAccess) && (normalWrite || amoDriveWrite));
   assign io_dBus_size = exMem_memSize;
-  assign io_dBus_address = exMem_aluResult;
+  assign io_dBus_address = (ptwAccess ? ptwAddr : exMem_paddr);
   assign storeOffset = exMem_aluResult[2 : 0];
   assign intStoreValue = (amoDriveWrite ? amoNewValue : exMem_rs2Data);
   assign storeValue = (exMem_fpStore ? exMem_fpRs2Data : intStoreValue);
@@ -1383,7 +1527,7 @@ module RiscvCore64KNE (
   assign _zz_loadResult_1 = _zz__zz_loadResult_1_1[15 : 0];
   assign _zz_loadResult_2 = _zz__zz_loadResult_2[31 : 0];
   assign fpLoadData = 1'b0;
-  assign when_RiscvCore_l1216 = (! freezeAll);
+  assign when_RiscvCore_l1327 = (! freezeAll);
   assign csrFile_1_io_retire = (memWb_valid && (! freezeAll));
   assign regFile_io_writeEnable = (memWb_valid && memWb_regWrite);
   assign io_debugPc = pcReg;
@@ -1429,6 +1573,7 @@ module RiscvCore64KNE (
       ifId_pc <= 64'h0;
       ifId_instruction <= 32'h0;
       ifId_compressed <= 1'b0;
+      ifId_pageFault <= 1'b0;
       idEx_valid <= 1'b0;
       idEx_pc <= 64'h0;
       idEx_compressed <= 1'b0;
@@ -1470,6 +1615,7 @@ module RiscvCore64KNE (
       idEx_csrAddr <= 12'h0;
       idEx_csrWe <= 1'b0;
       idEx_sysOp <= SysOp_NONE;
+      idEx_pageFault <= 1'b0;
       exMem_valid <= 1'b0;
       exMem_memRead <= 1'b0;
       exMem_memWrite <= 1'b0;
@@ -1489,11 +1635,13 @@ module RiscvCore64KNE (
       exMem_rd <= 5'h0;
       exMem_wbSel <= 3'b000;
       exMem_aluResult <= 64'h0;
+      exMem_paddr <= 64'h0;
       exMem_rs2Data <= 64'h0;
       exMem_csrOp <= CsrOp_NONE;
       exMem_csrWe <= 1'b0;
       exMem_csrAddr <= 12'h0;
       exMem_csrWrData <= 64'h0;
+      exMem_sysOp <= SysOp_NONE;
       memWb_valid <= 1'b0;
       memWb_regWrite <= 1'b0;
       memWb_rd <= 5'h0;
@@ -1506,8 +1654,9 @@ module RiscvCore64KNE (
       memWb_csrWe <= 1'b0;
       memWb_csrAddr <= 12'h0;
       memWb_csrWrData <= 64'h0;
+      memWb_sysOp <= SysOp_NONE;
     end else begin
-      if(when_RiscvCore_l1025) begin
+      if(when_RiscvCore_l1132) begin
         if(trapCommit) begin
           pcReg <= trapEntry;
         end else begin
@@ -1520,7 +1669,7 @@ module RiscvCore64KNE (
               if(ctrlFlush) begin
                 pcReg <= ctrlTarget;
               end else begin
-                if(when_RiscvCore_l1034) begin
+                if(when_RiscvCore_l1141) begin
                   pcReg <= pcReg;
                 end else begin
                   pcReg <= (pcReg + _zz_pcReg);
@@ -1530,20 +1679,21 @@ module RiscvCore64KNE (
           end
         end
       end
-      if(when_RiscvCore_l1042) begin
-        if(!when_RiscvCore_l1043) begin
+      if(when_RiscvCore_l1149) begin
+        if(!when_RiscvCore_l1150) begin
           if(flushYounger) begin
             ifId_valid <= 1'b0;
           end else begin
             ifId_pc <= pcReg;
             ifId_instruction <= fetchInstr;
             ifId_compressed <= fetchCompressed;
+            ifId_pageFault <= fetchFault;
             ifId_valid <= 1'b1;
           end
         end
       end
-      if(when_RiscvCore_l1056) begin
-        if(when_RiscvCore_l1057) begin
+      if(when_RiscvCore_l1164) begin
+        if(when_RiscvCore_l1165) begin
           idEx_valid <= 1'b0;
         end else begin
           idEx_valid <= ifId_valid;
@@ -1588,13 +1738,15 @@ module RiscvCore64KNE (
         idEx_csrAddr <= decoder_1_io_output_csrAddr;
         idEx_csrWe <= decoder_1_io_output_csrWe;
         idEx_sysOp <= decoder_1_io_output_sysOp;
+        idEx_pageFault <= ifId_pageFault;
       end
-      if(when_RiscvCore_l1105) begin
+      if(when_RiscvCore_l1214) begin
         if(bubbleEx) begin
           exMem_valid <= 1'b0;
         end else begin
           exMem_valid <= idEx_valid;
         end
+        exMem_paddr <= mmuDPaddr;
         exMem_memRead <= idEx_memRead;
         exMem_memWrite <= idEx_memWrite;
         exMem_memSize <= idEx_memSize;
@@ -1617,9 +1769,10 @@ module RiscvCore64KNE (
         exMem_csrOp <= idEx_csrOp;
         exMem_csrWe <= idEx_csrWe;
         exMem_csrAddr <= idEx_csrAddr;
+        exMem_sysOp <= idEx_sysOp;
         exMem_csrWrData <= csrWrDataEx;
       end
-      if(when_RiscvCore_l1216) begin
+      if(when_RiscvCore_l1327) begin
         memWb_valid <= exMem_valid;
         memWb_regWrite <= exMem_regWrite;
         memWb_rd <= exMem_rd;
@@ -1643,6 +1796,7 @@ module RiscvCore64KNE (
         memWb_csrOp <= exMem_csrOp;
         memWb_csrWe <= exMem_csrWe;
         memWb_csrAddr <= exMem_csrAddr;
+        memWb_sysOp <= exMem_sysOp;
         memWb_csrWrData <= exMem_csrWrData;
       end
     end
@@ -1819,6 +1973,990 @@ module Divider (
         end
       end
     endcase
+  end
+
+
+endmodule
+
+module Sv39Mmu (
+  input  wire          io_enable,
+  input  wire [43:0]   io_ppn,
+  input  wire [1:0]    io_priv,
+  input  wire          io_sum,
+  input  wire          io_flush,
+  input  wire          io_iValid,
+  input  wire [63:0]   io_iVaddr,
+  output wire [63:0]   io_iPaddr,
+  output wire          io_iHit,
+  output wire          io_iFault,
+  input  wire          io_dValid,
+  input  wire [1:0]    io_dAccess,
+  input  wire [63:0]   io_dVaddr,
+  output wire [63:0]   io_dPaddr,
+  output wire          io_dHit,
+  output wire          io_dFault,
+  output wire          io_ptwValid,
+  output wire [63:0]   io_ptwAddr,
+  input  wire [63:0]   io_ptwData,
+  input  wire          clk,
+  input  wire          reset
+);
+  localparam St_IDLE = 2'd0;
+  localparam St_REQ = 2'd1;
+  localparam St_EVAL = 2'd2;
+
+  reg        [3:0]    _zz__zz_iEntryOk_2;
+  reg                 _zz_iEntryOk_5;
+  reg        [26:0]   _zz_iEntryOk_6;
+  wire                _zz_iEntryOk_7;
+  wire                _zz_iEntryOk_8;
+  wire                _zz_iEntryOk_9;
+  wire                _zz_iEntryOk_10;
+  reg                 _zz_iEntryOk_11;
+  wire                _zz_iEntryOk_12;
+  wire                _zz_iEntryOk_13;
+  wire                _zz_iEntryOk_14;
+  wire                _zz_iEntryOk_15;
+  reg        [43:0]   _zz_iPpn;
+  reg        [3:0]    _zz__zz_dEntryOk_1;
+  reg                 _zz_dEntryOk_4;
+  reg        [26:0]   _zz_dEntryOk_5;
+  wire                _zz_dEntryOk_6;
+  wire                _zz_dEntryOk_7;
+  wire                _zz_dEntryOk_8;
+  wire                _zz_dEntryOk_9;
+  reg                 _zz_dEntryOk_10;
+  wire                _zz_dEntryOk_11;
+  wire                _zz_dEntryOk_12;
+  wire                _zz_dEntryOk_13;
+  wire                _zz_dEntryOk_14;
+  reg        [43:0]   _zz_dPpn;
+  wire       [63:0]   _zz_io_iPaddr;
+  wire       [55:0]   _zz_io_iPaddr_1;
+  wire       [63:0]   _zz_io_dPaddr;
+  wire       [55:0]   _zz_io_dPaddr_1;
+  wire       [63:0]   _zz_io_ptwAddr;
+  wire       [55:0]   _zz_io_ptwAddr_1;
+  wire       [1:0]    MODE_S;
+  wire       [1:0]    MODE_U;
+  reg                 tlbValid_0;
+  reg                 tlbValid_1;
+  reg                 tlbValid_2;
+  reg                 tlbValid_3;
+  reg                 tlbValid_4;
+  reg                 tlbValid_5;
+  reg                 tlbValid_6;
+  reg                 tlbValid_7;
+  reg                 tlbValid_8;
+  reg                 tlbValid_9;
+  reg                 tlbValid_10;
+  reg                 tlbValid_11;
+  reg                 tlbValid_12;
+  reg                 tlbValid_13;
+  reg                 tlbValid_14;
+  reg                 tlbValid_15;
+  reg        [26:0]   tlbVpn_0;
+  reg        [26:0]   tlbVpn_1;
+  reg        [26:0]   tlbVpn_2;
+  reg        [26:0]   tlbVpn_3;
+  reg        [26:0]   tlbVpn_4;
+  reg        [26:0]   tlbVpn_5;
+  reg        [26:0]   tlbVpn_6;
+  reg        [26:0]   tlbVpn_7;
+  reg        [26:0]   tlbVpn_8;
+  reg        [26:0]   tlbVpn_9;
+  reg        [26:0]   tlbVpn_10;
+  reg        [26:0]   tlbVpn_11;
+  reg        [26:0]   tlbVpn_12;
+  reg        [26:0]   tlbVpn_13;
+  reg        [26:0]   tlbVpn_14;
+  reg        [26:0]   tlbVpn_15;
+  reg        [43:0]   tlbPpn_0;
+  reg        [43:0]   tlbPpn_1;
+  reg        [43:0]   tlbPpn_2;
+  reg        [43:0]   tlbPpn_3;
+  reg        [43:0]   tlbPpn_4;
+  reg        [43:0]   tlbPpn_5;
+  reg        [43:0]   tlbPpn_6;
+  reg        [43:0]   tlbPpn_7;
+  reg        [43:0]   tlbPpn_8;
+  reg        [43:0]   tlbPpn_9;
+  reg        [43:0]   tlbPpn_10;
+  reg        [43:0]   tlbPpn_11;
+  reg        [43:0]   tlbPpn_12;
+  reg        [43:0]   tlbPpn_13;
+  reg        [43:0]   tlbPpn_14;
+  reg        [43:0]   tlbPpn_15;
+  reg        [3:0]    tlbPerm_0;
+  reg        [3:0]    tlbPerm_1;
+  reg        [3:0]    tlbPerm_2;
+  reg        [3:0]    tlbPerm_3;
+  reg        [3:0]    tlbPerm_4;
+  reg        [3:0]    tlbPerm_5;
+  reg        [3:0]    tlbPerm_6;
+  reg        [3:0]    tlbPerm_7;
+  reg        [3:0]    tlbPerm_8;
+  reg        [3:0]    tlbPerm_9;
+  reg        [3:0]    tlbPerm_10;
+  reg        [3:0]    tlbPerm_11;
+  reg        [3:0]    tlbPerm_12;
+  reg        [3:0]    tlbPerm_13;
+  reg        [3:0]    tlbPerm_14;
+  reg        [3:0]    tlbPerm_15;
+  reg                 tlbDirty_0;
+  reg                 tlbDirty_1;
+  reg                 tlbDirty_2;
+  reg                 tlbDirty_3;
+  reg                 tlbDirty_4;
+  reg                 tlbDirty_5;
+  reg                 tlbDirty_6;
+  reg                 tlbDirty_7;
+  reg                 tlbDirty_8;
+  reg                 tlbDirty_9;
+  reg                 tlbDirty_10;
+  reg                 tlbDirty_11;
+  reg                 tlbDirty_12;
+  reg                 tlbDirty_13;
+  reg                 tlbDirty_14;
+  reg                 tlbDirty_15;
+  reg                 iFaultValid;
+  reg        [63:0]   iFaultVaddr;
+  reg                 dFaultValid;
+  reg        [63:0]   dFaultVaddr;
+  wire                iFaultMatch;
+  wire                dFaultMatch;
+  wire       [1:0]    _zz_iEntryOk;
+  wire       [3:0]    _zz_iEntryOk_1;
+  wire       [3:0]    _zz_iEntryOk_2;
+  wire                _zz_iEntryOk_3;
+  wire                _zz_iEntryOk_4;
+  wire                iEntryOk;
+  wire       [43:0]   iPpn;
+  wire       [3:0]    _zz_dEntryOk;
+  wire       [3:0]    _zz_dEntryOk_1;
+  wire                _zz_dEntryOk_2;
+  wire                _zz_dEntryOk_3;
+  wire                dEntryOk;
+  wire       [43:0]   dPpn;
+  wire       [24:0]   _zz_iHitRaw;
+  wire                iHitRaw;
+  wire       [24:0]   _zz_dHitRaw;
+  wire                dHitRaw;
+  reg        [1:0]    state;
+  reg                 isData;
+  reg        [1:0]    walkLevel;
+  reg        [43:0]   basePpn;
+  reg        [26:0]   vpnReg;
+  reg        [1:0]    accessReg;
+  reg        [63:0]   pteReg;
+  wire       [24:0]   _zz_iNeedWalk;
+  wire                iNeedWalk;
+  wire       [24:0]   _zz_dNeedWalk;
+  wire                dNeedWalk;
+  wire                when_Mmu_l121;
+  reg        [8:0]    vpnSel;
+  wire                pteValid;
+  wire                pteR;
+  wire                pteW;
+  wire                pteX;
+  wire                pteU;
+  wire                pteA;
+  wire                pteD;
+  wire       [43:0]   ptePpn;
+  wire                pteUpperBad;
+  wire                leaf;
+  wire                wrNoR;
+  wire                superBad;
+  wire                needW;
+  wire                needR;
+  wire                accessOk;
+  wire                privOk;
+  wire                adOk;
+  wire                leafFault;
+  wire                walkFault;
+  wire       [63:0]   targetVaddr;
+  reg        [43:0]   finalPpn;
+  wire       [3:0]    tlbIdx;
+  wire       [3:0]    perm;
+  wire                when_Mmu_l183;
+  wire                when_Mmu_l187;
+  wire       [15:0]   _zz_1;
+  wire       [15:0]   _zz_2;
+  wire       [15:0]   _zz_3;
+  wire       [15:0]   _zz_4;
+  wire       [15:0]   _zz_5;
+  wire                when_Mmu_l212;
+  wire                when_Mmu_l213;
+  `ifndef SYNTHESIS
+  reg [31:0] state_string;
+  `endif
+
+
+  assign _zz_io_iPaddr_1 = {iPpn,io_iVaddr[11 : 0]};
+  assign _zz_io_iPaddr = {8'd0, _zz_io_iPaddr_1};
+  assign _zz_io_dPaddr_1 = {dPpn,io_dVaddr[11 : 0]};
+  assign _zz_io_dPaddr = {8'd0, _zz_io_dPaddr_1};
+  assign _zz_io_ptwAddr_1 = {basePpn,{vpnSel,3'b000}};
+  assign _zz_io_ptwAddr = {8'd0, _zz_io_ptwAddr_1};
+  assign _zz_iEntryOk_7 = (! _zz_iEntryOk_3);
+  assign _zz_iEntryOk_8 = _zz_iEntryOk_2[0];
+  assign _zz_iEntryOk_9 = (! _zz_iEntryOk_4);
+  assign _zz_iEntryOk_10 = (_zz_iEntryOk_2[1] && _zz_iEntryOk_11);
+  assign _zz_iEntryOk_12 = ((! _zz_iEntryOk[0]) && (! _zz_iEntryOk[1]));
+  assign _zz_iEntryOk_13 = _zz_iEntryOk_2[3];
+  assign _zz_iEntryOk_14 = (io_sum && _zz_iEntryOk_3);
+  assign _zz_iEntryOk_15 = (! _zz_iEntryOk_4);
+  assign _zz_dEntryOk_6 = (! _zz_dEntryOk_2);
+  assign _zz_dEntryOk_7 = _zz_dEntryOk_1[0];
+  assign _zz_dEntryOk_8 = (! _zz_dEntryOk_3);
+  assign _zz_dEntryOk_9 = (_zz_dEntryOk_1[1] && _zz_dEntryOk_10);
+  assign _zz_dEntryOk_11 = ((! io_dAccess[0]) && (! io_dAccess[1]));
+  assign _zz_dEntryOk_12 = _zz_dEntryOk_1[3];
+  assign _zz_dEntryOk_13 = (io_sum && _zz_dEntryOk_2);
+  assign _zz_dEntryOk_14 = (! _zz_dEntryOk_3);
+  always @(*) begin
+    case(_zz_iEntryOk_1)
+      4'b0000 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_0;
+        _zz_iEntryOk_5 = tlbValid_0;
+        _zz_iEntryOk_6 = tlbVpn_0;
+        _zz_iEntryOk_11 = tlbDirty_0;
+        _zz_iPpn = tlbPpn_0;
+      end
+      4'b0001 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_1;
+        _zz_iEntryOk_5 = tlbValid_1;
+        _zz_iEntryOk_6 = tlbVpn_1;
+        _zz_iEntryOk_11 = tlbDirty_1;
+        _zz_iPpn = tlbPpn_1;
+      end
+      4'b0010 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_2;
+        _zz_iEntryOk_5 = tlbValid_2;
+        _zz_iEntryOk_6 = tlbVpn_2;
+        _zz_iEntryOk_11 = tlbDirty_2;
+        _zz_iPpn = tlbPpn_2;
+      end
+      4'b0011 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_3;
+        _zz_iEntryOk_5 = tlbValid_3;
+        _zz_iEntryOk_6 = tlbVpn_3;
+        _zz_iEntryOk_11 = tlbDirty_3;
+        _zz_iPpn = tlbPpn_3;
+      end
+      4'b0100 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_4;
+        _zz_iEntryOk_5 = tlbValid_4;
+        _zz_iEntryOk_6 = tlbVpn_4;
+        _zz_iEntryOk_11 = tlbDirty_4;
+        _zz_iPpn = tlbPpn_4;
+      end
+      4'b0101 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_5;
+        _zz_iEntryOk_5 = tlbValid_5;
+        _zz_iEntryOk_6 = tlbVpn_5;
+        _zz_iEntryOk_11 = tlbDirty_5;
+        _zz_iPpn = tlbPpn_5;
+      end
+      4'b0110 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_6;
+        _zz_iEntryOk_5 = tlbValid_6;
+        _zz_iEntryOk_6 = tlbVpn_6;
+        _zz_iEntryOk_11 = tlbDirty_6;
+        _zz_iPpn = tlbPpn_6;
+      end
+      4'b0111 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_7;
+        _zz_iEntryOk_5 = tlbValid_7;
+        _zz_iEntryOk_6 = tlbVpn_7;
+        _zz_iEntryOk_11 = tlbDirty_7;
+        _zz_iPpn = tlbPpn_7;
+      end
+      4'b1000 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_8;
+        _zz_iEntryOk_5 = tlbValid_8;
+        _zz_iEntryOk_6 = tlbVpn_8;
+        _zz_iEntryOk_11 = tlbDirty_8;
+        _zz_iPpn = tlbPpn_8;
+      end
+      4'b1001 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_9;
+        _zz_iEntryOk_5 = tlbValid_9;
+        _zz_iEntryOk_6 = tlbVpn_9;
+        _zz_iEntryOk_11 = tlbDirty_9;
+        _zz_iPpn = tlbPpn_9;
+      end
+      4'b1010 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_10;
+        _zz_iEntryOk_5 = tlbValid_10;
+        _zz_iEntryOk_6 = tlbVpn_10;
+        _zz_iEntryOk_11 = tlbDirty_10;
+        _zz_iPpn = tlbPpn_10;
+      end
+      4'b1011 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_11;
+        _zz_iEntryOk_5 = tlbValid_11;
+        _zz_iEntryOk_6 = tlbVpn_11;
+        _zz_iEntryOk_11 = tlbDirty_11;
+        _zz_iPpn = tlbPpn_11;
+      end
+      4'b1100 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_12;
+        _zz_iEntryOk_5 = tlbValid_12;
+        _zz_iEntryOk_6 = tlbVpn_12;
+        _zz_iEntryOk_11 = tlbDirty_12;
+        _zz_iPpn = tlbPpn_12;
+      end
+      4'b1101 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_13;
+        _zz_iEntryOk_5 = tlbValid_13;
+        _zz_iEntryOk_6 = tlbVpn_13;
+        _zz_iEntryOk_11 = tlbDirty_13;
+        _zz_iPpn = tlbPpn_13;
+      end
+      4'b1110 : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_14;
+        _zz_iEntryOk_5 = tlbValid_14;
+        _zz_iEntryOk_6 = tlbVpn_14;
+        _zz_iEntryOk_11 = tlbDirty_14;
+        _zz_iPpn = tlbPpn_14;
+      end
+      default : begin
+        _zz__zz_iEntryOk_2 = tlbPerm_15;
+        _zz_iEntryOk_5 = tlbValid_15;
+        _zz_iEntryOk_6 = tlbVpn_15;
+        _zz_iEntryOk_11 = tlbDirty_15;
+        _zz_iPpn = tlbPpn_15;
+      end
+    endcase
+  end
+
+  always @(*) begin
+    case(_zz_dEntryOk)
+      4'b0000 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_0;
+        _zz_dEntryOk_4 = tlbValid_0;
+        _zz_dEntryOk_5 = tlbVpn_0;
+        _zz_dEntryOk_10 = tlbDirty_0;
+        _zz_dPpn = tlbPpn_0;
+      end
+      4'b0001 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_1;
+        _zz_dEntryOk_4 = tlbValid_1;
+        _zz_dEntryOk_5 = tlbVpn_1;
+        _zz_dEntryOk_10 = tlbDirty_1;
+        _zz_dPpn = tlbPpn_1;
+      end
+      4'b0010 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_2;
+        _zz_dEntryOk_4 = tlbValid_2;
+        _zz_dEntryOk_5 = tlbVpn_2;
+        _zz_dEntryOk_10 = tlbDirty_2;
+        _zz_dPpn = tlbPpn_2;
+      end
+      4'b0011 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_3;
+        _zz_dEntryOk_4 = tlbValid_3;
+        _zz_dEntryOk_5 = tlbVpn_3;
+        _zz_dEntryOk_10 = tlbDirty_3;
+        _zz_dPpn = tlbPpn_3;
+      end
+      4'b0100 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_4;
+        _zz_dEntryOk_4 = tlbValid_4;
+        _zz_dEntryOk_5 = tlbVpn_4;
+        _zz_dEntryOk_10 = tlbDirty_4;
+        _zz_dPpn = tlbPpn_4;
+      end
+      4'b0101 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_5;
+        _zz_dEntryOk_4 = tlbValid_5;
+        _zz_dEntryOk_5 = tlbVpn_5;
+        _zz_dEntryOk_10 = tlbDirty_5;
+        _zz_dPpn = tlbPpn_5;
+      end
+      4'b0110 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_6;
+        _zz_dEntryOk_4 = tlbValid_6;
+        _zz_dEntryOk_5 = tlbVpn_6;
+        _zz_dEntryOk_10 = tlbDirty_6;
+        _zz_dPpn = tlbPpn_6;
+      end
+      4'b0111 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_7;
+        _zz_dEntryOk_4 = tlbValid_7;
+        _zz_dEntryOk_5 = tlbVpn_7;
+        _zz_dEntryOk_10 = tlbDirty_7;
+        _zz_dPpn = tlbPpn_7;
+      end
+      4'b1000 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_8;
+        _zz_dEntryOk_4 = tlbValid_8;
+        _zz_dEntryOk_5 = tlbVpn_8;
+        _zz_dEntryOk_10 = tlbDirty_8;
+        _zz_dPpn = tlbPpn_8;
+      end
+      4'b1001 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_9;
+        _zz_dEntryOk_4 = tlbValid_9;
+        _zz_dEntryOk_5 = tlbVpn_9;
+        _zz_dEntryOk_10 = tlbDirty_9;
+        _zz_dPpn = tlbPpn_9;
+      end
+      4'b1010 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_10;
+        _zz_dEntryOk_4 = tlbValid_10;
+        _zz_dEntryOk_5 = tlbVpn_10;
+        _zz_dEntryOk_10 = tlbDirty_10;
+        _zz_dPpn = tlbPpn_10;
+      end
+      4'b1011 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_11;
+        _zz_dEntryOk_4 = tlbValid_11;
+        _zz_dEntryOk_5 = tlbVpn_11;
+        _zz_dEntryOk_10 = tlbDirty_11;
+        _zz_dPpn = tlbPpn_11;
+      end
+      4'b1100 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_12;
+        _zz_dEntryOk_4 = tlbValid_12;
+        _zz_dEntryOk_5 = tlbVpn_12;
+        _zz_dEntryOk_10 = tlbDirty_12;
+        _zz_dPpn = tlbPpn_12;
+      end
+      4'b1101 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_13;
+        _zz_dEntryOk_4 = tlbValid_13;
+        _zz_dEntryOk_5 = tlbVpn_13;
+        _zz_dEntryOk_10 = tlbDirty_13;
+        _zz_dPpn = tlbPpn_13;
+      end
+      4'b1110 : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_14;
+        _zz_dEntryOk_4 = tlbValid_14;
+        _zz_dEntryOk_5 = tlbVpn_14;
+        _zz_dEntryOk_10 = tlbDirty_14;
+        _zz_dPpn = tlbPpn_14;
+      end
+      default : begin
+        _zz__zz_dEntryOk_1 = tlbPerm_15;
+        _zz_dEntryOk_4 = tlbValid_15;
+        _zz_dEntryOk_5 = tlbVpn_15;
+        _zz_dEntryOk_10 = tlbDirty_15;
+        _zz_dPpn = tlbPpn_15;
+      end
+    endcase
+  end
+
+  `ifndef SYNTHESIS
+  always @(*) begin
+    case(state)
+      St_IDLE : state_string = "IDLE";
+      St_REQ : state_string = "REQ ";
+      St_EVAL : state_string = "EVAL";
+      default : state_string = "????";
+    endcase
+  end
+  `endif
+
+  assign MODE_S = 2'b01;
+  assign MODE_U = 2'b00;
+  assign iFaultMatch = (iFaultValid && (iFaultVaddr == io_iVaddr));
+  assign dFaultMatch = (dFaultValid && (dFaultVaddr == io_dVaddr));
+  assign io_iFault = (io_enable && iFaultMatch);
+  assign io_dFault = (io_enable && dFaultMatch);
+  assign _zz_iEntryOk = 2'b00;
+  assign _zz_iEntryOk_1 = io_iVaddr[15 : 12];
+  assign _zz_iEntryOk_2 = _zz__zz_iEntryOk_2;
+  assign _zz_iEntryOk_3 = _zz_iEntryOk[0];
+  assign _zz_iEntryOk_4 = _zz_iEntryOk[1];
+  assign iEntryOk = (((_zz_iEntryOk_5 && (_zz_iEntryOk_6 == io_iVaddr[38 : 12])) && (((_zz_iEntryOk_7 || _zz_iEntryOk_8) && (_zz_iEntryOk_9 || _zz_iEntryOk_10)) && ((! _zz_iEntryOk_12) || _zz_iEntryOk_2[2]))) && ((io_priv == MODE_U) ? _zz_iEntryOk_2[3] : ((io_priv == MODE_S) ? ((! _zz_iEntryOk_13) || (_zz_iEntryOk_14 && _zz_iEntryOk_15)) : 1'b1)));
+  assign iPpn = _zz_iPpn;
+  assign _zz_dEntryOk = io_dVaddr[15 : 12];
+  assign _zz_dEntryOk_1 = _zz__zz_dEntryOk_1;
+  assign _zz_dEntryOk_2 = io_dAccess[0];
+  assign _zz_dEntryOk_3 = io_dAccess[1];
+  assign dEntryOk = (((_zz_dEntryOk_4 && (_zz_dEntryOk_5 == io_dVaddr[38 : 12])) && (((_zz_dEntryOk_6 || _zz_dEntryOk_7) && (_zz_dEntryOk_8 || _zz_dEntryOk_9)) && ((! _zz_dEntryOk_11) || _zz_dEntryOk_1[2]))) && ((io_priv == MODE_U) ? _zz_dEntryOk_1[3] : ((io_priv == MODE_S) ? ((! _zz_dEntryOk_12) || (_zz_dEntryOk_13 && _zz_dEntryOk_14)) : 1'b1)));
+  assign dPpn = _zz_dPpn;
+  assign _zz_iHitRaw = io_iVaddr[63 : 39];
+  assign iHitRaw = (((_zz_iHitRaw == 25'h0) || (_zz_iHitRaw == 25'h1ffffff)) && iEntryOk);
+  assign _zz_dHitRaw = io_dVaddr[63 : 39];
+  assign dHitRaw = (((_zz_dHitRaw == 25'h0) || (_zz_dHitRaw == 25'h1ffffff)) && dEntryOk);
+  assign io_iHit = ((! io_enable) || iHitRaw);
+  assign io_dHit = ((! io_enable) || dHitRaw);
+  assign io_iPaddr = (io_enable ? _zz_io_iPaddr : io_iVaddr);
+  assign io_dPaddr = (io_enable ? _zz_io_dPaddr : io_dVaddr);
+  assign _zz_iNeedWalk = io_iVaddr[63 : 39];
+  assign iNeedWalk = ((((io_iValid && io_enable) && ((_zz_iNeedWalk == 25'h0) || (_zz_iNeedWalk == 25'h1ffffff))) && (! iHitRaw)) && (! iFaultMatch));
+  assign _zz_dNeedWalk = io_dVaddr[63 : 39];
+  assign dNeedWalk = ((((io_dValid && io_enable) && ((_zz_dNeedWalk == 25'h0) || (_zz_dNeedWalk == 25'h1ffffff))) && (! dHitRaw)) && (! dFaultMatch));
+  assign when_Mmu_l121 = (state == St_IDLE);
+  always @(*) begin
+    case(walkLevel)
+      2'b00 : begin
+        vpnSel = vpnReg[8 : 0];
+      end
+      2'b01 : begin
+        vpnSel = vpnReg[17 : 9];
+      end
+      default : begin
+        vpnSel = vpnReg[26 : 18];
+      end
+    endcase
+  end
+
+  assign io_ptwValid = (state == St_REQ);
+  assign io_ptwAddr = _zz_io_ptwAddr;
+  assign pteValid = pteReg[0];
+  assign pteR = pteReg[1];
+  assign pteW = pteReg[2];
+  assign pteX = pteReg[3];
+  assign pteU = pteReg[4];
+  assign pteA = pteReg[6];
+  assign pteD = pteReg[7];
+  assign ptePpn = pteReg[53 : 10];
+  assign pteUpperBad = (pteReg[63 : 54] != 10'h0);
+  assign leaf = (pteR || pteX);
+  assign wrNoR = (pteW && (! pteR));
+  assign superBad = (((walkLevel == 2'b01) && (ptePpn[8 : 0] != 9'h0)) || ((walkLevel == 2'b10) && (ptePpn[17 : 0] != 18'h0)));
+  assign needW = accessReg[1];
+  assign needR = accessReg[0];
+  assign accessOk = ((((! needR) || pteR) && ((! needW) || pteW)) && ((needR || needW) || pteX));
+  assign privOk = ((io_priv == MODE_U) ? pteU : ((io_priv == MODE_S) ? ((! pteU) || ((io_sum && needR) && (! needW))) : 1'b1));
+  assign adOk = (pteA && ((! needW) || pteD));
+  assign leafFault = (((((! accessOk) || (! privOk)) || (! adOk)) || pteUpperBad) || superBad);
+  assign walkFault = ((((! pteValid) || wrNoR) || (leaf && leafFault)) || ((! leaf) && (walkLevel == 2'b00)));
+  assign targetVaddr = (isData ? io_dVaddr : io_iVaddr);
+  always @(*) begin
+    case(walkLevel)
+      2'b00 : begin
+        finalPpn = ptePpn;
+      end
+      2'b01 : begin
+        finalPpn = {ptePpn[43 : 9],targetVaddr[29 : 21]};
+      end
+      default : begin
+        finalPpn = {ptePpn[43 : 18],{targetVaddr[38 : 30],targetVaddr[29 : 21]}};
+      end
+    endcase
+  end
+
+  assign tlbIdx = targetVaddr[15 : 12];
+  assign perm = {pteU,{pteX,{pteW,pteR}}};
+  assign when_Mmu_l183 = (state == St_REQ);
+  assign when_Mmu_l187 = (state == St_EVAL);
+  assign _zz_1 = ({15'd0,1'b1} <<< tlbIdx);
+  assign _zz_2 = ({15'd0,1'b1} <<< tlbIdx);
+  assign _zz_3 = ({15'd0,1'b1} <<< tlbIdx);
+  assign _zz_4 = ({15'd0,1'b1} <<< tlbIdx);
+  assign _zz_5 = ({15'd0,1'b1} <<< tlbIdx);
+  assign when_Mmu_l212 = (iFaultValid && (! iFaultMatch));
+  assign when_Mmu_l213 = (dFaultValid && (! dFaultMatch));
+  always @(posedge clk or posedge reset) begin
+    if(reset) begin
+      tlbValid_0 <= 1'b0;
+      tlbValid_1 <= 1'b0;
+      tlbValid_2 <= 1'b0;
+      tlbValid_3 <= 1'b0;
+      tlbValid_4 <= 1'b0;
+      tlbValid_5 <= 1'b0;
+      tlbValid_6 <= 1'b0;
+      tlbValid_7 <= 1'b0;
+      tlbValid_8 <= 1'b0;
+      tlbValid_9 <= 1'b0;
+      tlbValid_10 <= 1'b0;
+      tlbValid_11 <= 1'b0;
+      tlbValid_12 <= 1'b0;
+      tlbValid_13 <= 1'b0;
+      tlbValid_14 <= 1'b0;
+      tlbValid_15 <= 1'b0;
+      tlbVpn_0 <= 27'h0;
+      tlbVpn_1 <= 27'h0;
+      tlbVpn_2 <= 27'h0;
+      tlbVpn_3 <= 27'h0;
+      tlbVpn_4 <= 27'h0;
+      tlbVpn_5 <= 27'h0;
+      tlbVpn_6 <= 27'h0;
+      tlbVpn_7 <= 27'h0;
+      tlbVpn_8 <= 27'h0;
+      tlbVpn_9 <= 27'h0;
+      tlbVpn_10 <= 27'h0;
+      tlbVpn_11 <= 27'h0;
+      tlbVpn_12 <= 27'h0;
+      tlbVpn_13 <= 27'h0;
+      tlbVpn_14 <= 27'h0;
+      tlbVpn_15 <= 27'h0;
+      tlbPpn_0 <= 44'h0;
+      tlbPpn_1 <= 44'h0;
+      tlbPpn_2 <= 44'h0;
+      tlbPpn_3 <= 44'h0;
+      tlbPpn_4 <= 44'h0;
+      tlbPpn_5 <= 44'h0;
+      tlbPpn_6 <= 44'h0;
+      tlbPpn_7 <= 44'h0;
+      tlbPpn_8 <= 44'h0;
+      tlbPpn_9 <= 44'h0;
+      tlbPpn_10 <= 44'h0;
+      tlbPpn_11 <= 44'h0;
+      tlbPpn_12 <= 44'h0;
+      tlbPpn_13 <= 44'h0;
+      tlbPpn_14 <= 44'h0;
+      tlbPpn_15 <= 44'h0;
+      tlbPerm_0 <= 4'b0000;
+      tlbPerm_1 <= 4'b0000;
+      tlbPerm_2 <= 4'b0000;
+      tlbPerm_3 <= 4'b0000;
+      tlbPerm_4 <= 4'b0000;
+      tlbPerm_5 <= 4'b0000;
+      tlbPerm_6 <= 4'b0000;
+      tlbPerm_7 <= 4'b0000;
+      tlbPerm_8 <= 4'b0000;
+      tlbPerm_9 <= 4'b0000;
+      tlbPerm_10 <= 4'b0000;
+      tlbPerm_11 <= 4'b0000;
+      tlbPerm_12 <= 4'b0000;
+      tlbPerm_13 <= 4'b0000;
+      tlbPerm_14 <= 4'b0000;
+      tlbPerm_15 <= 4'b0000;
+      tlbDirty_0 <= 1'b0;
+      tlbDirty_1 <= 1'b0;
+      tlbDirty_2 <= 1'b0;
+      tlbDirty_3 <= 1'b0;
+      tlbDirty_4 <= 1'b0;
+      tlbDirty_5 <= 1'b0;
+      tlbDirty_6 <= 1'b0;
+      tlbDirty_7 <= 1'b0;
+      tlbDirty_8 <= 1'b0;
+      tlbDirty_9 <= 1'b0;
+      tlbDirty_10 <= 1'b0;
+      tlbDirty_11 <= 1'b0;
+      tlbDirty_12 <= 1'b0;
+      tlbDirty_13 <= 1'b0;
+      tlbDirty_14 <= 1'b0;
+      tlbDirty_15 <= 1'b0;
+      iFaultValid <= 1'b0;
+      iFaultVaddr <= 64'h0;
+      dFaultValid <= 1'b0;
+      dFaultVaddr <= 64'h0;
+      state <= St_IDLE;
+      isData <= 1'b0;
+      walkLevel <= 2'b00;
+      basePpn <= 44'h0;
+      vpnReg <= 27'h0;
+      accessReg <= 2'b00;
+      pteReg <= 64'h0;
+    end else begin
+      if(when_Mmu_l121) begin
+        if(dNeedWalk) begin
+          isData <= 1'b1;
+          vpnReg <= io_dVaddr[38 : 12];
+          accessReg <= io_dAccess;
+          basePpn <= io_ppn;
+          walkLevel <= 2'b10;
+          state <= St_REQ;
+        end else begin
+          if(iNeedWalk) begin
+            isData <= 1'b0;
+            vpnReg <= io_iVaddr[38 : 12];
+            accessReg <= 2'b00;
+            basePpn <= io_ppn;
+            walkLevel <= 2'b10;
+            state <= St_REQ;
+          end
+        end
+      end
+      if(when_Mmu_l183) begin
+        pteReg <= io_ptwData;
+        state <= St_EVAL;
+      end
+      if(when_Mmu_l187) begin
+        if(walkFault) begin
+          if(isData) begin
+            dFaultValid <= 1'b1;
+            dFaultVaddr <= io_dVaddr;
+          end else begin
+            iFaultValid <= 1'b1;
+            iFaultVaddr <= io_iVaddr;
+          end
+          state <= St_IDLE;
+        end else begin
+          if(leaf) begin
+            if(_zz_1[0]) begin
+              tlbValid_0 <= 1'b1;
+            end
+            if(_zz_1[1]) begin
+              tlbValid_1 <= 1'b1;
+            end
+            if(_zz_1[2]) begin
+              tlbValid_2 <= 1'b1;
+            end
+            if(_zz_1[3]) begin
+              tlbValid_3 <= 1'b1;
+            end
+            if(_zz_1[4]) begin
+              tlbValid_4 <= 1'b1;
+            end
+            if(_zz_1[5]) begin
+              tlbValid_5 <= 1'b1;
+            end
+            if(_zz_1[6]) begin
+              tlbValid_6 <= 1'b1;
+            end
+            if(_zz_1[7]) begin
+              tlbValid_7 <= 1'b1;
+            end
+            if(_zz_1[8]) begin
+              tlbValid_8 <= 1'b1;
+            end
+            if(_zz_1[9]) begin
+              tlbValid_9 <= 1'b1;
+            end
+            if(_zz_1[10]) begin
+              tlbValid_10 <= 1'b1;
+            end
+            if(_zz_1[11]) begin
+              tlbValid_11 <= 1'b1;
+            end
+            if(_zz_1[12]) begin
+              tlbValid_12 <= 1'b1;
+            end
+            if(_zz_1[13]) begin
+              tlbValid_13 <= 1'b1;
+            end
+            if(_zz_1[14]) begin
+              tlbValid_14 <= 1'b1;
+            end
+            if(_zz_1[15]) begin
+              tlbValid_15 <= 1'b1;
+            end
+            if(_zz_2[0]) begin
+              tlbVpn_0 <= vpnReg;
+            end
+            if(_zz_2[1]) begin
+              tlbVpn_1 <= vpnReg;
+            end
+            if(_zz_2[2]) begin
+              tlbVpn_2 <= vpnReg;
+            end
+            if(_zz_2[3]) begin
+              tlbVpn_3 <= vpnReg;
+            end
+            if(_zz_2[4]) begin
+              tlbVpn_4 <= vpnReg;
+            end
+            if(_zz_2[5]) begin
+              tlbVpn_5 <= vpnReg;
+            end
+            if(_zz_2[6]) begin
+              tlbVpn_6 <= vpnReg;
+            end
+            if(_zz_2[7]) begin
+              tlbVpn_7 <= vpnReg;
+            end
+            if(_zz_2[8]) begin
+              tlbVpn_8 <= vpnReg;
+            end
+            if(_zz_2[9]) begin
+              tlbVpn_9 <= vpnReg;
+            end
+            if(_zz_2[10]) begin
+              tlbVpn_10 <= vpnReg;
+            end
+            if(_zz_2[11]) begin
+              tlbVpn_11 <= vpnReg;
+            end
+            if(_zz_2[12]) begin
+              tlbVpn_12 <= vpnReg;
+            end
+            if(_zz_2[13]) begin
+              tlbVpn_13 <= vpnReg;
+            end
+            if(_zz_2[14]) begin
+              tlbVpn_14 <= vpnReg;
+            end
+            if(_zz_2[15]) begin
+              tlbVpn_15 <= vpnReg;
+            end
+            if(_zz_3[0]) begin
+              tlbPpn_0 <= finalPpn;
+            end
+            if(_zz_3[1]) begin
+              tlbPpn_1 <= finalPpn;
+            end
+            if(_zz_3[2]) begin
+              tlbPpn_2 <= finalPpn;
+            end
+            if(_zz_3[3]) begin
+              tlbPpn_3 <= finalPpn;
+            end
+            if(_zz_3[4]) begin
+              tlbPpn_4 <= finalPpn;
+            end
+            if(_zz_3[5]) begin
+              tlbPpn_5 <= finalPpn;
+            end
+            if(_zz_3[6]) begin
+              tlbPpn_6 <= finalPpn;
+            end
+            if(_zz_3[7]) begin
+              tlbPpn_7 <= finalPpn;
+            end
+            if(_zz_3[8]) begin
+              tlbPpn_8 <= finalPpn;
+            end
+            if(_zz_3[9]) begin
+              tlbPpn_9 <= finalPpn;
+            end
+            if(_zz_3[10]) begin
+              tlbPpn_10 <= finalPpn;
+            end
+            if(_zz_3[11]) begin
+              tlbPpn_11 <= finalPpn;
+            end
+            if(_zz_3[12]) begin
+              tlbPpn_12 <= finalPpn;
+            end
+            if(_zz_3[13]) begin
+              tlbPpn_13 <= finalPpn;
+            end
+            if(_zz_3[14]) begin
+              tlbPpn_14 <= finalPpn;
+            end
+            if(_zz_3[15]) begin
+              tlbPpn_15 <= finalPpn;
+            end
+            if(_zz_4[0]) begin
+              tlbPerm_0 <= perm;
+            end
+            if(_zz_4[1]) begin
+              tlbPerm_1 <= perm;
+            end
+            if(_zz_4[2]) begin
+              tlbPerm_2 <= perm;
+            end
+            if(_zz_4[3]) begin
+              tlbPerm_3 <= perm;
+            end
+            if(_zz_4[4]) begin
+              tlbPerm_4 <= perm;
+            end
+            if(_zz_4[5]) begin
+              tlbPerm_5 <= perm;
+            end
+            if(_zz_4[6]) begin
+              tlbPerm_6 <= perm;
+            end
+            if(_zz_4[7]) begin
+              tlbPerm_7 <= perm;
+            end
+            if(_zz_4[8]) begin
+              tlbPerm_8 <= perm;
+            end
+            if(_zz_4[9]) begin
+              tlbPerm_9 <= perm;
+            end
+            if(_zz_4[10]) begin
+              tlbPerm_10 <= perm;
+            end
+            if(_zz_4[11]) begin
+              tlbPerm_11 <= perm;
+            end
+            if(_zz_4[12]) begin
+              tlbPerm_12 <= perm;
+            end
+            if(_zz_4[13]) begin
+              tlbPerm_13 <= perm;
+            end
+            if(_zz_4[14]) begin
+              tlbPerm_14 <= perm;
+            end
+            if(_zz_4[15]) begin
+              tlbPerm_15 <= perm;
+            end
+            if(_zz_5[0]) begin
+              tlbDirty_0 <= pteD;
+            end
+            if(_zz_5[1]) begin
+              tlbDirty_1 <= pteD;
+            end
+            if(_zz_5[2]) begin
+              tlbDirty_2 <= pteD;
+            end
+            if(_zz_5[3]) begin
+              tlbDirty_3 <= pteD;
+            end
+            if(_zz_5[4]) begin
+              tlbDirty_4 <= pteD;
+            end
+            if(_zz_5[5]) begin
+              tlbDirty_5 <= pteD;
+            end
+            if(_zz_5[6]) begin
+              tlbDirty_6 <= pteD;
+            end
+            if(_zz_5[7]) begin
+              tlbDirty_7 <= pteD;
+            end
+            if(_zz_5[8]) begin
+              tlbDirty_8 <= pteD;
+            end
+            if(_zz_5[9]) begin
+              tlbDirty_9 <= pteD;
+            end
+            if(_zz_5[10]) begin
+              tlbDirty_10 <= pteD;
+            end
+            if(_zz_5[11]) begin
+              tlbDirty_11 <= pteD;
+            end
+            if(_zz_5[12]) begin
+              tlbDirty_12 <= pteD;
+            end
+            if(_zz_5[13]) begin
+              tlbDirty_13 <= pteD;
+            end
+            if(_zz_5[14]) begin
+              tlbDirty_14 <= pteD;
+            end
+            if(_zz_5[15]) begin
+              tlbDirty_15 <= pteD;
+            end
+            state <= St_IDLE;
+          end else begin
+            basePpn <= ptePpn;
+            walkLevel <= (walkLevel - 2'b01);
+            state <= St_REQ;
+          end
+        end
+      end
+      if(when_Mmu_l212) begin
+        iFaultValid <= 1'b0;
+      end
+      if(when_Mmu_l213) begin
+        dFaultValid <= 1'b0;
+      end
+      if(io_flush) begin
+        tlbValid_0 <= 1'b0;
+        tlbValid_1 <= 1'b0;
+        tlbValid_2 <= 1'b0;
+        tlbValid_3 <= 1'b0;
+        tlbValid_4 <= 1'b0;
+        tlbValid_5 <= 1'b0;
+        tlbValid_6 <= 1'b0;
+        tlbValid_7 <= 1'b0;
+        tlbValid_8 <= 1'b0;
+        tlbValid_9 <= 1'b0;
+        tlbValid_10 <= 1'b0;
+        tlbValid_11 <= 1'b0;
+        tlbValid_12 <= 1'b0;
+        tlbValid_13 <= 1'b0;
+        tlbValid_14 <= 1'b0;
+        tlbValid_15 <= 1'b0;
+        iFaultValid <= 1'b0;
+        dFaultValid <= 1'b0;
+        state <= St_IDLE;
+      end
+    end
   end
 
 
@@ -22192,6 +23330,10 @@ module CsrFile (
   output wire [2:0]    io_counterEnM,
   output wire [2:0]    io_counterEnS,
   output wire          io_sTimerPending,
+  output wire [43:0]   io_satpPpn,
+  output wire [3:0]    io_satpMode,
+  output wire          io_satpWrite,
+  output wire          io_mstatusSum,
   output wire [63:0]   io_debugMepc,
   output wire [63:0]   io_debugMcause,
   output wire [1:0]    io_debugMode,
@@ -22224,40 +23366,40 @@ module CsrFile (
   wire                wbActive;
   reg        [63:0]   opNew;
   reg        [63:0]   mstatusPostWb;
-  wire                when_CsrFile_l267;
+  wire                when_CsrFile_l272;
   wire       [63:0]   _zz_mstatusPostWb;
   wire       [63:0]   _zz_mstatusPostWb_1;
-  wire                when_CsrFile_l269;
+  wire                when_CsrFile_l274;
   reg        [63:0]   mstatusNext;
   reg        [1:0]    curModeNext;
   reg        [63:0]   mepcNext;
   reg        [63:0]   _zz_mepcNext;
-  wire                when_CsrFile_l320;
   wire                when_CsrFile_l325;
+  wire                when_CsrFile_l330;
   reg        [63:0]   mcauseNext;
-  wire                when_CsrFile_l328;
-  wire                when_CsrFile_l329;
-  reg        [63:0]   mtvalNext;
-  wire                when_CsrFile_l332;
   wire                when_CsrFile_l333;
-  reg        [63:0]   mieNext;
+  wire                when_CsrFile_l334;
+  reg        [63:0]   mtvalNext;
+  wire                when_CsrFile_l337;
   wire                when_CsrFile_l338;
+  reg        [63:0]   mieNext;
+  wire                when_CsrFile_l343;
   wire       [63:0]   _zz_mieNext;
   reg        [63:0]   mtvecNext;
-  wire                when_CsrFile_l344;
+  wire                when_CsrFile_l349;
   wire       [63:0]   _zz_mtvecNext;
   reg        [63:0]   mscratchNext;
-  wire                when_CsrFile_l353;
+  wire                when_CsrFile_l358;
   wire       [2:0]    mcounterenNext;
   wire       [2:0]    scounterenNext;
   wire       [2:0]    mcountinhibitNext;
   wire       [63:0]   stimecmpNext;
   wire       [63:0]   menvcfgNext;
   reg        [63:0]   medelegNext;
-  wire                when_CsrFile_l399;
+  wire                when_CsrFile_l404;
   wire       [63:0]   _zz_medelegNext;
   reg        [63:0]   midelegNext;
-  wire                when_CsrFile_l404;
+  wire                when_CsrFile_l409;
   wire       [63:0]   _zz_midelegNext;
   wire       [63:0]   stvecNext;
   wire       [63:0]   sscratchNext;
@@ -22352,13 +23494,13 @@ module CsrFile (
     endcase
   end
 
-  assign when_CsrFile_l267 = (wbActive && (io_csrAddr == 12'h300));
+  assign when_CsrFile_l272 = (wbActive && (io_csrAddr == 12'h300));
   assign _zz_mstatusPostWb = 64'h00000000000c79aa;
   always @(*) begin
-    if(when_CsrFile_l267) begin
+    if(when_CsrFile_l272) begin
       mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb)) | (opNew & _zz_mstatusPostWb));
     end else begin
-      if(when_CsrFile_l269) begin
+      if(when_CsrFile_l274) begin
         mstatusPostWb = ((mstatusReg & (~ _zz_mstatusPostWb_1)) | (opNew & _zz_mstatusPostWb_1));
       end else begin
         mstatusPostWb = mstatusReg;
@@ -22367,7 +23509,7 @@ module CsrFile (
   end
 
   assign _zz_mstatusPostWb_1 = 64'h00000000000c6122;
-  assign when_CsrFile_l269 = 1'b0;
+  assign when_CsrFile_l274 = 1'b0;
   always @(*) begin
     if(io_trapEna) begin
       mstatusNext = mstatusPostWb;
@@ -22415,9 +23557,9 @@ module CsrFile (
     end
   end
 
-  assign when_CsrFile_l320 = (wbActive && (io_csrAddr == 12'h341));
+  assign when_CsrFile_l325 = (wbActive && (io_csrAddr == 12'h341));
   always @(*) begin
-    if(when_CsrFile_l320) begin
+    if(when_CsrFile_l325) begin
       _zz_mepcNext = opNew;
     end else begin
       _zz_mepcNext = mepcReg;
@@ -22426,60 +23568,60 @@ module CsrFile (
 
   always @(*) begin
     mepcNext = _zz_mepcNext;
-    if(when_CsrFile_l325) begin
+    if(when_CsrFile_l330) begin
       mepcNext = io_trapEpc;
     end
   end
 
-  assign when_CsrFile_l325 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l328 = (wbActive && (io_csrAddr == 12'h342));
+  assign when_CsrFile_l330 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l333 = (wbActive && (io_csrAddr == 12'h342));
   always @(*) begin
-    if(when_CsrFile_l328) begin
+    if(when_CsrFile_l333) begin
       mcauseNext = opNew;
     end else begin
       mcauseNext = mcauseReg;
     end
-    if(when_CsrFile_l329) begin
+    if(when_CsrFile_l334) begin
       mcauseNext = io_trapCause;
     end
   end
 
-  assign when_CsrFile_l329 = (io_trapEna && (! io_trapToS));
-  assign when_CsrFile_l332 = (wbActive && (io_csrAddr == 12'h343));
+  assign when_CsrFile_l334 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l337 = (wbActive && (io_csrAddr == 12'h343));
   always @(*) begin
-    if(when_CsrFile_l332) begin
+    if(when_CsrFile_l337) begin
       mtvalNext = opNew;
     end else begin
       mtvalNext = mtvalReg;
     end
-    if(when_CsrFile_l333) begin
+    if(when_CsrFile_l338) begin
       mtvalNext = io_trapTval;
     end
   end
 
-  assign when_CsrFile_l333 = (io_trapEna && (! io_trapToS));
+  assign when_CsrFile_l338 = (io_trapEna && (! io_trapToS));
   always @(*) begin
     mieNext = mieReg;
-    if(when_CsrFile_l338) begin
+    if(when_CsrFile_l343) begin
       mieNext = ((mieReg & (~ _zz_mieNext)) | (opNew & _zz_mieNext));
     end
   end
 
-  assign when_CsrFile_l338 = (wbActive && (io_csrAddr == 12'h304));
+  assign when_CsrFile_l343 = (wbActive && (io_csrAddr == 12'h304));
   assign _zz_mieNext = 64'h00000000000002a2;
-  assign when_CsrFile_l344 = (wbActive && (io_csrAddr == 12'h305));
+  assign when_CsrFile_l349 = (wbActive && (io_csrAddr == 12'h305));
   assign _zz_mtvecNext = 64'hfffffffffffffffc;
   always @(*) begin
-    if(when_CsrFile_l344) begin
+    if(when_CsrFile_l349) begin
       mtvecNext = ((mtvecReg & (~ _zz_mtvecNext)) | (opNew & _zz_mtvecNext));
     end else begin
       mtvecNext = mtvecReg;
     end
   end
 
-  assign when_CsrFile_l353 = (wbActive && (io_csrAddr == 12'h340));
+  assign when_CsrFile_l358 = (wbActive && (io_csrAddr == 12'h340));
   always @(*) begin
-    if(when_CsrFile_l353) begin
+    if(when_CsrFile_l358) begin
       mscratchNext = opNew;
     end else begin
       mscratchNext = mscratchReg;
@@ -22491,20 +23633,20 @@ module CsrFile (
   assign mcountinhibitNext = 3'b000;
   assign stimecmpNext = 64'h0;
   assign menvcfgNext = 64'h0;
-  assign when_CsrFile_l399 = (wbActive && (io_csrAddr == 12'h302));
+  assign when_CsrFile_l404 = (wbActive && (io_csrAddr == 12'h302));
   assign _zz_medelegNext = 64'h000000000000035d;
   always @(*) begin
-    if(when_CsrFile_l399) begin
+    if(when_CsrFile_l404) begin
       medelegNext = ((medelegReg & (~ _zz_medelegNext)) | (opNew & _zz_medelegNext));
     end else begin
       medelegNext = medelegReg;
     end
   end
 
-  assign when_CsrFile_l404 = (wbActive && (io_csrAddr == 12'h303));
+  assign when_CsrFile_l409 = (wbActive && (io_csrAddr == 12'h303));
   assign _zz_midelegNext = 64'h0000000000000080;
   always @(*) begin
-    if(when_CsrFile_l404) begin
+    if(when_CsrFile_l409) begin
       midelegNext = ((midelegReg & (~ _zz_midelegNext)) | (opNew & _zz_midelegNext));
     end else begin
       midelegNext = midelegReg;
@@ -22535,6 +23677,10 @@ module CsrFile (
   assign io_counterEnM = 3'b000;
   assign io_counterEnS = 3'b000;
   assign io_sTimerPending = sTimerPending;
+  assign io_satpPpn = 44'h0;
+  assign io_satpMode = 4'b0000;
+  assign io_satpWrite = 1'b0;
+  assign io_mstatusSum = mstatusReg[18];
   assign io_stvec = 64'h0;
   assign io_sepc = 64'h0;
   assign io_debugMepc = mepcReg;
@@ -23066,7 +24212,8 @@ module Decoder (
   localparam SysOp_MRET = 3'd3;
   localparam SysOp_SRET = 3'd4;
   localparam SysOp_WFI = 3'd5;
-  localparam SysOp_ILLEGAL = 3'd6;
+  localparam SysOp_SFENCE = 3'd6;
+  localparam SysOp_ILLEGAL = 3'd7;
 
   wire       [11:0]   _zz_immI;
   wire       [11:0]   _zz_immS;
@@ -23347,6 +24494,7 @@ module Decoder (
       SysOp_MRET : io_output_sysOp_string = "MRET   ";
       SysOp_SRET : io_output_sysOp_string = "SRET   ";
       SysOp_WFI : io_output_sysOp_string = "WFI    ";
+      SysOp_SFENCE : io_output_sysOp_string = "SFENCE ";
       SysOp_ILLEGAL : io_output_sysOp_string = "ILLEGAL";
       default : io_output_sysOp_string = "???????";
     endcase
@@ -27365,6 +28513,9 @@ module Decoder (
                 12'b000100000101 : begin
                   io_output_sysOp = SysOp_WFI;
                 end
+                12'b000100100000 : begin
+                  io_output_sysOp = SysOp_SFENCE;
+                end
                 default : begin
                   io_output_sysOp = SysOp_ILLEGAL;
                 end
@@ -27770,6 +28921,8 @@ module Decoder (
                 12'b000100000010 : begin
                 end
                 12'b000100000101 : begin
+                end
+                12'b000100100000 : begin
                 end
                 default : begin
                   io_output_valid = 1'b0;

@@ -77,6 +77,11 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     val counterEnS = out Bits(3 bits)
     // Sstc: supervisor timer interrupt pending (time >= stimecmp with STCE on).
     val sTimerPending = out Bool()
+    // Sv39: satp translation state (PPN + MODE) and flush pulse for the MMU.
+    val satpPpn = out UInt(44 bits)
+    val satpMode = out UInt(4 bits)
+    val satpWrite = out Bool()
+    val mstatusSum = out Bool()
     // ---- debug readouts ----
     val debugMepc = out UInt(xlen bits)
     val debugMcause = out Bits(xlen bits)
@@ -432,12 +437,21 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     when(wbHit(0x143)) { stvalNext := opNew }
     when(io.trapEna && io.trapToS) { stvalNext := io.trapTval }
 
-    // satp: address translation is not implemented, so MODE is WARL forced to
-    // BARE while ASID/PPN are stored unchanged.
-    val modeMask: BigInt = if (xlen == 32) BigInt(1) << 31 else BigInt(0xF) << 60
-    val dataMask: BigInt = ((BigInt(1) << xlen) - 1) & ~modeMask
+    // satp: RV64 supports BARE (MODE=0) and Sv39 (MODE=8); any other MODE is
+    // WARL and keeps the previous value. RV32 stays BARE-only (Sv32 is not
+    // implemented), so bit 31 is not writable there.
     satpNext := satpReg.get
-    when(wbHit(0x180)) { satpNext := maskedNext(satpReg.get, opNew, dataMask) }
+    when(wbHit(0x180)) {
+      satpNext := opNew
+      if (xlen == 64) {
+        val newMode = opNew(63 downto 60)
+        when(newMode =/= B(0, 4 bits) && newMode =/= B(8, 4 bits)) {
+          satpNext(63 downto 60) := satpReg.get(63 downto 60)
+        }
+      } else {
+        satpNext(31) := satpReg.get(31)
+      }
+    }
   } else {
     stvecNext := B(0, xlen bits)
     sscratchNext := B(0, xlen bits)
@@ -535,6 +549,21 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     io.counterEnS := B(0, 3 bits)
   }
   io.sTimerPending := sTimerPending
+  if (hasSupervisor) {
+    if (xlen == 64) {
+      io.satpPpn := satpReg.get(43 downto 0).asUInt
+      io.satpMode := satpReg.get(63 downto 60).asUInt
+    } else {
+      io.satpPpn := U(0, 44 bits)
+      io.satpMode := U(0, 4 bits)
+    }
+    io.satpWrite := wbHit(0x180)
+  } else {
+    io.satpPpn := U(0, 44 bits)
+    io.satpMode := U(0, 4 bits)
+    io.satpWrite := False
+  }
+  io.mstatusSum := mstatusReg(18)
   if (hasSupervisor) {
     io.stvec := stvecReg.get
     io.sepc := sepcReg.get.asUInt
