@@ -52,3 +52,16 @@ Entries discovered by the Agent during task execution should follow this format:
 - Instructions:
   - 以后每次 git 提交都要增加 sign-off，作者为 Michael Chuh，邮箱 michael_chuh@163.com
   - 即在 commit message 末尾追加：`Signed-off-by: Michael Chuh <michael_chuh@163.com>`
+
+[Project Knowledge Summary]
+- Date: 2026-10-30
+- Context: Discovered by Agent while implementing Sv39 MMU
+- Category: Build Methods
+- Instructions:
+  - Sv39 is RV64-only; RV32 configs bypass MMU and stay BARE
+  - TLB: 16 entries direct-mapped, indexed by vaddr[15:12]
+  - Page-table walk: 3-level, drives dBus, freezes pipeline
+  - SFENCE.VMA encoding: 000100100000 (funct3=001)
+  - Page faults: cause 12 (instr), 13 (load), 15 (store)
+  - satp.MODE: 0=BARE, 8=Sv39 (RV64); RV32 forced to BARE
+  - Test count: 135 passing
