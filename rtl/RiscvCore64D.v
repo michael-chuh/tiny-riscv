@@ -1,6 +1,6 @@
 // Generator : SpinalHDL v1.14.2    git head : 78f29dc66110fc099a777992b6daa2f803ab445e
 // Component : RiscvCore64D
-// Git hash  : 71d37c44c30f0ca10c5cf5f68adc541476c46cff
+// Git hash  : f2ec848148827b5104634d869ff719330521e7cb
 
 `timescale 1ns/1ps
 
@@ -183,6 +183,7 @@ module RiscvCore64D (
 
   wire                regFile_io_writeEnable;
   wire                fpRegFile_io_writeEnable;
+  wire                csrFile_1_io_timerInterrupt;
   wire                csrFile_1_io_csrWe;
   wire       [63:0]   csrFile_1_io_trapEpc;
   wire       [63:0]   csrFile_1_io_trapCause;
@@ -332,6 +333,8 @@ module RiscvCore64D (
   wire       [63:0]   csrFile_1_io_debugMepc;
   wire       [63:0]   csrFile_1_io_debugMcause;
   wire       [1:0]    csrFile_1_io_debugMode;
+  wire                aiaAplic_1_io_meip;
+  wire                aiaAplic_1_io_seip;
   wire       [63:0]   alu_1_io_result;
   wire       [63:0]   sv39Mmu_1_io_iPaddr;
   wire                sv39Mmu_1_io_iHit;
@@ -428,6 +431,7 @@ module RiscvCore64D (
   reg        [31:0]   ifId_instruction;
   reg                 ifId_compressed;
   reg                 ifId_pageFault;
+  wire                aiaMeip;
   reg                 idEx_valid;
   reg        [63:0]   idEx_pc;
   reg                 idEx_compressed;
@@ -514,11 +518,11 @@ module RiscvCore64D (
   wire       [63:0]   fpRs3Data;
   wire       [63:0]   wbWriteData;
   reg        [63:0]   forwardRs1;
-  wire                when_RiscvCore_l434;
-  wire                when_RiscvCore_l436;
-  reg        [63:0]   forwardRs2;
+  wire                when_RiscvCore_l447;
   wire                when_RiscvCore_l449;
-  wire                when_RiscvCore_l451;
+  reg        [63:0]   forwardRs2;
+  wire                when_RiscvCore_l462;
+  wire                when_RiscvCore_l464;
   wire       [63:0]   fpFwdRs1;
   wire       [63:0]   fpFwdRs2;
   wire       [63:0]   fpFwdRs3;
@@ -544,8 +548,8 @@ module RiscvCore64D (
   wire                mtvecModeBad;
   wire                stvecModeBad;
   reg        [1:0]    counterIdx;
-  wire                when_RiscvCore_l597;
-  wire                when_RiscvCore_l600;
+  wire                when_RiscvCore_l610;
+  wire                when_RiscvCore_l613;
   wire                counterCsr;
   wire                mCounterDenied;
   wire                sCounterDenied;
@@ -559,17 +563,17 @@ module RiscvCore64D (
   wire       [1:0]    sppTarget;
   wire                sppSupported;
   wire                sretLegal;
-  wire                when_RiscvCore_l641;
-  wire                when_RiscvCore_l645;
-  wire                when_RiscvCore_l649;
-  wire                when_RiscvCore_l653;
+  wire                when_RiscvCore_l654;
+  wire                when_RiscvCore_l658;
   wire                when_RiscvCore_l662;
-  wire                when_RiscvCore_l668;
-  wire                when_RiscvCore_l671;
-  wire                when_RiscvCore_l680;
-  wire                when_RiscvCore_l685;
-  wire                when_RiscvCore_l690;
+  wire                when_RiscvCore_l666;
+  wire                when_RiscvCore_l675;
+  wire                when_RiscvCore_l681;
+  wire                when_RiscvCore_l684;
   wire                when_RiscvCore_l693;
+  wire                when_RiscvCore_l698;
+  wire                when_RiscvCore_l703;
+  wire                when_RiscvCore_l706;
   wire                mmuIValid;
   wire                mmuDValid;
   wire                mmuAmoAccess;
@@ -608,17 +612,17 @@ module RiscvCore64D (
   wire       [2:0]    fpRmEx;
   wire       [63:0]   fpuResult;
   wire       [4:0]    fpuFlags;
-  wire                _zz_when_RiscvCore_l906;
-  wire                _zz_when_RiscvCore_l906_1;
-  wire       [63:0]   _zz_when_RiscvCore_l906_2;
-  wire       [63:0]   _zz_when_RiscvCore_l909;
-  wire       [63:0]   _zz_when_RiscvCore_l910;
+  wire                _zz_when_RiscvCore_l919;
+  wire                _zz_when_RiscvCore_l919_1;
+  wire       [63:0]   _zz_when_RiscvCore_l919_2;
+  wire       [63:0]   _zz_when_RiscvCore_l922;
+  wire       [63:0]   _zz_when_RiscvCore_l923;
   reg        [63:0]   _zz_io_a;
   reg        [63:0]   _zz_io_b;
   reg        [63:0]   _zz_io_c;
-  wire                when_RiscvCore_l906;
-  wire                when_RiscvCore_l909;
-  wire                when_RiscvCore_l910;
+  wire                when_RiscvCore_l919;
+  wire                when_RiscvCore_l922;
+  wire                when_RiscvCore_l923;
   wire                _zz_fpuResult;
   wire       [63:0]   fpToIntResult;
   wire       [63:0]   fpToFpResult;
@@ -647,13 +651,13 @@ module RiscvCore64D (
   wire       [63:0]   intrCauseVal;
   wire                flushYounger;
   wire                bubbleEx;
-  wire                when_RiscvCore_l1132;
-  wire                when_RiscvCore_l1141;
-  wire                when_RiscvCore_l1149;
-  wire                when_RiscvCore_l1150;
-  wire                when_RiscvCore_l1164;
-  wire                when_RiscvCore_l1165;
-  wire                when_RiscvCore_l1214;
+  wire                when_RiscvCore_l1145;
+  wire                when_RiscvCore_l1154;
+  wire                when_RiscvCore_l1162;
+  wire                when_RiscvCore_l1163;
+  wire                when_RiscvCore_l1177;
+  wire                when_RiscvCore_l1178;
+  wire                when_RiscvCore_l1227;
   wire                effMemWrite;
   wire                normalRead;
   wire                normalWrite;
@@ -665,7 +669,7 @@ module RiscvCore64D (
   wire       [15:0]   _zz_loadResult_1;
   wire       [31:0]   _zz_loadResult_2;
   wire       [63:0]   fpLoadData;
-  wire                when_RiscvCore_l1327;
+  wire                when_RiscvCore_l1340;
   `ifndef SYNTHESIS
   reg [87:0] idEx_aluOp_string;
   reg [31:0] idEx_branchType_string;
@@ -890,7 +894,7 @@ module RiscvCore64D (
     .io_flags  (fpUnit64_io_flags[4:0]  )  //o
   );
   CsrFile csrFile_1 (
-    .io_timerInterrupt (io_timerInterrupt             ), //i
+    .io_timerInterrupt (csrFile_1_io_timerInterrupt   ), //i
     .io_csrAddr        (memWb_csrAddr[11:0]           ), //i
     .io_csrOp          (memWb_csrOp[1:0]              ), //i
     .io_csrWe          (csrFile_1_io_csrWe            ), //i
@@ -934,6 +938,12 @@ module RiscvCore64D (
     .io_debugMode      (csrFile_1_io_debugMode[1:0]   ), //o
     .clk               (clk                           ), //i
     .reset             (reset                         )  //i
+  );
+  AiaAplic aiaAplic_1 (
+    .io_enable (1'b1              ), //i
+    .io_irqIn  (16'h0             ), //i
+    .io_meip   (aiaAplic_1_io_meip), //o
+    .io_seip   (aiaAplic_1_io_seip)  //o
   );
   Alu alu_1 (
     .io_a      (aluA[63:0]           ), //i
@@ -1170,16 +1180,18 @@ module RiscvCore64D (
   assign fetchInstr = io_iBus_instruction;
   assign fetchLen = 3'b100;
   assign fetchCompressed = 1'b0;
+  assign aiaMeip = aiaAplic_1_io_meip;
+  assign csrFile_1_io_timerInterrupt = (io_timerInterrupt || aiaMeip);
   assign fpRs1Data = fpRegFile_io_rs1Data;
   assign fpRs2Data = fpRegFile_io_rs2Data;
   assign fpRs3Data = fpRegFile_io_rs3Data;
   assign wbWriteData = ((memWb_wbSel == 3'b011) ? csrFile_1_io_rdData : memWb_wbData);
-  assign when_RiscvCore_l434 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs1));
+  assign when_RiscvCore_l447 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs1));
   always @(*) begin
-    if(when_RiscvCore_l434) begin
+    if(when_RiscvCore_l447) begin
       forwardRs1 = exMem_aluResult;
     end else begin
-      if(when_RiscvCore_l436) begin
+      if(when_RiscvCore_l449) begin
         forwardRs1 = wbWriteData;
       end else begin
         forwardRs1 = regFile_io_rs1Data;
@@ -1187,13 +1199,13 @@ module RiscvCore64D (
     end
   end
 
-  assign when_RiscvCore_l436 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs1));
-  assign when_RiscvCore_l449 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs2));
+  assign when_RiscvCore_l449 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs1));
+  assign when_RiscvCore_l462 = ((((((exMem_valid && exMem_regWrite) && (exMem_rd != 5'h0)) && (! exMem_memRead)) && (! exMem_atomic)) && (exMem_wbSel != 3'b011)) && (exMem_rd == idEx_rs2));
   always @(*) begin
-    if(when_RiscvCore_l449) begin
+    if(when_RiscvCore_l462) begin
       forwardRs2 = exMem_aluResult;
     end else begin
-      if(when_RiscvCore_l451) begin
+      if(when_RiscvCore_l464) begin
         forwardRs2 = wbWriteData;
       end else begin
         forwardRs2 = regFile_io_rs2Data;
@@ -1201,7 +1213,7 @@ module RiscvCore64D (
     end
   end
 
-  assign when_RiscvCore_l451 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs2));
+  assign when_RiscvCore_l464 = (((memWb_valid && memWb_regWrite) && (memWb_rd != 5'h0)) && (memWb_rd == idEx_rs2));
   assign _zz_fpFwdRs1 = ((memWb_valid && memWb_fpWrite) && (memWb_rd != 5'h0));
   assign fpFwdRs1 = ((_zz_fpFwdRs1 && (memWb_rd == idEx_rs1)) ? memWb_wbData : fpRs1Data);
   assign fpFwdRs2 = ((_zz_fpFwdRs1 && (memWb_rd == idEx_rs2)) ? memWb_wbData : fpRs2Data);
@@ -1287,16 +1299,16 @@ module RiscvCore64D (
   assign stvecModeBad = 1'b0;
   always @(*) begin
     counterIdx = 2'b00;
-    if(when_RiscvCore_l597) begin
+    if(when_RiscvCore_l610) begin
       counterIdx = 2'b01;
     end
-    if(when_RiscvCore_l600) begin
+    if(when_RiscvCore_l613) begin
       counterIdx = 2'b10;
     end
   end
 
-  assign when_RiscvCore_l597 = ((idEx_csrAddr == 12'hc01) || (idEx_csrAddr == 12'hc81));
-  assign when_RiscvCore_l600 = ((idEx_csrAddr == 12'hc02) || (idEx_csrAddr == 12'hc82));
+  assign when_RiscvCore_l610 = ((idEx_csrAddr == 12'hc01) || (idEx_csrAddr == 12'hc81));
+  assign when_RiscvCore_l613 = ((idEx_csrAddr == 12'hc02) || (idEx_csrAddr == 12'hc82));
   assign counterCsr = (isCsrInst && ((((((idEx_csrAddr == 12'hc00) || (idEx_csrAddr == 12'hc80)) || (idEx_csrAddr == 12'hc01)) || (idEx_csrAddr == 12'hc81)) || (idEx_csrAddr == 12'hc02)) || (idEx_csrAddr == 12'hc82)));
   assign mCounterDenied = ((csrFile_1_io_curMode != MODE_M) && (! csrFile_1_io_counterEnM[counterIdx]));
   assign sCounterDenied = 1'b0;
@@ -1306,37 +1318,37 @@ module RiscvCore64D (
   always @(*) begin
     exTrapEna = 1'b0;
     if(idEx_valid) begin
-      if(when_RiscvCore_l641) begin
+      if(when_RiscvCore_l654) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l645) begin
-        exTrapEna = 1'b1;
-      end
-      if(when_RiscvCore_l649) begin
-        exTrapEna = 1'b1;
-      end
-      if(when_RiscvCore_l653) begin
-        exTrapEna = 1'b1;
-      end
-      if(csrIllegal) begin
+      if(when_RiscvCore_l658) begin
         exTrapEna = 1'b1;
       end
       if(when_RiscvCore_l662) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l668) begin
-        if(when_RiscvCore_l671) begin
+      if(when_RiscvCore_l666) begin
+        exTrapEna = 1'b1;
+      end
+      if(csrIllegal) begin
+        exTrapEna = 1'b1;
+      end
+      if(when_RiscvCore_l675) begin
+        exTrapEna = 1'b1;
+      end
+      if(when_RiscvCore_l681) begin
+        if(when_RiscvCore_l684) begin
           exTrapEna = 1'b1;
         end
       end
-      if(when_RiscvCore_l680) begin
+      if(when_RiscvCore_l693) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l685) begin
+      if(when_RiscvCore_l698) begin
         exTrapEna = 1'b1;
       end
-      if(when_RiscvCore_l690) begin
-        if(when_RiscvCore_l693) begin
+      if(when_RiscvCore_l703) begin
+        if(when_RiscvCore_l706) begin
           exTrapEna = 1'b1;
         end
       end
@@ -1352,37 +1364,37 @@ module RiscvCore64D (
   always @(*) begin
     exTrapCause = 64'h0;
     if(idEx_valid) begin
-      if(when_RiscvCore_l641) begin
+      if(when_RiscvCore_l654) begin
         exTrapCause = {60'd0, _zz_exTrapCause};
       end
-      if(when_RiscvCore_l645) begin
+      if(when_RiscvCore_l658) begin
         exTrapCause = 64'h0000000000000003;
       end
-      if(when_RiscvCore_l649) begin
+      if(when_RiscvCore_l662) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l653) begin
+      if(when_RiscvCore_l666) begin
         exTrapCause = 64'h0000000000000002;
       end
       if(csrIllegal) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l662) begin
+      if(when_RiscvCore_l675) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l668) begin
-        if(when_RiscvCore_l671) begin
+      if(when_RiscvCore_l681) begin
+        if(when_RiscvCore_l684) begin
           exTrapCause = (idEx_isLr ? 64'h0000000000000004 : 64'h0000000000000006);
         end
       end
-      if(when_RiscvCore_l680) begin
+      if(when_RiscvCore_l693) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l685) begin
+      if(when_RiscvCore_l698) begin
         exTrapCause = 64'h0000000000000002;
       end
-      if(when_RiscvCore_l690) begin
-        if(when_RiscvCore_l693) begin
+      if(when_RiscvCore_l703) begin
+        if(when_RiscvCore_l706) begin
           exTrapCause = (idEx_fpLoad ? 64'h0000000000000004 : 64'h0000000000000006);
         end
       end
@@ -1401,13 +1413,13 @@ module RiscvCore64D (
       if(csrIllegal) begin
         exTrapTval = _zz_exTrapTval;
       end
-      if(when_RiscvCore_l668) begin
-        if(when_RiscvCore_l671) begin
+      if(when_RiscvCore_l681) begin
+        if(when_RiscvCore_l684) begin
           exTrapTval = aluResult;
         end
       end
-      if(when_RiscvCore_l690) begin
-        if(when_RiscvCore_l693) begin
+      if(when_RiscvCore_l703) begin
+        if(when_RiscvCore_l706) begin
           exTrapTval = aluResult;
         end
       end
@@ -1424,17 +1436,17 @@ module RiscvCore64D (
   assign sppTarget = (csrFile_1_io_mstatusSpp ? MODE_S : MODE_U);
   assign sppSupported = ((sppTarget == 2'b00) || (sppTarget == 2'b11));
   assign sretLegal = 1'b0;
-  assign when_RiscvCore_l641 = (idEx_sysOp == SysOp_ECALL);
-  assign when_RiscvCore_l645 = (idEx_sysOp == SysOp_EBREAK);
-  assign when_RiscvCore_l649 = ((idEx_sysOp == SysOp_MRET) && ((csrFile_1_io_curMode != MODE_M) || (! mppSupported)));
-  assign when_RiscvCore_l653 = ((idEx_sysOp == SysOp_SRET) && (! sretLegal));
-  assign when_RiscvCore_l662 = (idEx_illegal || (idEx_sysOp == SysOp_ILLEGAL));
-  assign when_RiscvCore_l668 = (idEx_atomic || idEx_isLr);
-  assign when_RiscvCore_l671 = (! ((idEx_memSize == 2'b10) ? (aluResult[1 : 0] == 2'b00) : (aluResult[2 : 0] == 3'b000)));
-  assign when_RiscvCore_l680 = (idEx_fp && (csrFile_1_io_mstatusFs == 2'b00));
-  assign when_RiscvCore_l685 = ((idEx_sysOp == SysOp_SFENCE) && (! sfenceLegal));
-  assign when_RiscvCore_l690 = (idEx_fpLoad || idEx_fpStore);
-  assign when_RiscvCore_l693 = (! ((idEx_memSize == 2'b11) ? (aluResult[2 : 0] == 3'b000) : (aluResult[1 : 0] == 2'b00)));
+  assign when_RiscvCore_l654 = (idEx_sysOp == SysOp_ECALL);
+  assign when_RiscvCore_l658 = (idEx_sysOp == SysOp_EBREAK);
+  assign when_RiscvCore_l662 = ((idEx_sysOp == SysOp_MRET) && ((csrFile_1_io_curMode != MODE_M) || (! mppSupported)));
+  assign when_RiscvCore_l666 = ((idEx_sysOp == SysOp_SRET) && (! sretLegal));
+  assign when_RiscvCore_l675 = (idEx_illegal || (idEx_sysOp == SysOp_ILLEGAL));
+  assign when_RiscvCore_l681 = (idEx_atomic || idEx_isLr);
+  assign when_RiscvCore_l684 = (! ((idEx_memSize == 2'b10) ? (aluResult[1 : 0] == 2'b00) : (aluResult[2 : 0] == 3'b000)));
+  assign when_RiscvCore_l693 = (idEx_fp && (csrFile_1_io_mstatusFs == 2'b00));
+  assign when_RiscvCore_l698 = ((idEx_sysOp == SysOp_SFENCE) && (! sfenceLegal));
+  assign when_RiscvCore_l703 = (idEx_fpLoad || idEx_fpStore);
+  assign when_RiscvCore_l706 = (! ((idEx_memSize == 2'b11) ? (aluResult[2 : 0] == 3'b000) : (aluResult[1 : 0] == 2'b00)));
   assign mmuIValid = ((io_iBus_valid && (! exTrapEna)) && (! (idEx_valid && idEx_pageFault)));
   assign mmuDValid = ((idEx_valid && (! idEx_pageFault)) && ((idEx_memRead || idEx_memWrite) || idEx_atomic));
   assign mmuAmoAccess = ((idEx_atomic && (! idEx_isLr)) && (! idEx_isSc));
@@ -1481,36 +1493,36 @@ module RiscvCore64D (
   assign isFpMvW = (idEx_fpOp == 6'h0f);
   assign isFpMvX = (idEx_fpOp == 6'h0e);
   assign fpRmEx = ((idEx_fpRm == 3'b111) ? csrFile_1_io_frm : idEx_fpRm);
-  assign _zz_when_RiscvCore_l906 = (idEx_fpOp == 6'h1d);
-  assign _zz_when_RiscvCore_l906_1 = (idEx_fpOp == 6'h1c);
-  assign _zz_when_RiscvCore_l906_2 = (isFpFromInt ? forwardRs1 : fpFwdRs1);
-  assign _zz_when_RiscvCore_l909 = fpFwdRs2;
-  assign _zz_when_RiscvCore_l910 = fpFwdRs3;
+  assign _zz_when_RiscvCore_l919 = (idEx_fpOp == 6'h1d);
+  assign _zz_when_RiscvCore_l919_1 = (idEx_fpOp == 6'h1c);
+  assign _zz_when_RiscvCore_l919_2 = (isFpFromInt ? forwardRs1 : fpFwdRs1);
+  assign _zz_when_RiscvCore_l922 = fpFwdRs2;
+  assign _zz_when_RiscvCore_l923 = fpFwdRs3;
   always @(*) begin
-    _zz_io_a = _zz_when_RiscvCore_l906_2;
-    if(when_RiscvCore_l906) begin
+    _zz_io_a = _zz_when_RiscvCore_l919_2;
+    if(when_RiscvCore_l919) begin
       _zz_io_a[31 : 0] = 32'h7fc00000;
     end
   end
 
   always @(*) begin
-    _zz_io_b = _zz_when_RiscvCore_l909;
-    if(when_RiscvCore_l909) begin
+    _zz_io_b = _zz_when_RiscvCore_l922;
+    if(when_RiscvCore_l922) begin
       _zz_io_b[31 : 0] = 32'h7fc00000;
     end
   end
 
   always @(*) begin
-    _zz_io_c = _zz_when_RiscvCore_l910;
-    if(when_RiscvCore_l910) begin
+    _zz_io_c = _zz_when_RiscvCore_l923;
+    if(when_RiscvCore_l923) begin
       _zz_io_c[31 : 0] = 32'h7fc00000;
     end
   end
 
-  assign when_RiscvCore_l906 = (((! isFpFromInt) && (! (_zz_when_RiscvCore_l906 ? 1'b0 : (_zz_when_RiscvCore_l906_1 ? 1'b1 : idEx_fpFmt)))) && (! (&_zz_when_RiscvCore_l906_2[63 : 32])));
-  assign when_RiscvCore_l909 = ((! idEx_fpFmt) && (! (&_zz_when_RiscvCore_l909[63 : 32])));
-  assign when_RiscvCore_l910 = ((! idEx_fpFmt) && (! (&_zz_when_RiscvCore_l910[63 : 32])));
-  assign _zz_fpuResult = (idEx_fpFmt || (_zz_when_RiscvCore_l906 || _zz_when_RiscvCore_l906_1));
+  assign when_RiscvCore_l919 = (((! isFpFromInt) && (! (_zz_when_RiscvCore_l919 ? 1'b0 : (_zz_when_RiscvCore_l919_1 ? 1'b1 : idEx_fpFmt)))) && (! (&_zz_when_RiscvCore_l919_2[63 : 32])));
+  assign when_RiscvCore_l922 = ((! idEx_fpFmt) && (! (&_zz_when_RiscvCore_l922[63 : 32])));
+  assign when_RiscvCore_l923 = ((! idEx_fpFmt) && (! (&_zz_when_RiscvCore_l923[63 : 32])));
+  assign _zz_fpuResult = (idEx_fpFmt || (_zz_when_RiscvCore_l919 || _zz_when_RiscvCore_l919_1));
   assign fpuResult = (_zz_fpuResult ? fpUnit64_io_result : fpUnit32_io_result);
   assign fpuFlags = (_zz_fpuResult ? fpUnit64_io_flags : fpUnit32_io_flags);
   assign fpToIntResult = ((isFpMvX && (! idEx_fpFmt)) ? _zz_fpToIntResult : fpuResult);
@@ -1557,13 +1569,13 @@ module RiscvCore64D (
   assign csrFile_1_io_fpFlagsWe = (memWb_valid && memWb_fpWrite);
   assign flushYounger = (((ctrlFlush || trapCommit) || exXret) || intrTake);
   assign bubbleEx = ((trapCommit || exXret) || csrXretStall);
-  assign when_RiscvCore_l1132 = (! freezeAll);
-  assign when_RiscvCore_l1141 = (stallData || csrXretStall);
-  assign when_RiscvCore_l1149 = (! freezeAll);
-  assign when_RiscvCore_l1150 = (stallData || csrXretStall);
-  assign when_RiscvCore_l1164 = ((! freezeAll) && (! csrXretStall));
-  assign when_RiscvCore_l1165 = (stallData || flushYounger);
-  assign when_RiscvCore_l1214 = (! freezeAll);
+  assign when_RiscvCore_l1145 = (! freezeAll);
+  assign when_RiscvCore_l1154 = (stallData || csrXretStall);
+  assign when_RiscvCore_l1162 = (! freezeAll);
+  assign when_RiscvCore_l1163 = (stallData || csrXretStall);
+  assign when_RiscvCore_l1177 = ((! freezeAll) && (! csrXretStall));
+  assign when_RiscvCore_l1178 = (stallData || flushYounger);
+  assign when_RiscvCore_l1227 = (! freezeAll);
   assign effMemWrite = (exMem_memWrite && (exMem_isSc ? scSuccess : 1'b1));
   assign normalRead = ((exMem_valid && exMem_memRead) && (! exMem_atomic));
   assign normalWrite = (exMem_valid && effMemWrite);
@@ -1631,7 +1643,7 @@ module RiscvCore64D (
   assign _zz_loadResult_1 = _zz__zz_loadResult_1_1[15 : 0];
   assign _zz_loadResult_2 = _zz__zz_loadResult_2[31 : 0];
   assign fpLoadData = ((exMem_memSize == 2'b11) ? loadResult : {32'hffffffff,loadResult[31 : 0]});
-  assign when_RiscvCore_l1327 = (! freezeAll);
+  assign when_RiscvCore_l1340 = (! freezeAll);
   assign csrFile_1_io_retire = (memWb_valid && (! freezeAll));
   assign regFile_io_writeEnable = (memWb_valid && memWb_regWrite);
   assign fpRegFile_io_writeEnable = (memWb_valid && memWb_fpWrite);
@@ -1761,7 +1773,7 @@ module RiscvCore64D (
       memWb_csrWrData <= 64'h0;
       memWb_sysOp <= SysOp_NONE;
     end else begin
-      if(when_RiscvCore_l1132) begin
+      if(when_RiscvCore_l1145) begin
         if(trapCommit) begin
           pcReg <= trapEntry;
         end else begin
@@ -1774,7 +1786,7 @@ module RiscvCore64D (
               if(ctrlFlush) begin
                 pcReg <= ctrlTarget;
               end else begin
-                if(when_RiscvCore_l1141) begin
+                if(when_RiscvCore_l1154) begin
                   pcReg <= pcReg;
                 end else begin
                   pcReg <= (pcReg + _zz_pcReg);
@@ -1784,8 +1796,8 @@ module RiscvCore64D (
           end
         end
       end
-      if(when_RiscvCore_l1149) begin
-        if(!when_RiscvCore_l1150) begin
+      if(when_RiscvCore_l1162) begin
+        if(!when_RiscvCore_l1163) begin
           if(flushYounger) begin
             ifId_valid <= 1'b0;
           end else begin
@@ -1797,8 +1809,8 @@ module RiscvCore64D (
           end
         end
       end
-      if(when_RiscvCore_l1164) begin
-        if(when_RiscvCore_l1165) begin
+      if(when_RiscvCore_l1177) begin
+        if(when_RiscvCore_l1178) begin
           idEx_valid <= 1'b0;
         end else begin
           idEx_valid <= ifId_valid;
@@ -1845,7 +1857,7 @@ module RiscvCore64D (
         idEx_sysOp <= decoder_1_io_output_sysOp;
         idEx_pageFault <= ifId_pageFault;
       end
-      if(when_RiscvCore_l1214) begin
+      if(when_RiscvCore_l1227) begin
         if(bubbleEx) begin
           exMem_valid <= 1'b0;
         end else begin
@@ -1877,7 +1889,7 @@ module RiscvCore64D (
         exMem_sysOp <= idEx_sysOp;
         exMem_csrWrData <= csrWrDataEx;
       end
-      if(when_RiscvCore_l1327) begin
+      if(when_RiscvCore_l1340) begin
         memWb_valid <= exMem_valid;
         memWb_regWrite <= exMem_regWrite;
         memWb_rd <= exMem_rd;
@@ -23223,6 +23235,19 @@ module Alu (
   assign _zz_result_545 = aU[63 : 32];
   assign _zz_result_546 = _zz_result_544[31 : 0];
   assign io_result = result;
+
+endmodule
+
+module AiaAplic (
+  input  wire          io_enable,
+  input  wire [15:0]   io_irqIn,
+  output wire          io_meip,
+  output wire          io_seip
+);
+
+
+  assign io_meip = (io_enable && (|io_irqIn));
+  assign io_seip = 1'b0;
 
 endmodule
 

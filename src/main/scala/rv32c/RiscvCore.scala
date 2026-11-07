@@ -373,7 +373,20 @@ class RiscvCore(config: CoreConfig) extends Component {
 
   // ===== CSR file =====
   val csrFile = new CsrFile(xlen, config.hartId, config.isa)
-  csrFile.io.timerInterrupt := io.timerInterrupt
+  
+  // ===== AIA Interrupt Controller =====
+  val aiaMeip = Bool()
+  if (xlen == 64) {
+    val aia = new AiaAplic(numSources = 16, addrWidth = xlen)
+    aia.io.enable := True
+    aia.io.irqIn := B(0, 16 bits)
+    aiaMeip := aia.io.meip
+  } else {
+    aiaMeip := False
+  }
+  
+  // Merge interrupts (single assignment)
+  csrFile.io.timerInterrupt := io.timerInterrupt || aiaMeip
 
   // ===== ID/EX, EX/MEM, MEM/WB pipeline registers =====
   val idEx = Reg(new IdExBundle(xlen)) init (IdExBundle.zero(xlen))
