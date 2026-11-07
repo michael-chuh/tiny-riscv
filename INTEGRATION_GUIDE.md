@@ -131,44 +131,64 @@ walkAddr := someAddr.resized.resize(addrWidth)
 ## 3. AIA APLIC 集成
 
 ### 规格
-- 16 中断源，优先级编码
-- M/S/U 域模式支持
-- CSR 接口 (0x3C00-0x4000)
-- MSI 支持
+- 16 中断源，OR-tree 优先级编码
+- M-mode 输出 (meip)
+- 可配置 addrWidth (RV32/RV64 兼容)
+- 组件：`src/main/scala/rv32c/core/Aia.scala` (29 lines)
 
 ### 集成点 (`RiscvCore.scala`)
 
 ```scala
-// AIA 实例化
-val aia = new AiaAplic(numSources = 16)
-aia.io.irqIn := io.externalIrq  // 平台中断输入
-aia.io.meip  // 连接到 mip.EIP
+// 在 CSR file 实例化后添加
+val aiaMeip = False
+if (xlen == 64) {
+  val aia = new AiaAplic(numSources = 16, addrWidth = xlen)
+  aia.io.enable := True
+  aia.io.irqIn := B(0, 16 bits)  // 连接平台 IRQ
+  aiaMeip := aia.io.meip
+}
 
-// 中断合并
-csrFile.io.timerInterrupt := io.timerInterrupt || aia.io.meip
+// 中断合并（注意：不能在同一信号上多次赋值）
+csrFile.io.timerInterrupt := io.timerInterrupt || aiaMeip
 ```
 
 ### 已知问题
 
-1. **CSR 访问时序**
-   - AIA CSR 在 MEM/WB 段访问
-   - 与标准 CSR 访问路径不同步
+1. **Elaboration 失败 (RV64)**
+   - 错误：`ASSIGNMENT OVERLAP: Signal aiaMeip assigned at...`
+   - 原因：if/else 分支中对 timerInterrupt 的重复赋值
+   - 状态：**未解决** - 需要重构中断合并逻辑
 
-2. **中断优先级**
-   - 当前实现简单 OR 合并
-   - 需要正确的优先级仲裁
+2. **RV32/RV64 兼容性**
+   - AIA 组件支持可配置 addrWidth
+   - 集成时需要条件实例化（仅 RV64）
 
-3. **Elaboration 失败**
-   - 多个测试在组件实例化阶段失败
-   - 可能是信号未初始化或环路依赖
+3. **CSR 接口缺失**
+   - 当前简化版不支持 CSR 访问
+   - 完整集成需要添加 CSR 读/写路径
 
-### 集成步骤
+### 解决状态
 
-1. [ ] 简化 CSR 接口（先只支持写）
-2. [ ] 正确连接 `mie`/`mip` 信号
-3. [ ] 添加中断优先级仲裁
-4. [ ] 验证 CSR 读写功能
-5. [ ] 运行中断相关测试
+- ✅ 组件实现完成（29 lines）
+- ✅ RV32/RV64 兼容性支持
+- ❌ 核心集成失败（elaboration overlap）
+- ❌ CSR 接口未实现
+
+### 推荐方案
+
+暂时保持组件独立，等待以下解决方案之一：
+
+1. **重构中断输入** - 将 timerInterrupt 和 externalIRQ 合并为单一输入
+2. **使用 Mux 而非条件赋值** - 避免 SpinalHDL assignment overlap 检查
+3. **延迟集成** - 优先完成 Cache/Sv48 集成后再处理
+
+### 集成步骤（修正后）
+
+1. [ ] 修改 `RiscvCore.io` 添加 `externalIrq` 输入
+2. [ ] 移除 `timerInterrupt` 与 AIA 的硬编码合并
+3. [ ] 在 CsrFile 中正确合并中断信号
+4. [ ] 添加 AIA CSR 支持（可选）
+5. [ ] 运行完整测试套件验证
 
 ---
 
