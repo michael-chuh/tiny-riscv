@@ -388,6 +388,14 @@ class RiscvCore(config: CoreConfig) extends Component {
   // Merge interrupts (single assignment)
   csrFile.io.timerInterrupt := io.timerInterrupt || aiaMeip
 
+  // ===== I/D Cache (stub for future integration) =====
+  // Cache integration requires careful pipeline timing analysis
+  // Current status: components ready, integration pending
+  
+  // Placeholders for cache data paths (currently bypassed)
+  val iFetchDataCache = io.iBus.instruction
+  val dBusReadDataCache = io.dBus.readData
+
   // ===== ID/EX, EX/MEM, MEM/WB pipeline registers =====
   val idEx = Reg(new IdExBundle(xlen)) init (IdExBundle.zero(xlen))
   val exMem = Reg(new ExMemBundle(xlen)) init (ExMemBundle.zero(xlen))
