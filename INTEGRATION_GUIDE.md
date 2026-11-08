@@ -271,3 +271,23 @@ AIA 集成状态：完成 ✅*
 ### 建议
 优先修复 Sv48Mmu.scala 组件本身，再进行核心集成。
 
+
+---
+
+## Sv48 MMU 集成尝试 #3 (2026-11-08) ❌
+
+### 问题
+重写 Sv48Mmu.scala 后仍有编译错误：
+- walkPpn 位宽不匹配 (54 bits vs 52 bits)
+- SpinalHDL resize/resized 复杂
+
+### 当前状态
+- ✅ Sv48Mmu.scala 组件存在 (263 lines)
+- ❌ 编译失败
+- ❌ 无法集成
+
+### 建议
+暂时搁置 Sv48，优先完成：
+1. HPM 性能计数器 (新扩展，独立组件)
+2. 或修复 Sv48Mmu 位宽问题后再试
+
