@@ -291,3 +291,27 @@ AIA 集成状态：完成 ✅*
 1. HPM 性能计数器 (新扩展，独立组件)
 2. 或修复 Sv48Mmu 位宽问题后再试
 
+
+---
+
+## HPM 性能计数器集成尝试 (2026-11-08) ❌
+
+### 实现
+- Hpm.scala 组件 (138 lines)
+- mcycle/hpmcounter CSR 支持
+- mcounteren 用户模式访问控制
+- 基本性能事件计数
+
+### 集成问题
+- **Elaboration 失败** (58 tests)
+- 原因：pipeline 信号时序复杂
+- exMem/memWb 阶段选择困难
+
+### 当前状态
+- ✅ HPM 组件完成
+- ❌ 核心集成失败
+- ✅ 135 测试基线稳定
+
+### 建议
+HPM 需要更仔细分析 pipeline 时序，或等待 cache/MMU 完成后再集成。
+
