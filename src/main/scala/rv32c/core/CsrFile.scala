@@ -159,6 +159,10 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
   val mipBits = Bits(xlen bits)
   mipBits := (B(0, xlen - 8 bits) ## io.timerInterrupt.asBits ## B(0, 7 bits))
   if (isa.hasSstc) { mipBits(5) := sTimerPending }
+  
+  // HPM: mcycle counter (increments every cycle)
+  val mcycleReg = Reg(UInt(xlen bits)) init U(0, xlen bits)
+  mcycleReg := mcycleReg + 1
   switch(io.csrAddr) {
     is(U(0x300, 12 bits)) { readData := mstatusReg }
     is(U(0x301, 12 bits)) { readData := B(isa.misaValue, xlen bits) }
@@ -171,6 +175,7 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
     is(U(0x342, 12 bits)) { readData := mcauseReg }
     is(U(0x343, 12 bits)) { readData := mtvalReg }
     is(U(0x344, 12 bits)) { readData := mipBits }
+    is(U(0xB00, 12 bits)) { readData := mcycleReg.asBits }  // mcycle
     is(U(0xF14, 12 bits)) { readData := B(hartId, xlen bits) }
     default { readData := B(0, xlen bits) }
   }
@@ -249,6 +254,11 @@ class CsrFile(xlen: Int, hartId: Int, isa: IsaConfig) extends Component {
 
   // ---- Next-value helpers (priority: WB normal write, then trap/mret/sret) ----
   val wbActive = io.csrWe && io.csrOp =/= CsrOp.NONE
+  
+  // HPM: mcycle write support
+  when(wbActive && io.csrAddr === U(0xB00, 12 bits)) {
+    mcycleReg := io.csrWrData.asUInt
+  }
 
   def maskedNext(cur: Bits, raw: Bits, mask: BigInt): Bits = {
     val ones = (BigInt(1) << xlen) - 1
