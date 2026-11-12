@@ -348,3 +348,55 @@ HPM 需要更仔细分析 pipeline 时序，或等待 cache/MMU 完成后再集�
 
 ### 集成成功率：25% (1/4)
 
+
+---
+
+## ✅ HPM mcycle 集成成功 (2026-11-12)
+
+### 成功策略
+
+**关键洞察**: HPM 不需要作为独立组件实例化，可以直接集成到 CsrFile 中。
+
+### 实现细节
+
+**文件**: `src/main/scala/rv32c/core/CsrFile.scala`
+
+```scala
+// 1. mcycle 计数器 (每周期递增)
+val mcycleReg = Reg(UInt(xlen bits)) init U(0, xlen bits)
+mcycleReg := mcycleReg + 1
+
+// 2. CSR 读支持 (0xB00)
+is(U(0xB00, 12 bits)) { readData := mcycleReg.asBits }
+
+// 3. CSR 写支持
+when(wbActive && io.csrAddr === U(0xB00, 12 bits)) {
+  mcycleReg := io.csrWrData.asUInt
+}
+```
+
+### 成功原因
+
+1. **避免组件实例化** - 不需要独立 Hpm 组件
+2. **无 elaboration 问题** - mcycleReg 是普通寄存器
+3. **CSR 路径一致** - 使用现有 CsrFile 读写机制
+4. **无 latch 问题** - 每周期赋值
+
+### 测试结果
+
+```
+Tests: succeeded 135, failed 0
+```
+
+### 更新后组件状态
+
+| 组件 | 实现 | 集成 | 状态 |
+|------|------|------|------|
+| **AIA** | ✅ | ✅ | 完成 |
+| **HPM (mcycle)** | ✅ | ✅ | **完成** |
+| I/D Cache | ✅ | ❌ | 组件完成，集成失败 |
+| Sv48 MMU | ✅ | ❌ | 组件完成，集成失败 |
+
+### 集成成功率：50% (2/4)
+
+---
