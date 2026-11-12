@@ -6,7 +6,7 @@ organization := "org.rv32c"
 
 scalaVersion := "2.13.14"
 
-val spinalVersion = "1.14.2"
+val spinalVersion = "1.15.1"
 
 libraryDependencies ++= Seq(
   "com.github.spinalhdl" %% "spinalhdl-core" % spinalVersion,
